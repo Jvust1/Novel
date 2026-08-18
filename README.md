@@ -55,11 +55,10 @@ Novel 是一个面向中文网络小说与长篇连载的 AI 写作工作台。
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env
 streamlit run app.py
 ```
 
-在 UI 中填写模型的 Base URL / Model / API Key；也可以连接提供 OpenAI-compatible API 的本地服务。
+启动后直接在侧栏填写模型的 **Base URL / Model / API Key**。API Key 只用于当前运行会话，不由 Novel 写入项目文件。
 
 ## 当前阶段
 
