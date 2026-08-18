@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-import json
-
 import streamlit as st
 
 from novel_ai.engine import NovelEngine
 from novel_ai.models import Character, StoryBible, StyleFingerprint
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.storage import ProjectStore
-from novel_ai.style_engine import analyze_style, build_reference_signature, detect_ai_flavor
+from novel_ai.style_engine import (
+    analyze_style,
+    blend_styles,
+    build_reference_signature,
+    detect_ai_flavor,
+    reference_overlap,
+)
 
 
 st.set_page_config(page_title="Novel", page_icon="✍️", layout="wide")
@@ -21,10 +25,14 @@ if "characters" not in st.session_state:
     st.session_state.characters = []
 if "style" not in st.session_state:
     st.session_state.style = None
+if "style_profiles" not in st.session_state:
+    st.session_state.style_profiles = []
 if "reference_hashes" not in st.session_state:
     st.session_state.reference_hashes = set()
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
+if "last_overlap" not in st.session_state:
+    st.session_state.last_overlap = 0.0
 
 
 with st.sidebar:
@@ -55,6 +63,19 @@ def style_from_state() -> StyleFingerprint | None:
     return None
 
 
+def current_bible() -> StoryBible:
+    return StoryBible(
+        title=title,
+        genre=genre,
+        tone=tone,
+        premise=premise,
+        themes=[x.strip() for x in themes_text.splitlines() if x.strip()],
+        world_rules=[x.strip() for x in rules_text.splitlines() if x.strip()],
+        locked_facts=[x.strip() for x in rules_text.splitlines() if x.strip()],
+        forbidden_moves=[x.strip() for x in forbidden_text.splitlines() if x.strip()],
+    )
+
+
 story_tab, char_tab, style_tab, write_tab, review_tab = st.tabs(
     ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "✍️ 章节写作", "🔎 审校"]
 )
@@ -73,16 +94,7 @@ with story_tab:
 
     outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280)
     if st.button("保存故事设定到本地", use_container_width=True):
-        bible = StoryBible(
-            title=title,
-            genre=genre,
-            tone=tone,
-            premise=premise,
-            themes=[x.strip() for x in themes_text.splitlines() if x.strip()],
-            world_rules=[x.strip() for x in rules_text.splitlines() if x.strip()],
-            locked_facts=[x.strip() for x in rules_text.splitlines() if x.strip()],
-            forbidden_moves=[x.strip() for x in forbidden_text.splitlines() if x.strip()],
-        )
+        bible = current_bible()
         store.write_json(project_name, "memory/story_bible.json", bible.model_dump())
         store.write_json(project_name, "memory/outline.json", {"outline": outline})
         st.success("已保存到本地 data/projects 目录。")
@@ -131,43 +143,77 @@ with char_tab:
         st.info("还没有人物。")
 
 with style_tab:
-    st.subheader("Style Lab · 文风 DNA")
+    st.subheader("Style Lab · 多来源文风 DNA")
     st.write(
-        "把代表文本转成可解释的风格特征，而不是只给模型一句‘模仿某作者’。"
-        "参考正文默认不写入 GitHub；本地可保存派生特征和不可逆签名。"
+        "每份代表文本先提取统计特征，再可选用模型抽象叙事距离、对白方式、情绪表达、环境进入方式等语义特征。"
+        "多份 profile 按权重融合；参考正文不会写入 Style DNA 文件。"
     )
 
     uploaded = st.file_uploader("上传参考文本（v0.1 支持 TXT / MD）", type=["txt", "md"])
     pasted_reference = st.text_area("或粘贴参考文本", height=220)
-    reference_name = st.text_input("风格名称", value="Reference-1")
+    reference_name = st.text_input("风格来源名称", value=f"Reference-{len(st.session_state.style_profiles) + 1}")
+    weight = st.number_input("融合权重", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
+    use_semantic = st.checkbox("使用当前模型做语义文体分析", value=True)
     semantic_notes = st.text_area(
         "人工补充风格备注（可选）",
         placeholder="例如：近距离第三人称；对白克制；环境多通过人物动作带出；情绪少直说……",
         height=100,
     )
 
-    if st.button("分析文风", use_container_width=True):
+    if st.button("分析并加入风格库", use_container_width=True):
         text = pasted_reference
         if uploaded is not None:
             text = uploaded.getvalue().decode("utf-8", errors="ignore")
         if len(text.strip()) < 300:
-            st.warning("样本文本太短，建议至少提供 300 字，稳定分析最好使用更长样本。")
+            st.warning("样本文本太短，建议至少提供 300 字；稳定分析最好使用更长样本。")
         else:
-            fp = analyze_style(text, reference_name)
-            if semantic_notes.strip():
-                fp.custom_notes.extend([x.strip() for x in semantic_notes.splitlines() if x.strip()])
-            st.session_state.style = fp.model_dump()
-            st.session_state.reference_hashes = build_reference_signature(text)
-            store.write_json(project_name, "styles/style_dna.json", fp.model_dump())
-            store.write_json(
-                project_name,
-                "styles/reference_signature.json",
-                {"hashes": sorted(st.session_state.reference_hashes), "shingle_chars": 18},
-            )
-            st.success("Style DNA 已生成；参考正文没有被写入 style 文件。")
+            try:
+                fp = analyze_style(text, reference_name)
+                if use_semantic:
+                    engine = NovelEngine(make_provider())
+                    fp = engine.enrich_style(text, fp)
+                if semantic_notes.strip():
+                    fp.custom_notes.extend([x.strip() for x in semantic_notes.splitlines() if x.strip()])
+
+                signature = build_reference_signature(text)
+                st.session_state.style_profiles.append(
+                    {"name": reference_name, "weight": float(weight), "fingerprint": fp.model_dump()}
+                )
+                st.session_state.reference_hashes |= signature
+
+                weighted = [
+                    (StyleFingerprint.model_validate(item["fingerprint"]), float(item["weight"]))
+                    for item in st.session_state.style_profiles
+                ]
+                composite = blend_styles(weighted, name="Novel-Composite")
+                st.session_state.style = composite.model_dump()
+
+                store.write_json(project_name, "styles/style_profiles.json", st.session_state.style_profiles)
+                store.write_json(project_name, "styles/style_dna.json", composite.model_dump())
+                store.write_json(
+                    project_name,
+                    "styles/reference_signature.json",
+                    {"hashes": sorted(st.session_state.reference_hashes), "shingle_chars": 18},
+                )
+                st.success("已加入风格库并重新计算综合 Style DNA；参考正文未写入风格文件。")
+            except Exception as exc:
+                st.exception(exc)
+
+    if st.session_state.style_profiles:
+        st.markdown("#### 已加入的风格来源")
+        st.dataframe(
+            [{"name": p["name"], "weight": p["weight"]} for p in st.session_state.style_profiles],
+            use_container_width=True,
+        )
+        if st.button("清空风格库"):
+            st.session_state.style_profiles = []
+            st.session_state.style = None
+            st.session_state.reference_hashes = set()
+            st.rerun()
 
     fp = style_from_state()
     if fp:
+        st.markdown("#### 当前综合 Style DNA")
         st.json(fp.model_dump())
 
 with write_tab:
@@ -183,19 +229,8 @@ with write_tab:
 
     if st.button("生成本章", type="primary", use_container_width=True):
         try:
-            provider = make_provider()
-            engine = NovelEngine(provider)
-
-            bible = StoryBible(
-                title=title,
-                genre=genre,
-                tone=tone,
-                premise=premise,
-                themes=[x.strip() for x in themes_text.splitlines() if x.strip()],
-                world_rules=[x.strip() for x in rules_text.splitlines() if x.strip()],
-                locked_facts=[x.strip() for x in rules_text.splitlines() if x.strip()],
-                forbidden_moves=[x.strip() for x in forbidden_text.splitlines() if x.strip()],
-            )
+            engine = NovelEngine(make_provider())
+            bible = current_bible()
             characters = [Character.model_validate(c) for c in st.session_state.characters]
             recent = store.recent_chapter_summaries(project_name)
             result = engine.run(
@@ -212,6 +247,7 @@ with write_tab:
             )
             st.session_state.last_result = result
             final_text = result.revised or result.draft
+            st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
             store.write_chapter(project_name, chapter_id, final_text)
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
@@ -222,6 +258,10 @@ with write_tab:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
         st.text_area("正文", value=result.revised or result.draft, height=720)
+        if st.session_state.last_overlap > 0.01:
+            st.warning(
+                f"参考文本 18 字符片段哈希重合率 {st.session_state.last_overlap:.2%}，建议检查是否出现不必要的近似复用。"
+            )
         if result.review:
             with st.expander("编辑审校", expanded=False):
                 st.json(result.review.model_dump())
@@ -238,4 +278,4 @@ with review_tab:
             st.warning("请先粘贴正文。")
 
 st.divider()
-st.caption("v0.1：先验证长篇写作内核。后续再增加 RAG、人物关系图、伏笔面板、多 Style Profile 加权、DOCX/PDF 导入与桌面封装。")
+st.caption("v0.1：先验证长篇写作内核。下一阶段：RAG、人物关系图、伏笔面板、DOCX/PDF 导入、章节状态自动回写与桌面封装。")
