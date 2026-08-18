@@ -1,0 +1,25 @@
+{
+  "project": "Novel",
+  "repository": "Jvust/Novel",
+  "stage": "foundation",
+  "version": "0.1.0-dev",
+  "status": "active",
+  "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
+  "current_focus": [
+    "outline-to-scene planning",
+    "character-state-aware drafting",
+    "long-form memory",
+    "style fingerprint extraction and blending",
+    "AI-writing-pattern review and local repair"
+  ],
+  "frozen": false,
+  "blocking_issues": [],
+  "pending_sync": [],
+  "next_steps": [
+    "implement runnable v0.1 local web workspace",
+    "add structured project storage and chapter generation pipeline",
+    "add style analyzer and composite Style DNA",
+    "define evaluation set for plot, character, continuity, prose and AI-flavor"
+  ],
+  "updated_at": "2026-08-19"
+}
