@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .models import Character, ChapterPlan, ChapterReview, StoryBible, StyleFingerprint
-from .prompts import draft_messages, plan_messages, repair_messages, review_messages
+from .prompts import draft_messages, plan_messages, repair_messages, review_messages, semantic_style_messages
 from .provider import OpenAICompatibleProvider
 from .style_engine import detect_ai_flavor
 
@@ -35,6 +35,21 @@ def parse_json_object(text: str) -> dict[str, Any]:
     return value
 
 
+def sample_reference_text(text: str, max_chars: int = 12000) -> str:
+    text = text.strip()
+    if len(text) <= max_chars:
+        return text
+    part = max_chars // 3
+    middle_start = max((len(text) - part) // 2, part)
+    return (
+        text[:part]
+        + "\n\n[中段抽样]\n\n"
+        + text[middle_start : middle_start + part]
+        + "\n\n[末段抽样]\n\n"
+        + text[-part:]
+    )
+
+
 @dataclass
 class ChapterResult:
     plan: ChapterPlan
@@ -47,6 +62,29 @@ class ChapterResult:
 class NovelEngine:
     def __init__(self, provider: OpenAICompatibleProvider):
         self.provider = provider
+
+    def enrich_style(self, text: str, surface: StyleFingerprint) -> StyleFingerprint:
+        """Add semantic, high-level style traits without storing or reproducing source prose."""
+        sample = sample_reference_text(text)
+        raw = self.provider.chat(
+            semantic_style_messages(sample, surface),
+            temperature=0.2,
+            response_format={"type": "json_object"},
+        )
+        semantic = parse_json_object(raw)
+        allowed = {
+            "narrative_distance",
+            "pov_preference",
+            "action_psychology_environment_balance",
+            "diction",
+            "rhythm_notes",
+            "emotion_expression",
+            "imagery_notes",
+            "avoid_patterns",
+            "custom_notes",
+        }
+        updates = {k: v for k, v in semantic.items() if k in allowed}
+        return surface.model_copy(update=updates)
 
     def plan(
         self,
