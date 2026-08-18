@@ -181,3 +181,29 @@ def repair_messages(draft: str, review: dict, style: StyleFingerprint | None) ->
 输出修订后的完整正文。不要解释修改过程。
 """.strip()
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+def semantic_style_messages(sample: str, surface: StyleFingerprint) -> list[dict[str, str]]:
+    system = """你是小说文体分析师。你的任务不是复述、续写或仿写输入文本，而是把其写作方式抽象成高层、可解释、可混合的 Style DNA。
+不要引用原文句子，不要输出作者身份猜测，不要用“像某某作者”作为结论。只输出严格 JSON。"""
+    user = f"""
+【已提取的表层统计】
+{_dump(surface.prompt_view())}
+
+【参考文本抽样】
+{sample}
+
+请从文本中抽象以下维度。描述必须可以指导新的原创写作，但不能包含原文长句或可复原内容：
+{{
+  "narrative_distance": "叙事距离、内心进入深度、镜头是否贴身",
+  "pov_preference": "视角习惯及切换纪律",
+  "action_psychology_environment_balance": "动作/心理/对话/环境的大致配比与进入方式",
+  "diction": "词汇层级、口语度、书面度、抽象词与具体词倾向",
+  "rhythm_notes": "句段节奏、快慢切换、信息密度",
+  "emotion_expression": "情绪通常如何表达：直述、动作、对白、生理、留白等",
+  "imagery_notes": "意象与环境描写的频率、功能和常见尺度，不要复述具体意象",
+  "avoid_patterns": ["如果要保持这种气质，应避免哪些相反写法"],
+  "custom_notes": ["其他可复用的高层文体规律"]
+}}
+""".strip()
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
