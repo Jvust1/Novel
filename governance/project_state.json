@@ -1,25 +1,45 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "foundation",
+  "stage": "foundation-v0.1-runnable",
   "version": "0.1.0-dev",
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
+    "post-chapter memory extraction",
+    "Canon/Active/Recall context assembly",
+    "real chapter A/B evaluation",
+    "character knowledge-boundary enforcement",
+    "composite Style DNA evaluation"
+  ],
+  "implemented": [
+    "Streamlit local web workspace",
+    "OpenAI-compatible provider",
     "outline-to-scene planning",
-    "character-state-aware drafting",
-    "long-form memory",
-    "style fingerprint extraction and blending",
-    "AI-writing-pattern review and local repair"
+    "character-state-aware drafting schema",
+    "draft/review/local-repair pipeline",
+    "surface style fingerprint extraction",
+    "semantic style abstraction",
+    "multi-reference weighted Style DNA blending",
+    "AI-flavor heuristic scan",
+    "non-reversible reference shingle signature and overlap warning",
+    "local project storage",
+    "basic tests and GitHub Actions workflow"
   ],
   "frozen": false,
   "blocking_issues": [],
-  "pending_sync": [],
+  "pending_sync": [
+    {
+      "type": "verification",
+      "severity": "non_blocking",
+      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
+    }
+  ],
   "next_steps": [
-    "implement runnable v0.1 local web workspace",
-    "add structured project storage and chapter generation pipeline",
-    "add style analyzer and composite Style DNA",
-    "define evaluation set for plot, character, continuity, prose and AI-flavor"
+    "extract chapter summaries, facts, character state, knowledge changes, timeline and foreshadowing after each accepted chapter",
+    "assemble bounded Canon/Active/Recall context for long-form writing",
+    "freeze the first real multi-genre chapter benchmark and run A/B evaluations",
+    "only then decide whether vector RAG or a knowledge graph materially improves quality"
   ],
   "updated_at": "2026-08-19"
 }
