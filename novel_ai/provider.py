@@ -49,6 +49,10 @@ class OpenAICompatibleProvider:
 
         with httpx.Client(timeout=self.config.timeout) as client:
             response = client.post(endpoint, json=payload, headers=headers)
+            if response.status_code >= 400 and response_format:
+                fallback = dict(payload)
+                fallback.pop("response_format", None)
+                response = client.post(endpoint, json=fallback, headers=headers)
             response.raise_for_status()
             data = response.json()
 
