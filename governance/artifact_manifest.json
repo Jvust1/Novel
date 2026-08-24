@@ -4,10 +4,17 @@
     "name": "Novel",
     "id": "135EL_t49i-Xyhncd9ZIukQg7_y27cEf-"
   },
+  "drive_subfolders": {
+    "github_project": {
+      "name": "06_GitHub_Project",
+      "id": "1JSM4NEhKsXPF0d7biPF_l2-evchlxBFC"
+    }
+  },
   "artifacts": [],
   "notes": [
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
-    "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived."
+    "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
+    "The v0.2 backend stores accepted chapter artifacts under the existing Novel Drive folder; OAuth tokens remain runtime-only."
   ]
 }
