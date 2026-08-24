@@ -14,6 +14,10 @@ Novel has a v0.2 orchestration skeleton on branch dev/multi-model-drive-backend-
 - Offline routing tests covering preferred providers and missing configuration.
 - GitHub Actions run 11 passed: Python compilation and the full pytest suite.
 
+### Latest machine check
+
+On the Windows 1号机, running `ollama pull qwen3:4b` and `ollama run qwen3:4b` returned `Error: could not locate ollama app`. This is an installation/PATH prerequisite, not a model-quality failure. The next local step is to install Ollama, reopen PowerShell, verify `ollama --version`, then pull `qwen3:4b`.
+
 ### Existing foundation
 
 - Streamlit local writing workbench.
@@ -35,9 +39,10 @@ Novel has a v0.2 orchestration skeleton on branch dev/multi-model-drive-backend-
 
 ### Next sequence
 
-1. Connect the website session to the provider router.
-2. Add an explicit author acceptance gate.
-3. Sync accepted draft, review and memory artifacts to Drive.
-4. Extract chapter facts, character state, timeline and foreshadowing.
-5. Build Canon / Active / Recall context assembly.
-6. Run the first fixed multi-genre A/B benchmark.
+1. Install and verify Ollama on the Windows 1号机.
+2. Connect the website session to the provider router.
+3. Add an explicit author acceptance gate.
+4. Sync accepted draft, review and memory artifacts to Drive.
+5. Extract chapter facts, character state, timeline and foreshadowing.
+6. Build Canon / Active / Recall context assembly.
+7. Run the first fixed multi-genre A/B benchmark.
