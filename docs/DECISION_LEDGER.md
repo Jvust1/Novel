@@ -39,3 +39,11 @@
 前端网站只调用后端编排层；本地模型负责低延迟写作和记忆提取，Colab 负责批量实验，V4 API 作为可替换的高质量节点，GPT 作为独立审校节点。接受后的章节、审核结果和结构化记忆进入 Google Drive；代码、治理和派生统计留在 GitHub。
 
 原因：模型角色分离可以降低单一模型失效风险，Drive 适合保存大文件和版本快照，GitHub 不应承载用户小说正文或密钥。当前先提交路由器和 Drive 适配器，待网站接入、OAuth 和人工接受门完成后再进行真实章节验证。
+
+## D-007｜本地运行前置检查
+**Date:** 2026-08-24  
+**Status:** ACTIVE
+
+Windows 1号机尚未通过 Ollama 运行时检查；PowerShell 执行 `ollama pull qwen3:4b` 与 `ollama run qwen3:4b` 时返回 `could not locate ollama app`。该结果记录为安装/PATH 阻塞，不判定为模型质量问题。
+
+解除条件：安装 Ollama for Windows，重新打开 PowerShell，确认 `ollama --version`，再下载并运行 `qwen3:4b`。
