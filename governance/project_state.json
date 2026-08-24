@@ -29,20 +29,32 @@
     "basic tests and GitHub Actions workflow",
     "role-based multi-model provider router",
     "runtime-only Google Drive Markdown/JSON storage adapter",
+    "routed writer/reviewer engine",
     "multi-model and Drive architecture specification"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [
     {
-      "type": "verification",
-      "severity": "non_blocking",
-      "item": "Confirm CI run for the v0.2 orchestration branch."
-    },
-    {
       "type": "integration",
       "severity": "non_blocking",
       "item": "Wire the router and Drive adapter into the website session/auth flow."
+    },
+    {
+      "type": "documentation",
+      "severity": "non_blocking",
+      "item": "docs/HANDOFF.md update conflicted through the connector; the existing v0.1 handoff remains unchanged on this branch."
+    }
+  ],
+  "verification": [
+    {
+      "type": "ci",
+      "run_number": 11,
+      "status": "success",
+      "checks": [
+        "python -m compileall app.py novel_ai",
+        "PYTHONPATH=. pytest -q"
+      ]
     }
   ],
   "next_steps": [
