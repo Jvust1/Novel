@@ -8,6 +8,15 @@
     "github_project": {
       "name": "06_GitHub_Project",
       "id": "1JSM4NEhKsXPF0d7biPF_l2-evchlxBFC"
+    },
+    "generated_artifacts_novel": {
+      "name": "02_Generated_Artifacts/Novel",
+      "id": "1yGy4l24pnGDdV2MYb3ayOcEWXhYjMGCa",
+      "children": {
+        "chapters": "1-TW6506qpNMp-L1yxarsTUrEfxOKvGkp",
+        "reviews": "1PBvN-sR-vU0Kli6qiUOKNMM3X5IL6NeG",
+        "memory": "1kGyf3PYIvnfHwocupVz-6UwdOUdoZkGF"
+      }
     }
   },
   "artifacts": [],
