@@ -9,8 +9,10 @@ Novel has a v0.2 orchestration skeleton on branch dev/multi-model-drive-backend-
 - Role-based provider router with local, Colab, V4 and reviewer targets.
 - Runtime-only provider configuration through environment variables.
 - Google Drive storage adapter for Markdown and JSON artifacts below the Novel root folder.
+- Routed writer/reviewer engine that separates draft generation from review.
 - Architecture specification for website, backend, model routing and Drive artifact layout.
 - Offline routing tests covering preferred providers and missing configuration.
+- GitHub Actions run 11 passed: Python compilation and the full pytest suite.
 
 ### Existing foundation
 
@@ -29,7 +31,7 @@ Novel has a v0.2 orchestration skeleton on branch dev/multi-model-drive-backend-
 - Chapter acceptance and Drive synchronization are not yet connected to the generation button.
 - Post-chapter structured memory extraction is still pending.
 - No frozen real-novel A/B benchmark exists.
-- CI for this branch is not yet verified.
+- docs/HANDOFF.md remains on the prior v0.1 text because the connector returned a branch SHA conflict during update.
 
 ### Next sequence
 
