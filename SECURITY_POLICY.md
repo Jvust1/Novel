@@ -88,3 +88,13 @@ Backup-only repositories and frozen evidence are preservation targets. Agents ma
 ## Enforcement intent
 
 This document is an agent-governance safety lock, not a substitute for provider-side access controls. Where possible, GitHub branch protection/rulesets, Drive permissions, revision history, and independent backups should also be enabled so protection does not depend only on agent compliance.
+
+## Legacy branch security bootstrap
+
+A non-default branch that demonstrably predates this safety system and lacks `SECURITY_POLICY.md` must not be permanently deadlocked solely because the policy did not exist when that branch was created.
+
+`LEGACY_BRANCH_SECURITY_BOOTSTRAP` is allowed only when the Drive global safety baseline and the repository default branch's current `SECURITY_POLICY.md` are both readable and intact, the target branch is confirmed to exist, and there is no evidence that a previously protected target-branch policy was removed or weakened.
+
+While in this mode, writes are restricted to copying/creating the current security policy and necessary Agent governance on the target branch. Business code, data, results, historical evidence, permissions, and unrelated governance must not be changed as part of the bootstrap.
+
+After bootstrap, the agent must re-read the target branch's `SECURITY_POLICY.md` and the Drive global safety baseline. Ordinary non-destructive writes may resume only after both reads succeed and are consistent. If tampering or ambiguity is suspected, remain `READ_ONLY_LOCKED`.
