@@ -1,45 +1,16 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "foundation-v0.1-runnable",
-  "version": "0.1.0-dev",
+  "stage": "foundation-v0.2-orchestration-skeleton",
+  "version": "0.2.0-dev",
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
-  "current_focus": [
-    "post-chapter memory extraction",
-    "Canon/Active/Recall context assembly",
-    "real chapter A/B evaluation",
-    "character knowledge-boundary enforcement",
-    "composite Style DNA evaluation"
-  ],
-  "implemented": [
-    "Streamlit local web workspace",
-    "OpenAI-compatible provider",
-    "outline-to-scene planning",
-    "character-state-aware drafting schema",
-    "draft/review/local-repair pipeline",
-    "surface style fingerprint extraction",
-    "semantic style abstraction",
-    "multi-reference weighted Style DNA blending",
-    "AI-flavor heuristic scan",
-    "non-reversible reference shingle signature and overlap warning",
-    "local project storage",
-    "basic tests and GitHub Actions workflow"
-  ],
+  "current_focus": ["multi-model backend orchestration","Google Drive chapter artifact storage","post-chapter memory extraction","Canon/Active/Recall context assembly","real chapter A/B evaluation","character knowledge-boundary enforcement","composite Style DNA evaluation"],
+  "implemented": ["Streamlit local web workspace","OpenAI-compatible provider","outline-to-scene planning","character-state-aware drafting schema","draft/review/local-repair pipeline","surface style fingerprint extraction","semantic style abstraction","multi-reference weighted Style DNA blending","AI-flavor heuristic scan","non-reversible reference shingle signature and overlap warning","local project storage","basic tests and GitHub Actions workflow","role-based multi-model provider router","runtime-only Google Drive Markdown/JSON storage adapter","routed writer/reviewer engine","multi-model and Drive architecture specification"],
   "frozen": false,
-  "blocking_issues": [],
-  "pending_sync": [
-    {
-      "type": "verification",
-      "severity": "non_blocking",
-      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
-    }
-  ],
-  "next_steps": [
-    "extract chapter summaries, facts, character state, knowledge changes, timeline and foreshadowing after each accepted chapter",
-    "assemble bounded Canon/Active/Recall context for long-form writing",
-    "freeze the first real multi-genre chapter benchmark and run A/B evaluations",
-    "only then decide whether vector RAG or a knowledge graph materially improves quality"
-  ],
-  "updated_at": "2026-08-19"
+  "blocking_issues": [{"type":"local_runtime","severity":"user_action_required","item":"Ollama is not yet installed or registered on the Windows 1号机; PowerShell reports 'could not locate ollama app' when running qwen3:4b commands.","next_action":"Install Ollama for Windows, reopen PowerShell, verify ollama --version, then pull qwen3:4b."}],
+  "pending_sync": [{"type":"integration","severity":"non_blocking","item":"Wire the router and Drive adapter into the website session/auth flow."},{"type":"documentation","severity":"non_blocking","item":"docs/HANDOFF.md update conflicted through the connector; the existing v0.1 handoff remains unchanged on this branch."}],
+  "verification": [{"type":"ci","run_number":11,"status":"success","checks":["python -m compileall app.py novel_ai","PYTHONPATH=. pytest -q"]}],
+  "next_steps": ["Install and verify Ollama on the Windows 1号机","wire Streamlit or a separate web API to the provider router","add chapter acceptance gate before Drive synchronization","add post-chapter memory extraction and Canon/Active/Recall assembly","connect OAuth token acquisition outside the repository","freeze the first real multi-genre chapter benchmark and run A/B evaluations"],
+  "updated_at": "2026-08-24"
 }

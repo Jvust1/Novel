@@ -1,37 +1,48 @@
 # Current State
 
-## 2026-08-19
+## 2026-08-24
 
-Novel 已从空仓库初始化为可运行的 v0.1 本地 Web 原型。
+Novel has a v0.2 orchestration skeleton on branch dev/multi-model-drive-backend-v0-2.
 
-### 已完成
+### Newly completed
 
-- Streamlit 本地写作工作台。
-- OpenAI-compatible 模型适配层；运行时输入密钥，不写入项目文件。
-- Story Bible / 总纲 / 章纲输入。
-- 动态人物卡：目标、秘密、知识边界、关系与状态字段。
-- 章纲 → 场景计划 → 正文 → 审校 → 可选局部修订。
-- 本地 AI 味启发式扫描。
-- Style DNA 表层统计分析。
-- 可选模型语义文体分析。
-- 多份参考文本按权重融合为综合 Style DNA。
-- 参考文本非可逆 18 字符 shingle 哈希签名与输出重合检查。
-- 本地项目存储骨架。
-- 基础单元测试与 GitHub Actions CI 配置。
+- Role-based provider router with local, Colab, V4 and reviewer targets.
+- Runtime-only provider configuration through environment variables.
+- Google Drive storage adapter for Markdown and JSON artifacts below the Novel root folder.
+- Routed writer/reviewer engine that separates draft generation from review.
+- Architecture specification for website, backend, model routing and Drive artifact layout.
+- Offline routing tests covering preferred providers and missing configuration.
+- GitHub Actions run 11 passed: Python compilation and the full pytest suite.
 
-### 当前限制
+### Latest machine check
 
-- v0.1 只直接导入 TXT / MD 参考文本；DOCX / PDF 尚未接入。
-- 人物、事件、伏笔在章节生成后尚未自动回写结构化状态。
-- 长篇 Recall 目前只有近章摘要接口，尚未接入向量 RAG / 知识图谱。
-- Style Lab 的多来源权重目前在会话中设置，尚未有完整的 profile 编辑器。
-- 没有冻结的真实小说 A/B benchmark，因此不能声称当前生成质量已经达到目标。
-- GitHub Actions workflow 已创建，但本轮连接器没有返回 push-triggered run，因此 CI 通过状态仍需后续确认。
+On the Windows 1号机, running `ollama pull qwen3:4b` and `ollama run qwen3:4b` returned `Error: could not locate ollama app`. This is an installation/PATH prerequisite, not a model-quality failure. The next local step is to install Ollama, reopen PowerShell, verify `ollama --version`, then pull `qwen3:4b`.
 
-### 下一阶段
+### Existing foundation
 
-1. 章节后处理：自动抽取事实、人物状态变化、伏笔、时间线和章节摘要。
-2. Context Assembler：Canon + Active + Recall 三层记忆。
-3. 固定测试集：至少覆盖都市、玄幻、悬疑等不同题材的章纲扩写。
-4. 建立人工评分表：情节、人物、连续性、自然度、AI 味、章末拉力。
-5. 根据 A/B 结果决定是否引入向量数据库 / 知识图谱，避免为了架构复杂度而复杂。
+- Streamlit local writing workbench.
+- OpenAI-compatible model adapter.
+- Story Bible / outline / character state input.
+- Outline to scene plan to draft to review to local repair.
+- Local AI-flavor heuristic scan.
+- Style DNA surface and semantic analysis.
+- Local project storage and basic CI.
+
+### Current limitations
+
+- The router is not yet wired into the Streamlit UI or a separate HTTP backend.
+- Google Drive OAuth/token acquisition is intentionally outside the repository and is not configured by code.
+- Chapter acceptance and Drive synchronization are not yet connected to the generation button.
+- Post-chapter structured memory extraction is still pending.
+- No frozen real-novel A/B benchmark exists.
+- docs/HANDOFF.md remains on the prior v0.1 text because the connector returned a branch SHA conflict during update.
+
+### Next sequence
+
+1. Install and verify Ollama on the Windows 1号机.
+2. Connect the website session to the provider router.
+3. Add an explicit author acceptance gate.
+4. Sync accepted draft, review and memory artifacts to Drive.
+5. Extract chapter facts, character state, timeline and foreshadowing.
+6. Build Canon / Active / Recall context assembly.
+7. Run the first fixed multi-genre A/B benchmark.
