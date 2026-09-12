@@ -16,4 +16,4 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - run: python -m compileall app.py novel_ai
-      - run: pytest -q
+      - run: PYTHONPATH=. pytest -q

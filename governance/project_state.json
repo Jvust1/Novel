@@ -1,18 +1,26 @@
 {
   "project": "Novel",
-  "repository": "Jvust/Novel",
-  "stage": "foundation-v0.1-runnable",
-  "version": "0.1.0-dev",
-  "status": "active",
+  "repository": "Jvust2/Novel",
+  "stage": "chatgpt-only-writing-workflow",
+  "version": "0.3.0-workflow",
+  "status": "awaiting_story_brief",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
-    "post-chapter memory extraction",
-    "Canon/Active/Recall context assembly",
-    "real chapter A/B evaluation",
-    "character knowledge-boundary enforcement",
-    "composite Style DNA evaluation"
+    "ChatGPT conversation writing",
+    "author-approved characters and story progress",
+    "chapter acceptance and structured memory protocol"
   ],
-  "implemented": [
+  "frozen": false,
+  "blocking_issues": [],
+  "pending_sync": [],
+  "next_steps": [
+    "Obtain genre, protagonist, core conflict and style preferences or existing story materials.",
+    "Confirm the story brief and record character/Story Bible state.",
+    "Propose the first chapter scene plan and wait for author confirmation.",
+    "Draft and review in ChatGPT; accept a specific revision before extracting and confirming memory."
+  ],
+  "updated_at": "2026-09-12",
+  "legacy_implemented": [
     "Streamlit local web workspace",
     "OpenAI-compatible provider",
     "outline-to-scene planning",
@@ -26,20 +34,48 @@
     "local project storage",
     "basic tests and GitHub Actions workflow"
   ],
-  "frozen": false,
-  "blocking_issues": [],
-  "pending_sync": [
+  "implemented": [
+    "ChatGPT writing instructions and staged workflow",
+    "blank versioned story state",
+    "author acceptance and memory confirmation protocol (not automated)"
+  ],
+  "execution_mode": "chatgpt_conversation_only",
+  "story_state_path": "writing/story_state.json",
+  "active_workflow_path": "docs/CHATGPT_WRITING.md",
+  "active_branch": "docs/chatgpt-only-workflow-20260912",
+  "active_review": {
+    "pull_request": 3,
+    "url": "https://github.com/Jvust2/Novel/pull/3",
+    "head_sha": null,
+    "head_sha_source": "Read the live head from PR #3 before review or any follow-up action.",
+    "base_branch": "main",
+    "base_sha": "15d71c013951bb1f55d6d5b926f0dad78560409f",
+    "state": "open",
+    "merge_authorization": "not_requested",
+    "ci": "see pull request checks"
+  },
+  "superseded_work": {
+    "branch": "dev/multi-model-drive-backend-v0-2",
+    "observed_head": "83e542aaca2e38ac1ea907576af7de319a1af0ca",
+    "pull_request": 1,
+    "items": [
+      "Ollama setup and model download",
+      "provider/Colab/V4 routing",
+      "model API calls",
+      "website OAuth and Drive backend integration"
+    ],
+    "reason": "Explicit user decision on 2026-09-12; historical branch and PR preserved."
+  },
+  "historical_pending_sync": [
     {
       "type": "verification",
       "severity": "non_blocking",
-      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
+      "item": "The old main foundation CI note was not verified in this continuation; it is not a runtime prerequisite for the conversation workflow."
     }
   ],
-  "next_steps": [
-    "extract chapter summaries, facts, character state, knowledge changes, timeline and foreshadowing after each accepted chapter",
-    "assemble bounded Canon/Active/Recall context for long-form writing",
-    "freeze the first real multi-genre chapter benchmark and run A/B evaluations",
-    "only then decide whether vector RAG or a knowledge graph materially improves quality"
-  ],
-  "updated_at": "2026-08-19"
+  "validation": {
+    "scope": "documentation and empty story state only",
+    "real_chapter_evaluation": "not_run",
+    "automated_memory_commit": "not_implemented"
+  }
 }

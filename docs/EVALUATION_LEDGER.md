@@ -1,5 +1,14 @@
 # Evaluation Ledger
 
+## E-20260912｜ChatGPT-only 工作流交付
+**Date:** 2026-09-12
+**Status:** DOCUMENTATION_REVIEW_PASS / REAL_CHAPTER_NOT_RUN
+
+本轮验证仅覆盖写作协议、空白故事 JSON 与入口链接：JSON 可解析、故事 revision=0、人物/接受章节为空、接受记录为 null；当前入口路径有效，git diff --check 通过。
+独立审阅先指出接受记录未绑定版本、工作中原件恢复不足、空数组缺少条目约定，修订后复核 PASS。
+没有修改或运行历史模型程序，没有模型调用，没有真实章节与 A/B 结果。协议不等于自动执行的事务、校验器或同步服务；不能据此声称写作质量提升。
+后续应使用作者实际提供的故事，完成计划确认、正文接受、记忆确认和下一章恢复，再记录流程实测。下方 E-000 继续保留为尚未开展的真实质量评测计划。
+
 ## E-000｜Foundation baseline
 **Date:** 2026-08-19  
 **Status:** NOT_YET_RUN

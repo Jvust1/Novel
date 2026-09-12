@@ -1,5 +1,34 @@
 # Current State
 
+## 2026-09-12｜ChatGPT-only
+
+用户要求：“不用本地模型和api了，只用chatgpt”，并确认“直接在 ChatGPT 里写作，Novel 仓库保存规则、人物和进度”。
+
+### 本轮交付
+
+- `docs/CHATGPT_WRITING.md`：可复制的项目指令、分阶段写作、作者接受、记忆候选与保存/恢复协议。
+- `writing/story_state.json`：空白 Story Bible、人物、Style DNA、事实/时间线/伏笔、接受章节与写作进度；尚无真实小说资料。
+- 入口、产品、架构、决策和交接状态同步到当前路线。
+
+### Review 状态
+
+- PR [#3](https://github.com/Jvust2/Novel/pull/3) 已创建：`docs/chatgpt-only-workflow-20260912` → `main@15d71c013951bb1f55d6d5b926f0dad78560409f`；head 每次从 PR 实时读取。
+- PR 当前为 open、非 draft、未合并；CI 结果以 PR checks 为准。此前 `pytest -q` 的导入失败已修复为 `PYTHONPATH=. pytest -q`。合并授权尚未请求，也未执行合并。
+
+### 已停止推进的历史路线
+
+- Ollama 安装、模型下载、API、Colab/V4、provider router 与网站 OAuth 集成不再是当前待办。
+- 历史开发分支 `dev/multi-model-drive-backend-v0-2@83e542aaca2e38ac1ea907576af7de319a1af0ca` 保留；PR #1 是未合并的旧多模型草稿，不再作为本路线的下一步。没有关闭或合并它。
+- main 的历史 Streamlit/provider 代码保留，当前不启动它。下面 2026-08-19 记录属于历史原型。
+
+### 下一步与限制
+
+1. 获取题材、主角、核心冲突、文风偏好；已有大纲或人物则按作者提供的当前版本导入。
+2. 故事方向确认后更新人物和 Story Bible，再提出首章场景计划。
+3. 计划获确认后写正文；正文版本和记忆更新分别经作者确认后保存。
+
+本轮没有创建 ChatGPT 项目、生成真实章节、运行模型或完成真实 A/B 评测；记忆更新/幂等目前是执行协议，非新增自动程序。正式正文默认放聊天/本地/Drive，规则、人物和结构化进度放 GitHub。
+
 ## 2026-08-19
 
 Novel 已从空仓库初始化为可运行的 v0.1 本地 Web 原型。
