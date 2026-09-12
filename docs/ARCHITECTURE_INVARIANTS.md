@@ -1,5 +1,13 @@
 # Architecture Invariants
 
+## 当前实现方式修订｜2026-09-12
+
+依据用户明确指令与 D-20260912-CHATGPT，当前入口为 ChatGPT 对话，默认语言模型执行方式为 `chatgpt_conversation_only`。
+本修订替代下文 A1 的本地 Web/provider 部署路线；A2 的流水线保留为作者参与的对话阶段，并在计划后加入确认，在正文接受后提取、确认记忆，再持久化。
+GitHub 保存规则、人物、确认状态与进度；原始小说和正文仍按 A10 保存。A3–A12 的人物、分层记忆、因果、文风、局部修订和真实评测原则继续有效。
+本地模型、API、多模型 router、Colab 节点与 OAuth 网站后端不属于当前计划。历史代码保留为旧原型，不作为当前入口。
+当前协议见 `docs/CHATGPT_WRITING.md`；故事状态见 `writing/story_state.json`。此路线由用户需求改变驱动，尚无质量 A/B 结果。
+
 这些原则除非有明确实验结果和 Decision Ledger 记录，不应被随意破坏。
 
 ## A1. 本地优先，云端模型可替换

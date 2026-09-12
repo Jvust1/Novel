@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## 当前写作路线｜2026-09-12
+
+用户明确要求只用 ChatGPT，并选择直接在 ChatGPT 写作、Novel 仓库保存规则、人物和进度。
+完成下述全项目及仓库读取后，进入 `docs/CHATGPT_WRITING.md` 和 `writing/story_state.json`。
+所有写作、规划、审校和记忆提取通过 ChatGPT 对话完成；不再安装/启动本地模型、下载权重、调用模型 API 或继续多模型后端接线。
+人物、设定和结构化进度可按作者确认结果入库；正文、参考小说与秘密凭据继续遵守既有存储规则。
+下文的 provider、生成流水线等历史技术描述，按此新路线映射为对话阶段。现有安全条款不变。
+
 任何 GPT / Claude / Codex / DeepSeek / 本地 Agent 接手 Novel 前，按以下顺序恢复状态。
 
 ## 1. 全项目基线

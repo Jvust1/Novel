@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "project": "Novel",
+  "story_id": null,
+  "revision": 0,
+  "status": "awaiting_story_brief",
+  "updated_at": "2026-09-12",
+  "story_bible": {
+    "title": "",
+    "genre": "",
+    "audience": "",
+    "tone": "",
+    "premise": "",
+    "themes": [],
+    "world_rules": [],
+    "locked_facts": [],
+    "forbidden_moves": []
+  },
+  "outline": {"overall": "", "current_volume": ""},
+  "characters": [],
+  "style_dna": {
+    "narrative_distance": "",
+    "pov_preference": "",
+    "rhythm_notes": "",
+    "dialogue_notes": "",
+    "diction": "",
+    "emotion_expression": "",
+    "environment_function": "",
+    "avoid_patterns": [],
+    "custom_notes": []
+  },
+  "chapter_summaries": [],
+  "facts": [],
+  "timeline": [],
+  "foreshadowing": [],
+  "accepted_chapters": [],
+  "progress": {
+    "current_chapter_id": null,
+    "base_story_revision": 0,
+    "current_plan_revision": null,
+    "current_draft_revision": null,
+    "stage": "brief",
+    "plan_acceptance": null,
+    "chapter_acceptance": null,
+    "memory_acceptance": null,
+    "plan_source": null,
+    "draft_source": null,
+    "open_review_issues": [],
+    "next_action": "Ask the author for genre, protagonist, core conflict and style preferences."
+  },
+  "pending_memory_updates": [],
+  "pending_sync": []
+}
