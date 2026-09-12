@@ -10,6 +10,11 @@
 - `writing/story_state.json`：空白 Story Bible、人物、Style DNA、事实/时间线/伏笔、接受章节与写作进度；尚无真实小说资料。
 - 入口、产品、架构、决策和交接状态同步到当前路线。
 
+### Review 状态
+
+- PR [#3](https://github.com/Jvust2/Novel/pull/3) 已创建：`docs/chatgpt-only-workflow-20260912@18304deaf48140a0d404ca1415c5cb49f3673e99` → `main@15d71c013951bb1f55d6d5b926f0dad78560409f`。
+- PR 当前为 open、非 draft、未合并；创建时 CI `test` 正在运行。合并授权尚未请求，也未执行合并。
+
 ### 已停止推进的历史路线
 
 - Ollama 安装、模型下载、API、Colab/V4、provider router 与网站 OAuth 集成不再是当前待办。

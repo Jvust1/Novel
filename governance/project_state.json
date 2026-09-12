@@ -43,6 +43,16 @@
   "story_state_path": "writing/story_state.json",
   "active_workflow_path": "docs/CHATGPT_WRITING.md",
   "active_branch": "docs/chatgpt-only-workflow-20260912",
+  "active_review": {
+    "pull_request": 3,
+    "url": "https://github.com/Jvust2/Novel/pull/3",
+    "head_sha": "18304deaf48140a0d404ca1415c5cb49f3673e99",
+    "base_branch": "main",
+    "base_sha": "15d71c013951bb1f55d6d5b926f0dad78560409f",
+    "state": "open",
+    "merge_authorization": "not_requested",
+    "ci": "in_progress"
+  },
   "superseded_work": {
     "branch": "dev/multi-model-drive-backend-v0-2",
     "observed_head": "83e542aaca2e38ac1ea907576af7de319a1af0ca",
