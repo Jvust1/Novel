@@ -5,7 +5,7 @@
 当前采用 ChatGPT-only 写作。先按 AGENTS.md 完成必要治理读取，再读 `docs/CHATGPT_WRITING.md` 与 `writing/story_state.json`。
 用户已明确选择 ChatGPT 内写作、Novel 保存规则/人物/进度；不要重新要求安装 Ollama、配置 API 或恢复多模型后端。
 当前故事档案为空，唯一下一步为获取故事题材、主角、核心冲突和文风偏好；已有材料则先恢复材料，不重新虚构。
-当前审阅入口是 [PR #3](https://github.com/Jvust2/Novel/pull/3)，head 为 `9c8c302fe1db6e1afca7e4f3f5368731b2f1b27a`，目标为 `main@15d71c013951bb1f55d6d5b926f0dad78560409f`；PR 未合并，不能把它当作 main 已生效。CI 结果以 PR checks 为准。
+当前审阅入口是 [PR #3](https://github.com/Jvust2/Novel/pull/3)，分支为 `docs/chatgpt-only-workflow-20260912`，目标为 `main@15d71c013951bb1f55d6d5b926f0dad78560409f`；恢复或操作前先从 PR 实时读取 head。PR 未合并，不能把它当作 main 已生效。CI 结果以 PR checks 为准。
 场景计划先确认；草稿不自动进入正式记忆；作者接受具体正文版本之后，才提取、确认和保存记忆候选。不能把协议交付说成真实章节已验证。
 恢复时核对故事 revision 与当前阶段；无法访问档案就明确报告，不从旧聊天猜测。
 

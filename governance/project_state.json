@@ -46,7 +46,8 @@
   "active_review": {
     "pull_request": 3,
     "url": "https://github.com/Jvust2/Novel/pull/3",
-    "head_sha": "9c8c302fe1db6e1afca7e4f3f5368731b2f1b27a",
+    "head_sha": null,
+    "head_sha_source": "Read the live head from PR #3 before review or any follow-up action.",
     "base_branch": "main",
     "base_sha": "15d71c013951bb1f55d6d5b926f0dad78560409f",
     "state": "open",
