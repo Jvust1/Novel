@@ -46,12 +46,12 @@
   "active_review": {
     "pull_request": 3,
     "url": "https://github.com/Jvust2/Novel/pull/3",
-    "head_sha": "0bf2fe9facfc833d17775f68125f6e090945200e",
+    "head_sha": "9c8c302fe1db6e1afca7e4f3f5368731b2f1b27a",
     "base_branch": "main",
     "base_sha": "15d71c013951bb1f55d6d5b926f0dad78560409f",
     "state": "open",
     "merge_authorization": "not_requested",
-    "ci": "in_progress"
+    "ci": "see pull request checks"
   },
   "superseded_work": {
     "branch": "dev/multi-model-drive-backend-v0-2",

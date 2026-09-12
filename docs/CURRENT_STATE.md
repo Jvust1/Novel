@@ -12,8 +12,8 @@
 
 ### Review 状态
 
-- PR [#3](https://github.com/Jvust2/Novel/pull/3) 已创建：`docs/chatgpt-only-workflow-20260912@0bf2fe9facfc833d17775f68125f6e090945200e` → `main@15d71c013951bb1f55d6d5b926f0dad78560409f`。
-- PR 当前为 open、非 draft、未合并；创建时 CI `test` 正在运行。合并授权尚未请求，也未执行合并。
+- PR [#3](https://github.com/Jvust2/Novel/pull/3) 已创建：`docs/chatgpt-only-workflow-20260912@9c8c302fe1db6e1afca7e4f3f5368731b2f1b27a` → `main@15d71c013951bb1f55d6d5b926f0dad78560409f`。
+- PR 当前为 open、非 draft、未合并；CI 结果以 PR checks 为准。此前 `pytest -q` 的导入失败已修复为 `PYTHONPATH=. pytest -q`。合并授权尚未请求，也未执行合并。
 
 ### 已停止推进的历史路线
 
