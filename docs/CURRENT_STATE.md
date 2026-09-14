@@ -6,7 +6,7 @@ CI 修复 + 评测闭环补全 + 参考文本格式扩展。测试 27 项全部�
 
 ### 本轮内容
 
-- **CI 修复（blocking）**：main 上 run 34797893235 失败——workflow 用 bare `pytest`，不把仓库根加入 `sys.path`。新增 `pyproject.toml`（`[tool.pytest.ini_options] pythonpath=["."]`），本地 bare pytest 验证通过；**修复尚未推送**，推送后 CI 才会变绿。
+- **CI 修复（blocking）**：main 上 run 34797893235 失败——workflow 用 bare `pytest`，不把仓库根加入 `sys.path`。新增 `pyproject.toml`（`[tool.pytest.ini_options] pythonpath=["."]`）；修复已在 PR #4 的 CI run 34828564029 上验证通过（经授权合并后 main CI 恢复绿色）。
 - `scripts/aggregate_scores.py`：评分表聚合 CLI——读取填好的 `scoring_sheet.csv`，按 run.json 的 case/variant 网格检查覆盖缺口（缺哪些维度、哪些组整组未评），输出聚合 JSON（含 B−A delta），`--write` 落盘 `scores_summary.json` 供回填 ledger。
 - `novel_ai/reading.py`：参考文本导入扩展到 DOCX（python-docx）与 PDF（pypdf），懒加载依赖；app.py Style Lab 上传器已支持四种格式。
 - `project_state.json`：repository 更正为 `Jvust2/Novel`（远端实际地址）。

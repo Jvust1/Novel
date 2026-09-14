@@ -30,13 +30,7 @@
   ],
   "frozen": false,
   "blocking_issues": [],
-  "pending_sync": [
-    {
-      "type": "code_fix",
-      "severity": "blocking_ci",
-      "item": "CI on main failed (run 34797893235): bare pytest could not import novel_ai. Fixed locally via pyproject.toml pythonpath; fix awaits commit+push to turn CI green."
-    }
-  ],
+  "pending_sync": [],
   "next_steps": [
     "run scripts/run_benchmark.py against a real endpoint (set NOVEL_BASE_URL/NOVEL_MODEL env only)",
     "fill runs/<run_id>/scoring_sheet.csv (12 dims x 1-5) and write aggregated results into EVALUATION_LEDGER",
