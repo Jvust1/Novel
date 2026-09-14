@@ -6,9 +6,9 @@
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
-    "run first real A/B on frozen benchmark novel-ab-v1 (needs model endpoint)",
-    "human scoring of 12-dimension rubric and ledger write-back",
-    "decide RAG / knowledge graph only after first A/B results"
+    "human scoring of run-20260914-153013 scoring sheet (12 dims x 1-5)",
+    "aggregate scores into EVALUATION_LEDGER and decide next model tier for benchmarking",
+    "decide RAG / knowledge graph only after scored A/B results"
   ],
   "implemented": [
     "Streamlit local web workspace",
