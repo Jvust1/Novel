@@ -34,15 +34,17 @@ def plan_messages(
     chapter_goal: str,
     characters: list[Character],
     recent_summaries: list[dict],
+    extra_context: str = "",
 ) -> list[dict[str, str]]:
     system = """你是长篇网络小说的章节策划编辑。只负责把章纲变成可写的事件与场景，不写正文。
 每个场景都必须回答：谁想要什么、阻力是什么、人物做什么选择、付出什么代价、结束时状态发生什么变化。
 避免纯信息场景、纯聊天场景和没有状态变化的过场。
 输出严格 JSON，不要 Markdown。"""
+    extra = f"\n\n{extra_context}\n" if extra_context.strip() else ""
     user = f"""
 【Story Bible】
 {_dump(bible)}
-
+{extra}
 【人物】
 {_dump([c.model_dump() for c in characters])}
 
@@ -91,12 +93,14 @@ def draft_messages(
     style: StyleFingerprint | None,
     target_chars: int,
     user_notes: str = "",
+    extra_context: str = "",
 ) -> list[dict[str, str]]:
     style_text = _dump(style.prompt_view()) if style else "未设置 Style DNA；使用自然、克制、节奏有变化的中文网文叙事。"
+    extra = f"\n\n{extra_context}\n" if extra_context.strip() else ""
     user = f"""
 【Story Bible】
 {_dump(bible)}
-
+{extra}
 【人物动态状态】
 {_dump([c.model_dump() for c in characters])}
 
@@ -204,6 +208,58 @@ def semantic_style_messages(sample: str, surface: StyleFingerprint) -> list[dict
   "imagery_notes": "意象与环境描写的频率、功能和常见尺度，不要复述具体意象",
   "avoid_patterns": ["如果要保持这种气质，应避免哪些相反写法"],
   "custom_notes": ["其他可复用的高层文体规律"]
+}}
+""".strip()
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+def memory_extraction_messages(
+    bible: StoryBible,
+    characters: list[Character],
+    chapter_id: str,
+    chapter_text: str,
+) -> list[dict[str, str]]:
+    system = """你是长篇小说的连续性记录员。只根据本章正文抽取客观发生的事实，不做推测、不补写、不评价文笔。
+人物只能知道自己视角内能知道的信息；抽取"知识变化"时必须区分"人物知道了"和"读者知道了"。
+输出严格 JSON，不要 Markdown。"""
+    user = f"""
+【Story Bible】
+{_dump(bible)}
+
+【人物卡（抽取前的状态）】
+{_dump([c.model_dump() for c in characters])}
+
+【章节编号】
+{chapter_id}
+
+【本章正文】
+{chapter_text}
+
+请抽取本章结束后需要写入长期记忆的变化：
+{{
+  "chapter_id": "{chapter_id}",
+  "chapter_title": "",
+  "summary": "150-300字本章摘要：谁做了什么、结果如何、留什么尾巴，供后续章节回顾",
+  "new_facts": ["本章确立的、今后不得矛盾的事实（不含未揭示的秘密）"],
+  "character_updates": [
+    {{
+      "name": "必须匹配人物卡姓名",
+      "goal_change": "本章结束后该人物的当前目标是否变化；无变化留空",
+      "state_changes": {{"伤势/位置/身份/资源等状态键": "新值"}},
+      "relationship_changes": {{"对方姓名": "关系如何变化"}},
+      "knowledge_gained": ["该人物本章新得知的信息"],
+      "misconceptions_cleared": ["该人物本章发现自己搞错了什么"],
+      "resources_gained": [],
+      "recent_change": "一句话概括该人物本章最重要的变化"
+    }}
+  ],
+  "timeline_events": [
+    {{"chapter_id": "{chapter_id}", "description": "客观事件，按发生顺序", "time_hint": "如'当夜''三天后'"}}
+  ],
+  "foreshadowing": [
+    {{"id": "简短英文或拼音标识", "description": "伏笔内容", "status": "planted|advanced|resolved", "chapter_id": "{chapter_id}"}}
+  ],
+  "open_threads": ["本章结尾留下的未解决问题"]
 }}
 """.strip()
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]

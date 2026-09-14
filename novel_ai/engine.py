@@ -5,8 +5,22 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from .models import Character, ChapterPlan, ChapterReview, StoryBible, StyleFingerprint
-from .prompts import draft_messages, plan_messages, repair_messages, review_messages, semantic_style_messages
+from .models import (
+    Character,
+    ChapterPlan,
+    ChapterReview,
+    MemoryExtraction,
+    StoryBible,
+    StyleFingerprint,
+)
+from .prompts import (
+    draft_messages,
+    memory_extraction_messages,
+    plan_messages,
+    repair_messages,
+    review_messages,
+    semantic_style_messages,
+)
 from .provider import OpenAICompatibleProvider
 from .style_engine import detect_ai_flavor
 
@@ -93,9 +107,10 @@ class NovelEngine:
         chapter_goal: str,
         characters: list[Character],
         recent_summaries: list[dict[str, Any]] | None = None,
+        extra_context: str = "",
     ) -> ChapterPlan:
         raw = self.provider.chat(
-            plan_messages(bible, outline, chapter_goal, characters, recent_summaries or []),
+            plan_messages(bible, outline, chapter_goal, characters, recent_summaries or [], extra_context),
             temperature=0.45,
             response_format={"type": "json_object"},
         )
@@ -110,6 +125,7 @@ class NovelEngine:
         style: StyleFingerprint | None = None,
         target_chars: int = 3500,
         user_notes: str = "",
+        extra_context: str = "",
     ) -> str:
         return self.provider.chat(
             draft_messages(
@@ -120,6 +136,7 @@ class NovelEngine:
                 style,
                 target_chars,
                 user_notes,
+                extra_context,
             ),
             temperature=0.86,
         ).strip()
@@ -149,6 +166,23 @@ class NovelEngine:
             temperature=0.72,
         ).strip()
 
+    def extract_memory(
+        self,
+        bible: StoryBible,
+        characters: list[Character],
+        chapter_id: str,
+        chapter_text: str,
+    ) -> MemoryExtraction:
+        """Extract structured memory deltas from an accepted chapter."""
+        raw = self.provider.chat(
+            memory_extraction_messages(bible, characters, chapter_id, chapter_text),
+            temperature=0.2,
+            response_format={"type": "json_object"},
+        )
+        data = parse_json_object(raw)
+        data.setdefault("chapter_id", chapter_id)
+        return MemoryExtraction.model_validate(data)
+
     def run(
         self,
         *,
@@ -162,8 +196,9 @@ class NovelEngine:
         user_notes: str = "",
         review: bool = True,
         auto_repair: bool = False,
+        extra_context: str = "",
     ) -> ChapterResult:
-        plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries)
+        plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
         draft = self.draft(
             bible,
             plan,
@@ -172,6 +207,7 @@ class NovelEngine:
             style,
             target_chars,
             user_notes,
+            extra_context,
         )
         local_signals = detect_ai_flavor(draft)
         review_result = self.review(bible, plan, characters, draft) if review else None

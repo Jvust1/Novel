@@ -103,3 +103,42 @@ class ChapterReview(BaseModel):
     continuity_updates: list[str] = Field(default_factory=list)
     character_updates: list[str] = Field(default_factory=list)
     open_threads: list[str] = Field(default_factory=list)
+
+
+class CharacterMemoryUpdate(BaseModel):
+    """Per-character delta extracted after a chapter is accepted."""
+
+    name: str
+    goal_change: str = ""
+    state_changes: dict[str, str] = Field(default_factory=dict)
+    relationship_changes: dict[str, str] = Field(default_factory=dict)
+    knowledge_gained: list[str] = Field(default_factory=list)
+    misconceptions_cleared: list[str] = Field(default_factory=list)
+    resources_gained: list[str] = Field(default_factory=list)
+    recent_change: str = ""
+
+
+class TimelineEvent(BaseModel):
+    chapter_id: str = ""
+    description: str
+    time_hint: str = ""
+
+
+class ForeshadowItem(BaseModel):
+    id: str
+    description: str
+    status: str = "planted"  # planted | advanced | resolved
+    chapter_id: str = ""
+
+
+class MemoryExtraction(BaseModel):
+    """Structured memory written back after each accepted chapter."""
+
+    chapter_id: str = ""
+    chapter_title: str = ""
+    summary: str
+    new_facts: list[str] = Field(default_factory=list)
+    character_updates: list[CharacterMemoryUpdate] = Field(default_factory=list)
+    timeline_events: list[TimelineEvent] = Field(default_factory=list)
+    foreshadowing: list[ForeshadowItem] = Field(default_factory=list)
+    open_threads: list[str] = Field(default_factory=list)

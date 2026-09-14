@@ -1,5 +1,40 @@
 # Current State
 
+## 2026-09-14（第二轮）
+
+v0.2 评测骨架：冻结基准 novel-ab-v1 + A/B 运行器（E-001，状态 PENDING_RUN）。
+
+### 本轮新增
+
+- `benchmarks/`：三个原创冻结用例（urban_dispute / xuanhuan_residual / mystery_calls），各含 Bible、人物卡（知识边界）、章纲、目标与三轮前情；`benchmark_manifest.json` 记录 SHA-256，加载与测试强制校验，改动即报错。
+- `novel_ai/eval.py`：12 维评分 rubric（E-000 口径）、变体定义（A_baseline / B_memory 单变量对照）、`run_case` / `run_benchmark`（结果写入不可变 `runs/<run_id>/`，gitignore）、评分表生成 / 读取 / 聚合（含 B−A delta）。
+- `scripts/run_benchmark.py`：CLI；密钥只从 `NOVEL_BASE_URL / NOVEL_MODEL / NOVEL_API_KEY` 环境变量读取，不落盘。
+- 测试增至 19 项，全部通过（含冻结哈希防篡改、变体唯一差异、评分表 roundtrip）。
+
+### 阻塞点
+
+真实 A/B 运行需要模型端点。运行命令与评分流程见 `benchmarks/README.md`。
+
+## 2026-09-14
+
+v0.2：补齐长篇记忆内核（A2 的 Memory Update 环节 + A4 的三层记忆）。
+
+### 本轮新增
+
+- `novel_ai/models.py`：`MemoryExtraction` / `CharacterMemoryUpdate` / `TimelineEvent` / `ForeshadowItem` Schema。
+- `novel_ai/prompts.py`：章节后记忆抽取协议；plan/draft 支持 `extra_context` 注入长期记忆。
+- `novel_ai/memory.py`：`apply_extraction` 纯函数回写——知识边界一致性（获得知识移出 does_not_know、澄清误解移出 false_beliefs）、事实/线索/伏笔去重、幂等、未知人物拦截进 `unapplied_updates`。
+- `novel_ai/context.py`：`ContextAssembler` 按预算组装 Canon（锁定事实+未回收线索）/ Active（开放伏笔+近章摘要）/ Recall（更早章节一行回顾），resolved 伏笔不进入 Active。
+- `novel_ai/storage.py`：`save_extraction` / `load_story_state` / `save_story_state` / `all_chapter_summaries`。
+- `novel_ai/engine.py`：`extract_memory()`；plan/draft/run 透传 `extra_context`。
+- `app.py`：生成时自动组装三层上下文；新增"抽取本章记忆并回写"按钮与 story_state 查看器。
+- 测试 12 项全部通过（memory 回写幂等/知识边界/伏笔状态推进；context 分层与预算）。
+
+### 设计要点
+
+- 回写逻辑全部在代码侧，模型只负责抽取（D-006）；模型输出不直接改人物卡。
+- 仍不引入向量 RAG / 知识图谱，等真实 A/B 评测结果（D-007）。
+
 ## 2026-08-19
 
 Novel 已从空仓库初始化为可运行的 v0.1 本地 Web 原型。

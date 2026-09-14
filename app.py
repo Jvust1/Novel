@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import streamlit as st
 
+from novel_ai.context import ContextAssembler
 from novel_ai.engine import NovelEngine
-from novel_ai.models import Character, StoryBible, StyleFingerprint
+from novel_ai.memory import apply_extraction
+from novel_ai.models import Character, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
@@ -33,6 +35,8 @@ if "last_result" not in st.session_state:
     st.session_state.last_result = None
 if "last_overlap" not in st.session_state:
     st.session_state.last_overlap = 0.0
+if "last_extraction" not in st.session_state:
+    st.session_state.last_extraction = None
 
 
 with st.sidebar:
@@ -232,18 +236,19 @@ with write_tab:
             engine = NovelEngine(make_provider())
             bible = current_bible()
             characters = [Character.model_validate(c) for c in st.session_state.characters]
-            recent = store.recent_chapter_summaries(project_name)
+            context = ContextAssembler(store, project_name).assemble()
             result = engine.run(
                 bible=bible,
                 outline=outline,
                 chapter_goal=chapter_goal,
                 characters=characters,
-                recent_summaries=recent,
+                recent_summaries=context.recent_summaries,
                 style=style_from_state(),
                 target_chars=int(target_chars),
                 user_notes=user_notes,
                 review=mode != "快速草稿",
                 auto_repair=mode == "精修",
+                extra_context=context.prompt_sections(),
             )
             st.session_state.last_result = result
             final_text = result.revised or result.draft
@@ -268,6 +273,43 @@ with write_tab:
         with st.expander("本地 AI 味信号", expanded=False):
             st.json(result.ai_flavor)
 
+        st.divider()
+        st.subheader("章节后处理 · 记忆抽取")
+        st.caption("章节定稿后抽取摘要、新事实、人物状态/知识变化、时间线与伏笔，并回写本地长期记忆。")
+        if st.button("抽取本章记忆并回写", use_container_width=True):
+            try:
+                engine = NovelEngine(make_provider())
+                final_text = result.revised or result.draft
+                extraction = engine.extract_memory(
+                    current_bible(),
+                    [Character.model_validate(c) for c in st.session_state.characters],
+                    chapter_id,
+                    final_text,
+                )
+                new_characters, new_state = apply_extraction(
+                    [Character.model_validate(c) for c in st.session_state.characters],
+                    store.load_story_state(project_name),
+                    extraction,
+                )
+                st.session_state.characters = [c.model_dump() for c in new_characters]
+                store.save_story_state(project_name, new_state)
+                store.save_extraction(project_name, extraction.model_dump())
+                st.session_state.last_extraction = extraction.model_dump()
+                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要已更新。")
+            except Exception as exc:
+                st.exception(exc)
+
+        if st.session_state.last_extraction:
+            with st.expander("本次抽取结果", expanded=False):
+                st.json(st.session_state.last_extraction)
+
+    with st.expander("长期记忆状态（story_state）", expanded=False):
+        state = store.load_story_state(project_name)
+        if any(state.get(k) for k in ("facts", "timeline", "foreshadowing", "open_threads")):
+            st.json(state)
+        else:
+            st.info("还没有已回写的长期记忆。生成章节后执行记忆抽取即可累积。")
+
 with review_tab:
     st.subheader("独立文本审校")
     review_text = st.text_area("粘贴需要检查的正文", height=500)
@@ -278,4 +320,4 @@ with review_tab:
             st.warning("请先粘贴正文。")
 
 st.divider()
-st.caption("v0.1：先验证长篇写作内核。下一阶段：RAG、人物关系图、伏笔面板、DOCX/PDF 导入、章节状态自动回写与桌面封装。")
+st.caption("v0.2：长篇记忆内核（章节后处理回写 + Canon/Active/Recall 组装）。下一阶段：冻结多题材 A/B benchmark 与真实评测。")

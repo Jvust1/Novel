@@ -31,3 +31,15 @@
 **Status:** ACTIVE
 
 采用密度、重复、均匀度和编辑审校结合。像“仿佛”“微微”等词允许出现，但连续高密度时才提示，避免把文风修成另一种机械文本。
+
+## D-006｜章节后处理：模型抽取 + 规则回写
+**Date:** 2026-09-14  
+**Status:** ACTIVE
+
+章节定稿后由模型按固定 Schema 抽取摘要、新事实、人物状态/知识变化、时间线和伏笔（`MemoryExtraction`），但**回写**由本地纯函数 `memory.apply_extraction` 完成：知识边界（knows / does_not_know / false_beliefs）的一致性、事实与伏笔去重、未知人物拦截都由代码保证，不信任模型直接改人物卡。重复执行同一抽取结果幂等。
+
+## D-007｜上下文组装三层预算制
+**Date:** 2026-09-14  
+**Status:** ACTIVE
+
+`ContextAssembler` 按 A4 不变量组装 Canon（锁定事实 + story_state 事实 + 未回收线索）/ Active（开放伏笔 + 近章摘要）/ Recall（更早章节一行回顾），各层有字符预算上限，已 resolve 的伏笔不进入 Active。在拿到真实 A/B 评测结果前，不引入向量 RAG / 知识图谱。

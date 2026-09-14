@@ -38,3 +38,27 @@
 - 无审校 vs 局部审校
 
 看过结果的 case 不再称为 unseen。第一轮真实结果无论好坏都必须保留。
+
+## E-001｜novel-ab-v1 基准冻结与评测骨架
+**Date:** 2026-09-14  
+**Status:** PENDING_RUN
+
+### 已冻结
+
+`benchmarks/`（novel-ab-v1, version 1）包含三个原创用例，均带 Story Bible、人物卡（含知识边界）、章纲、本章目标和三轮前情（摘要/事实/时间线/伏笔/未回收线索）：
+
+- `urban_dispute` 都市现实：对话与人物关系重
+- `xuanhuan_residual` 玄幻：世界规则与战斗状态重
+- `mystery_calls` 悬疑：信息边界、伏笔与误导重
+
+SHA-256 已记录在 `benchmark_manifest.json`，由 `load_benchmark` 与测试强制校验；冻结用例不得修改，新用例只能新增并升级版本号。
+
+### A/B 设计
+
+单变量对照：`A_baseline`（v0.1：仅近章摘要）vs `B_memory`（v0.2：注入 Canon/Active/Recall 长期记忆）。同一模型、同一温度、同一章纲，唯一变量是长期记忆层。评分沿用 E-000 的 12 维度人工 1–5 分，评分表由运行器自动生成。
+
+### 尚未完成
+
+- 真实模型运行（需模型端点；`scripts/run_benchmark.py` 已就绪）。
+- 人工评分与聚合结果回填本 ledger。
+- 在拿到至少一轮完整 A/B 结果前，不得宣称长期记忆层提升质量（D-007 继续有效）。
