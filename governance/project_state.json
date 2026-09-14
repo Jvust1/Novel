@@ -20,6 +20,7 @@
     "rule-based idempotent memory write-back with knowledge-boundary consistency",
     "Canon/Active/Recall context assembler with per-layer char budgets",
     "frozen multi-genre A/B benchmark (novel-ab-v1, hash-locked) with run harness and scoring sheet",
+    "role-based multi-provider routing (ProviderRouter + RoutedNovelEngine, ported from stale dev branch)",
     "surface style fingerprint extraction",
     "semantic style abstraction",
     "multi-reference weighted Style DNA blending",
