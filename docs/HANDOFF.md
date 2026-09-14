@@ -26,7 +26,7 @@
 1. ~~章节生成后自动抽取并回写：人物状态、人物知识、事件、时间线、伏笔、摘要。~~ → `novel_ai/memory.py` + `engine.extract_memory` + app.py"抽取本章记忆并回写"。
 2. ~~Context Assembler：Canon / Active / Recall 三层记忆。~~ → `novel_ai/context.py`，带字符预算。
 3. ~~固定小说章纲 A/B benchmark。~~ → 已冻结 `benchmarks/`（novel-ab-v1，哈希锁定）+ `novel_ai/eval.py` 运行器 + 评分表工具（E-001 PENDING_RUN）。
-4. **当前第一优先：真实跑一轮 A/B（`scripts/run_benchmark.py`，需要模型端点），人工评分后把聚合结果写进 EVALUATION_LEDGER。**
+4. **当前第一优先：①把本地 CI 修复（`pyproject.toml`）提交推送，让 main 的 ci 变绿；②真实跑一轮 A/B（`scripts/run_benchmark.py`，需要模型端点），人工评分后用 `scripts/aggregate_scores.py` 聚合并回填 EVALUATION_LEDGER。**
 5. 根据评测决定是否引入 RAG / 知识图谱。
 6. 可选：DOCX/PDF 参考导入、完整 Style profile 编辑器、伏笔面板。
 

@@ -1,6 +1,6 @@
 {
   "project": "Novel",
-  "repository": "Jvust/Novel",
+  "repository": "Jvust2/Novel",
   "stage": "foundation-v0.1-runnable",
   "version": "0.1.0-dev",
   "status": "active",
@@ -32,9 +32,9 @@
   "blocking_issues": [],
   "pending_sync": [
     {
-      "type": "verification",
-      "severity": "non_blocking",
-      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
+      "type": "code_fix",
+      "severity": "blocking_ci",
+      "item": "CI on main failed (run 34797893235): bare pytest could not import novel_ai. Fixed locally via pyproject.toml pythonpath; fix awaits commit+push to turn CI green."
     }
   ],
   "next_steps": [
