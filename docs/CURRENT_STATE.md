@@ -1,5 +1,16 @@
 # Current State
 
+## 2026-09-14（第三轮）
+
+CI 修复 + 评测闭环补全 + 参考文本格式扩展。测试 27 项全部通过（含 bare `pytest`）。
+
+### 本轮内容
+
+- **CI 修复（blocking）**：main 上 run 34797893235 失败——workflow 用 bare `pytest`，不把仓库根加入 `sys.path`。新增 `pyproject.toml`（`[tool.pytest.ini_options] pythonpath=["."]`）；修复已在 PR #4 的 CI run 34828564029 上验证通过（经授权合并后 main CI 恢复绿色）。
+- `scripts/aggregate_scores.py`：评分表聚合 CLI——读取填好的 `scoring_sheet.csv`，按 run.json 的 case/variant 网格检查覆盖缺口（缺哪些维度、哪些组整组未评），输出聚合 JSON（含 B−A delta），`--write` 落盘 `scores_summary.json` 供回填 ledger。
+- `novel_ai/reading.py`：参考文本导入扩展到 DOCX（python-docx）与 PDF（pypdf），懒加载依赖；app.py Style Lab 上传器已支持四种格式。
+- `project_state.json`：repository 更正为 `Jvust2/Novel`（远端实际地址）。
+
 ## 2026-09-14（第二轮）
 
 v0.2 评测骨架：冻结基准 novel-ab-v1 + A/B 运行器（E-001，状态 PENDING_RUN）。
@@ -56,8 +67,7 @@ Novel 已从空仓库初始化为可运行的 v0.1 本地 Web 原型。
 
 ### 当前限制
 
-- v0.1 只直接导入 TXT / MD 参考文本；DOCX / PDF 尚未接入。
-- 人物、事件、伏笔在章节生成后尚未自动回写结构化状态。
+- 人物、事件、伏笔在章节生成后尚未自动回写结构化状态。（2026-09-14 已解决：`novel_ai/memory.py`）
 - 长篇 Recall 目前只有近章摘要接口，尚未接入向量 RAG / 知识图谱。
 - Style Lab 的多来源权重目前在会话中设置，尚未有完整的 profile 编辑器。
 - 没有冻结的真实小说 A/B benchmark，因此不能声称当前生成质量已经达到目标。

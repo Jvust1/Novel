@@ -1,6 +1,6 @@
 {
   "project": "Novel",
-  "repository": "Jvust/Novel",
+  "repository": "Jvust2/Novel",
   "stage": "foundation-v0.1-runnable",
   "version": "0.1.0-dev",
   "status": "active",
@@ -30,13 +30,7 @@
   ],
   "frozen": false,
   "blocking_issues": [],
-  "pending_sync": [
-    {
-      "type": "verification",
-      "severity": "non_blocking",
-      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
-    }
-  ],
+  "pending_sync": [],
   "next_steps": [
     "run scripts/run_benchmark.py against a real endpoint (set NOVEL_BASE_URL/NOVEL_MODEL env only)",
     "fill runs/<run_id>/scoring_sheet.csv (12 dims x 1-5) and write aggregated results into EVALUATION_LEDGER",

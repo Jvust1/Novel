@@ -6,6 +6,7 @@ from novel_ai.context import ContextAssembler
 from novel_ai.engine import NovelEngine
 from novel_ai.memory import apply_extraction
 from novel_ai.models import Character, MemoryExtraction, StoryBible, StyleFingerprint
+from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
@@ -153,7 +154,7 @@ with style_tab:
         "多份 profile 按权重融合；参考正文不会写入 Style DNA 文件。"
     )
 
-    uploaded = st.file_uploader("上传参考文本（v0.1 支持 TXT / MD）", type=["txt", "md"])
+    uploaded = st.file_uploader("上传参考文本（支持 TXT / MD / DOCX / PDF）", type=["txt", "md", "docx", "pdf"])
     pasted_reference = st.text_area("或粘贴参考文本", height=220)
     reference_name = st.text_input("风格来源名称", value=f"Reference-{len(st.session_state.style_profiles) + 1}")
     weight = st.number_input("融合权重", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
@@ -167,7 +168,7 @@ with style_tab:
     if st.button("分析并加入风格库", use_container_width=True):
         text = pasted_reference
         if uploaded is not None:
-            text = uploaded.getvalue().decode("utf-8", errors="ignore")
+            text = extract_reference_text(uploaded.name, uploaded.getvalue())
         if len(text.strip()) < 300:
             st.warning("样本文本太短，建议至少提供 300 字；稳定分析最好使用更长样本。")
         else:

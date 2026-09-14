@@ -60,5 +60,5 @@ SHA-256 已记录在 `benchmark_manifest.json`，由 `load_benchmark` 与测试�
 ### 尚未完成
 
 - 真实模型运行（需模型端点；`scripts/run_benchmark.py` 已就绪）。
-- 人工评分与聚合结果回填本 ledger。
+- 人工评分与聚合结果回填本 ledger（评分后用 `scripts/aggregate_scores.py` 聚合，它会按 run.json 网格报告未评项）。
 - 在拿到至少一轮完整 A/B 结果前，不得宣称长期记忆层提升质量（D-007 继续有效）。
