@@ -1,5 +1,21 @@
 # Current State
 
+## 2026-09-14（第四轮）
+
+回收过期 dev 分支的多模型路由能力（D-008）。
+
+### 盘点结论（只读）
+
+远端 `dev/multi-model-drive-backend-v0-2` 停在 2026-08-24，基线远落后 main；整体合并会删除 main 的记忆/评测子系统（diff 约 -2100 行）。其有价值部分：ProviderRouter（TaskKind 角色回退路由：draft/plan/review/memory/benchmark）、RoutedNovelEngine（writer/reviewer 分离）、离线路由测试。分支保留原样，未动。
+
+### 本轮新增（additive 移植）
+
+- `novel_ai/orchestration.py`：原样移植（仅依赖 provider.py，无冲突）。
+- `novel_ai/routed_engine.py`：移植并适配 main 的 `extra_context` 参数透传。
+- 测试 +5（含 writer/reviewer 角色分离与 reviewer 缺失回退），共 32 项全过。
+- 未接线：app.py 与 eval 尚未暴露路由模式；待真实端点出现后再决定 UI/评测入口（避免无端点的死配置）。
+- dev 分支记录的 Ollama 前置问题（qwen3:4b，`could not locate ollama app`，安装/PATH 问题）仍待用户本机解决。
+
 ## 2026-09-14（第三轮）
 
 CI 修复 + 评测闭环补全 + 参考文本格式扩展。测试 27 项全部通过（含 bare `pytest`）。

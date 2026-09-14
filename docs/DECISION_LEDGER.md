@@ -43,3 +43,9 @@
 **Status:** ACTIVE
 
 `ContextAssembler` 按 A4 不变量组装 Canon（锁定事实 + story_state 事实 + 未回收线索）/ Active（开放伏笔 + 近章摘要）/ Recall（更早章节一行回顾），各层有字符预算上限，已 resolve 的伏笔不进入 Active。在拿到真实 A/B 评测结果前，不引入向量 RAG / 知识图谱。
+
+## D-008｜多模型角色路由移植自过期 dev 分支
+**Date:** 2026-09-14  
+**Status:** ACTIVE
+
+远端 `dev/multi-model-drive-backend-v0-2`（2026-08-24 停更）包含 ProviderRouter（按 TaskKind 角色回退路由）与 RoutedNovelEngine（writer/reviewer 分离），但其基线落后 main，整体合并会删除 main 的记忆/评测子系统。处理：只做 **additive 移植**（orchestration + routed_engine + 测试），补上 `extra_context` 透传；dev 分支本身保持不动。动机：A/B 评测与生产都受益于"草稿用便宜模型、审校用强模型"的角色分离；所有端点仍走 OpenAI-compatible adapter（D-002 不变）。路由配置只读运行时环境变量（`NOVEL_LOCAL_*` / `NOVEL_COLAB_*` / `NOVEL_V4_*` / `NOVEL_REVIEW_*`），凭据不落盘。
