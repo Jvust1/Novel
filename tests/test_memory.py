@@ -78,6 +78,26 @@ def test_state_merges_are_idempotent():
     assert len(state_twice["foreshadowing"]) == 1
 
 
+def test_locked_character_is_skipped_and_recorded():
+    lin = Character(name="林舟", locked=True)
+    chars, state = apply_extraction([lin], {}, make_extraction())
+    updated = next(c for c in chars if c.name == "林舟")
+    # 锁定人物卡片逐字段保持原样
+    assert updated.model_dump() == lin.model_dump()
+    reasons = {row["name"]: row["reason"] for row in state["unapplied_updates"]}
+    assert reasons["林舟"] == "人物已锁定，回写跳过"
+
+
+def test_unlock_after_lock_resumes_writeback():
+    lin = Character(name="林舟", locked=True)
+    _, state = apply_extraction([lin], {}, make_extraction())
+    lin_unlocked = lin.model_copy(update={"locked": False})
+    chars, state2 = apply_extraction([lin_unlocked], state, make_extraction())
+    updated = next(c for c in chars if c.name == "林舟")
+    assert updated.current_goal == "查清是谁抹掉了父亲的档案"
+    assert state2["unapplied_updates"] == state["unapplied_updates"]  # 历史记录保留，不再新增
+
+
 def test_foreshadow_status_advances_by_id():
     extraction = make_extraction()
     _, state = apply_extraction([], {}, extraction)

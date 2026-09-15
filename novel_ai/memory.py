@@ -62,15 +62,28 @@ def apply_extraction(
         "open_threads": list(story_state.get("open_threads", [])),
         "unapplied_updates": list(story_state.get("unapplied_updates", [])),
     }
+    known_misses = {
+        (str(row.get("chapter_id")), str(row.get("name")), str(row.get("reason")))
+        for row in state["unapplied_updates"]
+    }
+
+    def record_miss(name: str, reason: str) -> None:
+        key = (extraction.chapter_id, name, reason)
+        if key not in known_misses:
+            known_misses.add(key)
+            state["unapplied_updates"].append(
+                {"chapter_id": extraction.chapter_id, "name": name, "reason": reason}
+            )
 
     by_name = {c.name: c for c in characters}
     updated: dict[str, Character] = {}
     for update in extraction.character_updates:
         char = updated.get(update.name) or by_name.get(update.name)
         if char is None:
-            state["unapplied_updates"].append(
-                {"chapter_id": extraction.chapter_id, "name": update.name, "reason": "人物不在人物卡中"}
-            )
+            record_miss(update.name, "人物不在人物卡中")
+            continue
+        if char.locked:
+            record_miss(update.name, "人物已锁定，回写跳过")
             continue
         data = char.model_dump()
         if update.goal_change.strip():
