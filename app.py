@@ -192,6 +192,17 @@ with char_tab:
 
     if st.session_state.characters:
         st.dataframe(st.session_state.characters, use_container_width=True)
+        names = [c["name"] for c in st.session_state.characters]
+        locked_names = st.multiselect(
+            "锁定人物（Product Spec：锁定后记忆回写不得擅改其人物卡）",
+            options=names,
+            default=[c["name"] for c in st.session_state.characters if c.get("locked")],
+        )
+        if st.button("应用锁定"):
+            for c in st.session_state.characters:
+                c["locked"] = c["name"] in locked_names
+            store.write_json(project_name, "memory/characters.json", st.session_state.characters)
+            st.success("锁定状态已应用并保存。")
         if st.button("保存人物到本地"):
             store.write_json(project_name, "memory/characters.json", st.session_state.characters)
             st.success("人物已保存。")

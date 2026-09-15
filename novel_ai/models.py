@@ -16,6 +16,7 @@ class Character(BaseModel):
     self_deception: str = ""
     secret: str = ""
     speech: str = ""
+    locked: bool = False
     relationships: dict[str, str] = Field(default_factory=dict)
     knows: list[str] = Field(default_factory=list)
     does_not_know: list[str] = Field(default_factory=list)

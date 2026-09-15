@@ -1,5 +1,18 @@
 # Current State
 
+## 2026-09-15（第四轮）
+
+实现 Product Spec 的"锁定人物"机制。
+
+### 本轮内容
+
+- `Character.locked: bool = False`：作者可锁定已定稿的人物卡。
+- 回写层：锁定人物的抽取更新不应用，记入 `unapplied_updates`（reason="人物已锁定，回写跳过"）；解锁后恢复正常回写。
+- 顺带修复一个幂等性缺口：`unapplied_updates`（未知人物/锁定跳过记录）此前会跨重复运行累积，现按 (chapter_id, name, reason) 三元组去重，符合 D-006 的幂等声明。
+- 工作台人物页新增锁定多选与"应用锁定"（同时落盘）。
+- 测试 41 项全过（新增锁定跳过、解锁恢复两条）。
+- 说明：story_state 的 facts 本身是只增不删的（append-only），无需额外锁；"锁定段落"属正文编辑器范畴，延后。
+
 ## 2026-09-15（第三轮）
 
 基线对齐检查（PROJECT_NORTH_STAR / PRODUCT_SPEC）后补上工作台的计划确认流程。
