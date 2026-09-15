@@ -1,5 +1,18 @@
 # Current State
 
+## 2026-09-15（第二轮）
+
+Review → Repair 闭环真实验证 + 一个真实环境缺陷修复。测试 38 项全过。
+
+### 本轮内容
+
+- **系统代理劫持本地端点（已修复）**：httpx ≥0.28 会读取 Windows 注册表系统代理；本机代理（127.0.0.1:10809）拒绝转发 loopback 目标，对本地 Ollama 的调用全部变成空体 503（curl 不读注册表所以对照正常；昨天 benchmark 成功是因为当时系统代理未开）。修复：`provider.is_loopback_url` 检测 loopback 端点并对其实例化 `httpx.Client(trust_env=False)`；远程端点保持 trust_env（云端 API 仍可走用户代理）。回归测试 3 项（loopback 判定、本地禁代理、远程保留代理）。
+- **Review → Repair 真实验证**（urban_dispute B 变体 + 真实 plan，qwen3-vl:4b）：审校返回合法 JSON；verdict=pass 时修复稿与原稿相似度 98.92%——局部修复纪律在"通过"场景下不重写整章，行为正确。
+- **观察（4B 审校者过宽）**：该章存在人工可辨的连续性瑕疵（E-001 已记录的伤势描述不符），4B 审校却给 pass 零问题——审校角色需要更强模型，正好验证了 D-008 角色路由（REVIEW 走独立端点）的架构价值；待有第二个端点后在 UI/评测中启用。
+- 至此流水线五环节（Context → Plan → Draft → Review → Memory Update）全部经过真实模型执行验证。
+
+## 2026-09-15
+
 ## 2026-09-15
 
 工作台状态回载 + 评分辅助工具。测试 35 项全过（新增 Streamlit `AppTest` 应用级执行测试）。
