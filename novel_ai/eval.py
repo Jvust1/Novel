@@ -255,3 +255,64 @@ def aggregate_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
         a, b = summary["variant_overall"]["A_baseline"], summary["variant_overall"]["B_memory"]
         summary["deltas"]["B_minus_A"] = round(b - a, 3)
     return summary
+
+
+def render_scoring_pack(run_dir: str | Path) -> Path:
+    """Render a human-friendly side-by-side scoring pack (markdown) for one run.
+
+    For each (case, variant) it includes the chapter goal, generation stats and
+    the full text, plus the 12-dimension rubric with anchors. Read-only over
+    the run directory; the pack lands next to run.json.
+    """
+    run_path = Path(run_dir)
+    record = json.loads((run_path / "run.json").read_text(encoding="utf-8"))
+    benchmark_dir = Path(__file__).resolve().parents[1] / "benchmarks"
+    cases = {c.case_id: c for c in load_benchmark(benchmark_dir)} if (benchmark_dir / "benchmark_manifest.json").exists() else {}
+
+    lines: list[str] = [
+        f"# 评分包 · {record['run_id']}",
+        "",
+        f"- 模型：`{record.get('provider_note', '')}`",
+        f"- 变体：A_baseline = 仅近章摘要；B_memory = 注入 Canon/Active/Recall 长期记忆（唯一变量）",
+        "- 评分：12 维 × 1–5 分，填入同目录 `scoring_sheet.csv` 的 score 列。",
+        "",
+        "## 评分维度与锚点",
+        "",
+        "| 维度 | 锚点 |",
+        "|---|---|",
+    ]
+    for item in RUBRIC:
+        lines.append(f"| {item['label']} ({item['key']}) | {item['anchor']} |")
+
+    by_case: dict[str, list[dict[str, Any]]] = {}
+    for entry in record["cases"]:
+        by_case.setdefault(entry["case_id"], []).append(entry)
+
+    for case_id, entries in by_case.items():
+        lines += ["", f"---", "", f"# 用例：{case_id}", ""]
+        case = cases.get(case_id)
+        if case:
+            lines += [
+                f"**本章目标**：{case.data.get('chapter_goal', '')}",
+                "",
+                f"**用户额外要求**：{case.data.get('user_notes', '')}",
+                "",
+                f"**目标字数**：{case.data.get('target_chars', '')}",
+                "",
+            ]
+        for entry in sorted(entries, key=lambda e: e["variant"]):
+            text = (run_path / f"{entry['case_id']}__{entry['variant']}.txt").read_text(encoding="utf-8")
+            lines += [
+                f"## {case_id} · {entry['variant']}",
+                "",
+                f"（正文 {len(text)} 字；注入长期记忆 {entry['extra_context_chars']} 字）",
+                "",
+                "```text",
+                text.strip(),
+                "```",
+                "",
+            ]
+
+    out = run_path / "scoring_pack.md"
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
