@@ -81,23 +81,72 @@ def current_bible() -> StoryBible:
     )
 
 
+def seed_project_state() -> None:
+    """Reload persisted project state once per project so restarts keep working data.
+
+    Non-destructive: values are only filled from saved files; when a project
+    has nothing saved yet, whatever is currently in the session stays.
+    """
+    if st.session_state.get("seeded_project") == project_name:
+        return
+    st.session_state.seeded_project = project_name
+
+    bible = store.read_json(project_name, "memory/story_bible.json", default=None)
+    if bible:
+        st.session_state["title"] = bible.get("title") or project_name
+        st.session_state["genre"] = bible.get("genre", "")
+        st.session_state["tone"] = bible.get("tone", "")
+        st.session_state["premise"] = bible.get("premise", "")
+        st.session_state["themes_text"] = "\n".join(bible.get("themes", []))
+        st.session_state["rules_text"] = "\n".join(bible.get("world_rules", []))
+        st.session_state["forbidden_text"] = "\n".join(bible.get("forbidden_moves", ""))
+    elif "title" not in st.session_state:
+        st.session_state["title"] = project_name
+
+    outline = store.read_json(project_name, "memory/outline.json", default=None)
+    if outline and outline.get("outline"):
+        st.session_state["outline"] = outline["outline"]
+
+    if not st.session_state.characters:
+        saved_chars = store.read_json(project_name, "memory/characters.json", default=None)
+        if saved_chars:
+            st.session_state.characters = saved_chars
+
+    if not st.session_state.style_profiles:
+        profiles = store.read_json(project_name, "styles/style_profiles.json", default=None)
+        if profiles:
+            st.session_state.style_profiles = profiles
+    if st.session_state.style is None:
+        dna = store.read_json(project_name, "styles/style_dna.json", default=None)
+        if dna:
+            st.session_state.style = dna
+    if not st.session_state.reference_hashes:
+        sig = store.read_json(project_name, "styles/reference_signature.json", default=None)
+        if sig:
+            st.session_state.reference_hashes = set(sig.get("hashes", []))
+
+
+seed_project_state()
+
+
 story_tab, char_tab, style_tab, write_tab, review_tab = st.tabs(
     ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "✍️ 章节写作", "🔎 审校"]
 )
 
 with story_tab:
+    st.caption("设定、人物与 Style 会随保存写入本地项目目录；重启应用或切换项目时自动回载。")
     col1, col2 = st.columns(2)
     with col1:
-        title = st.text_input("书名", value=project_name)
-        genre = st.text_input("题材", placeholder="都市 / 玄幻 / 悬疑 / 言情 / 科幻……")
-        tone = st.text_input("基调", placeholder="克制、冷幽默、压迫、热血……")
-        premise = st.text_area("核心设定 / Premise", height=130)
+        title = st.text_input("书名", key="title")
+        genre = st.text_input("题材", key="genre", placeholder="都市 / 玄幻 / 悬疑 / 言情 / 科幻……")
+        tone = st.text_input("基调", key="tone", placeholder="克制、冷幽默、压迫、热血……")
+        premise = st.text_area("核心设定 / Premise", height=130, key="premise")
     with col2:
-        themes_text = st.text_area("主题（每行一个）", height=100)
-        rules_text = st.text_area("世界规则 / 锁定事实（每行一个）", height=130)
-        forbidden_text = st.text_area("明确禁止的剧情处理（每行一个）", height=100)
+        themes_text = st.text_area("主题（每行一个）", height=100, key="themes_text")
+        rules_text = st.text_area("世界规则 / 锁定事实（每行一个）", height=130, key="rules_text")
+        forbidden_text = st.text_area("明确禁止的剧情处理（每行一个）", height=100, key="forbidden_text")
 
-    outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280)
+    outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280, key="outline")
     if st.button("保存故事设定到本地", use_container_width=True):
         bible = current_bible()
         store.write_json(project_name, "memory/story_bible.json", bible.model_dump())

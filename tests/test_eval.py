@@ -12,6 +12,7 @@ from novel_ai.eval import (
     load_benchmark,
     load_scores,
     make_scoring_sheet,
+    render_scoring_pack,
     run_case,
     seed_store_from_case,
 )
@@ -142,3 +143,32 @@ def test_parse_json_object_tolerant():
 def test_provider_config_defaults():
     cfg = ProviderConfig(base_url="http://x", model="m")
     assert cfg.timeout == 180.0
+
+
+def test_render_scoring_pack_includes_goal_texts_and_rubric(tmp_path):
+    run_dir = tmp_path / "run-x"
+    run_dir.mkdir()
+    (run_dir / "run.json").write_text(
+        json.dumps(
+            {
+                "run_id": "run-x",
+                "provider_note": "model=fake",
+                "cases": [
+                    {"case_id": "urban_dispute", "variant": "A_baseline", "extra_context_chars": 0},
+                    {"case_id": "urban_dispute", "variant": "B_memory", "extra_context_chars": 123},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "urban_dispute__A_baseline.txt").write_text("甲的正文。", encoding="utf-8")
+    (run_dir / "urban_dispute__B_memory.txt").write_text("乙的正文。", encoding="utf-8")
+    out = render_scoring_pack(run_dir)
+    pack = out.read_text(encoding="utf-8")
+    assert "评分包 · run-x" in pack
+    assert "模型：`model=fake`" in pack
+    for key in RUBRIC_KEYS:
+        assert key in pack
+    assert "甲的正文。" in pack and "乙的正文。" in pack
+    assert "刘聪" in pack  # 冻结用例的章纲细节进入评分包供对照
+    assert pack.index("A_baseline") < pack.index("B_memory")

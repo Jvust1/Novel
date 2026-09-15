@@ -1,5 +1,16 @@
 # Current State
 
+## 2026-09-15
+
+工作台状态回载 + 评分辅助工具。测试 35 项全过（新增 Streamlit `AppTest` 应用级执行测试）。
+
+### 本轮新增
+
+- **工作台状态回载（可用性修复）**：app.py 新增 `seed_project_state`——按当前项目从 `memory/story_bible.json`、`outline.json`、`characters.json`、`styles/*.json` 回载设定、人物、Style DNA 与参考签名；此前重启应用虽已落盘但从不回载。策略是非破坏的：只回载已保存的数据，未保存项目保留会话现状。
+- **应用级测试**：`tests/test_app.py` 用 `streamlit.testing.v1.AppTest` 真正执行 app.py（此前的 health 冒烟只验证服务器不执行脚本）——覆盖启动无异常与回载正确性。
+- **评分包渲染**：`novel_ai/eval.py:render_scoring_pack` + `scripts/render_scoring_pack.py`——从 run 目录生成 `scoring_pack.md`（每用例目标/要求 + A/B 双变体全文 + 12 维锚点表），`run-20260914-153013` 已生成，供人工评分时对照。
+- Ollama 服务进程曾退出（机器重启）；qwen2.5:7b 下载已按用户要求取消，第二轮评测搁置，待评分或新端点。
+
 ## 2026-09-14（第四轮）
 
 回收过期 dev 分支的多模型路由能力（D-008）。
