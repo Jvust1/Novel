@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 
 from novel_ai.context import ContextAssembler
-from novel_ai.engine import NovelEngine
+from novel_ai.engine import ChapterResult, NovelEngine
 from novel_ai.memory import apply_extraction
 from novel_ai.models import Character, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
@@ -280,12 +282,95 @@ with write_tab:
     )
     user_notes = st.text_area("本章额外要求", placeholder="例如：本章不要揭晓真相；减少环境；最后停在门被推开……", height=100)
     mode = st.radio("生成模式", ["快速草稿", "标准审校", "精修"], horizontal=True, index=1)
+    confirm_plan = st.checkbox(
+        "写正文前确认/编辑场景计划（推荐）",
+        value=True,
+        help="North Star 原则：AI 先给结构化建议，作者可编辑后再生成正文，不被全自动流水线绑架。",
+    )
 
-    if st.button("生成本章", type="primary", use_container_width=True):
+    if "pending_plan_json" not in st.session_state:
+        st.session_state.pending_plan_json = ""
+    if "pending_plan_meta" not in st.session_state:
+        st.session_state.pending_plan_meta = {}
+    if "plan_new" not in st.session_state:
+        st.session_state.plan_new = False
+
+    def _engine_and_inputs():
+        engine = NovelEngine(make_provider())
+        bible = current_bible()
+        characters = [Character.model_validate(c) for c in st.session_state.characters]
+        return engine, bible, characters
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        make_plan = st.button("① 生成场景计划", use_container_width=True, key="btn_plan")
+    with col2:
+        write_draft = st.button(
+            "② 按计划写正文",
+            type="primary",
+            use_container_width=True,
+            disabled=not st.session_state.pending_plan_json,
+            key="btn_draft",
+        )
+    with col3:
+        one_shot = st.button("一步生成", use_container_width=True, help="跳过计划确认：计划→正文→审校一次完成", key="btn_oneshot")
+
+    if make_plan:
         try:
-            engine = NovelEngine(make_provider())
-            bible = current_bible()
-            characters = [Character.model_validate(c) for c in st.session_state.characters]
+            engine, bible, characters = _engine_and_inputs()
+            context = ContextAssembler(store, project_name).assemble()
+            plan = engine.plan(
+                bible, outline, chapter_goal, characters, context.recent_summaries, context.prompt_sections()
+            )
+            st.session_state.pending_plan_json = plan.model_dump_json(indent=2)
+            st.session_state.pending_plan_meta = {
+                "recent": context.recent_summaries,
+                "extra": context.prompt_sections(),
+            }
+            st.session_state.plan_new = True
+            st.rerun()
+        except Exception as exc:
+            st.exception(exc)
+
+    if write_draft:
+        try:
+            engine, bible, characters = _engine_and_inputs()
+            plan_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
+            plan = ChapterPlan.model_validate(json.loads(plan_json))
+            meta = st.session_state.pending_plan_meta
+            draft = engine.draft(
+                bible,
+                plan,
+                characters,
+                meta.get("recent", []),
+                style_from_state(),
+                int(target_chars),
+                user_notes,
+                meta.get("extra", ""),
+            )
+            review_result = None
+            revised = None
+            if mode != "快速草稿":
+                review_result = engine.review(bible, plan, characters, draft)
+                if mode == "精修" and review_result.verdict == "revise":
+                    revised = engine.repair(draft, review_result, style_from_state())
+            st.session_state.last_result = ChapterResult(
+                plan=plan,
+                draft=draft,
+                review=review_result,
+                ai_flavor=detect_ai_flavor(draft),
+                revised=revised,
+            )
+            final_text = revised or draft
+            st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
+            store.write_chapter(project_name, chapter_id, final_text)
+            st.success("章节已按确认的计划生成并保存到本地项目目录。")
+        except Exception as exc:
+            st.exception(exc)
+
+    if one_shot:
+        try:
+            engine, bible, characters = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble()
             result = engine.run(
                 bible=bible,
@@ -307,6 +392,16 @@ with write_tab:
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
+
+    if st.session_state.pending_plan_json:
+        if st.session_state.plan_new:
+            st.session_state["plan_editor"] = st.session_state.pending_plan_json
+            st.session_state.plan_new = False
+        st.text_area(
+            "场景计划（可直接编辑 JSON：改目标、阻力、选择、代价、知识边界后再写正文）",
+            key="plan_editor",
+            height=420,
+        )
 
     result = st.session_state.last_result
     if result:

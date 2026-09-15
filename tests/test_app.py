@@ -50,3 +50,19 @@ def test_app_reloads_persisted_project_state(monkeypatch, tmp_path):
     assert at.text_input(key="genre").value == "玄幻"
     assert at.text_area(key="rules_text").value == "灵石按滴计价"
     assert at.session_state["characters"][0]["name"] == "沈无咎"
+
+
+def test_plan_confirmation_flow_gate(monkeypatch, tmp_path):
+    """North Star: plan must be confirmable before drafting; ② stays gated without one."""
+    at = run_app(monkeypatch, tmp_path)
+    assert not at.exception
+    # 初始：没有待确认计划 → ② 禁用，计划编辑器不存在
+    assert at.button(key="btn_draft").disabled is True
+    assert not [w for w in at.text_area if w.key == "plan_editor"]
+
+    # 注入一个待确认计划后：② 启用，计划编辑器出现且可编辑
+    at.session_state["pending_plan_json"] = json.dumps({"chapter_title": "测试章", "scenes": []})
+    at.session_state["plan_new"] = True
+    at.run()
+    assert at.button(key="btn_draft").disabled is False
+    assert at.text_area(key="plan_editor").value == at.session_state["pending_plan_json"]
