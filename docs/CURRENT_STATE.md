@@ -11,6 +11,15 @@
 - **评分包渲染**：`novel_ai/eval.py:render_scoring_pack` + `scripts/render_scoring_pack.py`——从 run 目录生成 `scoring_pack.md`（每用例目标/要求 + A/B 双变体全文 + 12 维锚点表），`run-20260914-153013` 已生成，供人工评分时对照。
 - Ollama 服务进程曾退出（机器重启）；qwen2.5:7b 下载已按用户要求取消，第二轮评测搁置，待评分或新端点。
 
+### 记忆回写环节真实模型验证（2026-09-15，未入库的本地验证）
+
+用本地 qwen3-vl:4b 对 `run-20260914-153013/urban_dispute__B_memory.txt` 完整跑通 `extract_memory → apply_extraction`：
+
+- 抽取结果符合 Schema；三个角色更新全部命中人物卡姓名（`unapplied_updates` 为空）。
+- 回写正确：knows 追加、`recent_change` 带 `[004B]` 章节戳、status 合并无丢失。
+- **发现抽取器的一个真实缺陷模式**：模型把疑似读者视角信息（周凯藏钥匙）写进了陈桂香的 `knowledge_gained`——"人物知道 vs 读者知道"的区分对 4B 模型不可靠。改进方向（未实施）：抽取协议中加入"逐条知识归属检查"示例，或在审校协议中增加知识来源复核项；待人工评分确认该问题权重后再动。
+- 验证时 story_state 从空开始（未带前情伏笔），故模型新建了伏笔条目而非推进已有 `zhou-key`——正式流程会传入累积 state，此为验证设置差异，非代码缺陷。
+
 ## 2026-09-14（第四轮）
 
 回收过期 dev 分支的多模型路由能力（D-008）。
