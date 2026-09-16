@@ -1,16 +1,14 @@
 {
   "project": "Novel",
-  "repository": "Jvust/Novel",
+  "repository": "Jvust2/Novel",
   "stage": "foundation-v0.1-runnable",
   "version": "0.1.0-dev",
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
-    "post-chapter memory extraction",
-    "Canon/Active/Recall context assembly",
-    "real chapter A/B evaluation",
-    "character knowledge-boundary enforcement",
-    "composite Style DNA evaluation"
+    "human scoring of run-20260914-153013 scoring sheet (12 dims x 1-5)",
+    "aggregate scores into EVALUATION_LEDGER and decide next model tier for benchmarking",
+    "decide RAG / knowledge graph only after scored A/B results"
   ],
   "implemented": [
     "Streamlit local web workspace",
@@ -18,6 +16,11 @@
     "outline-to-scene planning",
     "character-state-aware drafting schema",
     "draft/review/local-repair pipeline",
+    "post-chapter memory extraction (summary, facts, character/knowledge deltas, timeline, foreshadowing)",
+    "rule-based idempotent memory write-back with knowledge-boundary consistency",
+    "Canon/Active/Recall context assembler with per-layer char budgets",
+    "frozen multi-genre A/B benchmark (novel-ab-v1, hash-locked) with run harness and scoring sheet",
+    "role-based multi-provider routing (ProviderRouter + RoutedNovelEngine, ported from stale dev branch)",
     "surface style fingerprint extraction",
     "semantic style abstraction",
     "multi-reference weighted Style DNA blending",
@@ -28,18 +31,12 @@
   ],
   "frozen": false,
   "blocking_issues": [],
-  "pending_sync": [
-    {
-      "type": "verification",
-      "severity": "non_blocking",
-      "item": "Confirm first CI run; connector did not expose a push-triggered workflow run in this session."
-    }
-  ],
+  "pending_sync": [],
   "next_steps": [
-    "extract chapter summaries, facts, character state, knowledge changes, timeline and foreshadowing after each accepted chapter",
-    "assemble bounded Canon/Active/Recall context for long-form writing",
-    "freeze the first real multi-genre chapter benchmark and run A/B evaluations",
-    "only then decide whether vector RAG or a knowledge graph materially improves quality"
+    "run scripts/run_benchmark.py against a real endpoint (set NOVEL_BASE_URL/NOVEL_MODEL env only)",
+    "fill runs/<run_id>/scoring_sheet.csv (12 dims x 1-5) and write aggregated results into EVALUATION_LEDGER",
+    "use A/B results to decide whether vector RAG or knowledge graph materially improves quality",
+    "optional: DOCX/PDF reference import and full style profile editor"
   ],
-  "updated_at": "2026-08-19"
+  "updated_at": "2026-09-14"
 }

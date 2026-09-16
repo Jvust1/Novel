@@ -51,6 +51,10 @@ class ProjectStore:
         return path
 
     def recent_chapter_summaries(self, project: str, limit: int = 4) -> list[dict[str, Any]]:
+        rows = self.all_chapter_summaries(project)
+        return rows[-limit:]
+
+    def all_chapter_summaries(self, project: str) -> list[dict[str, Any]]:
         path = self.project_dir(project) / "memory" / "chapter_summaries.jsonl"
         if not path.exists():
             return []
@@ -59,4 +63,32 @@ class ProjectStore:
             line = line.strip()
             if line:
                 rows.append(json.loads(line))
-        return rows[-limit:]
+        return rows
+
+    def save_extraction(self, project: str, extraction: dict[str, Any]) -> Path:
+        """Persist one chapter's memory extraction and append its summary row."""
+        chapter_id = str(extraction.get("chapter_id") or "chapter").strip() or "chapter"
+        self.write_json(project, f"memory/extractions/{self.slugify(chapter_id)}.json", extraction)
+        summary = {
+            "chapter_id": chapter_id,
+            "chapter_title": extraction.get("chapter_title", ""),
+            "summary": extraction.get("summary", ""),
+        }
+        rows = self.all_chapter_summaries(project)
+        rows = [r for r in rows if str(r.get("chapter_id")) != chapter_id]
+        rows.append(summary)
+        path = self.project_dir(project) / "memory" / "chapter_summaries.jsonl"
+        with path.open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return path
+
+    def load_story_state(self, project: str) -> dict[str, Any]:
+        return self.read_json(
+            project,
+            "memory/story_state.json",
+            default={"facts": [], "timeline": [], "foreshadowing": [], "open_threads": []},
+        )
+
+    def save_story_state(self, project: str, state: dict[str, Any]) -> Path:
+        return self.write_json(project, "memory/story_state.json", state)
