@@ -16,20 +16,21 @@ from novel_ai.eval import (
     run_case,
     seed_store_from_case,
 )
-from novel_ai.models import ChapterPlan
+from novel_ai.models import ChapterPlan, StoryBible
 from novel_ai.provider import ProviderConfig
 
 
 class FakeProvider:
-    """Scripted provider: no network. Returns a minimal valid plan/draft."""
+    """Scripted provider: no network. Returns a minimal valid plan/draft/review."""
 
     def __init__(self):
         self.calls: list[dict] = []
+        self.review_verdict = "revise"
 
     def chat(self, messages, *, temperature=0.8, max_tokens=None, response_format=None):
         self.calls.append({"messages": messages, "response_format": response_format})
-        user_text = messages[-1]["content"]
-        if response_format and "章节策划" in messages[0]["content"]:
+        system = messages[0]["content"]
+        if response_format and "章节策划" in system:
             return json.dumps(
                 {
                     "chapter_title": "测试章",
@@ -49,6 +50,8 @@ class FakeProvider:
                 },
                 ensure_ascii=False,
             )
+        if response_format and "严苛的网络小说章节编辑" in system:
+            return json.dumps({"verdict": self.review_verdict, "issues": []}, ensure_ascii=False)
         if response_format:
             return "{}"
         return "正文第一段。\n\n正文第二段。"
@@ -143,6 +146,50 @@ def test_parse_json_object_tolerant():
 def test_provider_config_defaults():
     cfg = ProviderConfig(base_url="http://x", model="m")
     assert cfg.timeout == 180.0
+
+
+def test_run_rereviews_after_repair():
+    engine, provider = make_engine()
+    provider.review_verdict = "revise"
+    result = engine.run(
+        bible=StoryBible(),
+        outline="纲",
+        chapter_goal="目标",
+        characters=[],
+        recent_summaries=[],
+        review=True,
+        auto_repair=True,
+    )
+    assert result.revised is not None
+    assert result.review_after_repair is not None
+    assert result.final_text == result.revised
+    kinds = []
+    for call in provider.calls:
+        system = call["messages"][0]["content"]
+        if "章节策划" in system:
+            kinds.append("plan")
+        elif "严苛的网络小说章节编辑" in system:
+            kinds.append("review")
+        else:
+            kinds.append("draft/repair")
+    assert kinds == ["plan", "draft/repair", "review", "draft/repair", "review"]
+
+
+def test_run_skips_repair_and_rereview_on_pass():
+    engine, provider = make_engine()
+    provider.review_verdict = "pass"
+    result = engine.run(
+        bible=StoryBible(),
+        outline="纲",
+        chapter_goal="目标",
+        characters=[],
+        recent_summaries=[],
+        review=True,
+        auto_repair=True,
+    )
+    assert result.revised is None
+    assert result.review_after_repair is None
+    assert result.final_text == result.draft
 
 
 def test_render_scoring_pack_includes_goal_texts_and_rubric(tmp_path):

@@ -71,6 +71,11 @@ class ChapterResult:
     review: ChapterReview | None
     ai_flavor: dict[str, Any]
     revised: str | None = None
+    review_after_repair: ChapterReview | None = None
+
+    @property
+    def final_text(self) -> str:
+        return self.revised or self.draft
 
 
 class NovelEngine:
@@ -212,12 +217,15 @@ class NovelEngine:
         local_signals = detect_ai_flavor(draft)
         review_result = self.review(bible, plan, characters, draft) if review else None
         revised = None
+        review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = self.repair(draft, review_result, style)
+            review_after_repair = self.review(bible, plan, characters, revised)
         return ChapterResult(
             plan=plan,
             draft=draft,
             review=review_result,
             ai_flavor=local_signals,
             revised=revised,
+            review_after_repair=review_after_repair,
         )

@@ -49,3 +49,9 @@
 **Status:** ACTIVE
 
 远端 `dev/multi-model-drive-backend-v0-2`（2026-08-24 停更）包含 ProviderRouter（按 TaskKind 角色回退路由）与 RoutedNovelEngine（writer/reviewer 分离），但其基线落后 main，整体合并会删除 main 的记忆/评测子系统。处理：只做 **additive 移植**（orchestration + routed_engine + 测试），补上 `extra_context` 透传；dev 分支本身保持不动。动机：A/B 评测与生产都受益于"草稿用便宜模型、审校用强模型"的角色分离；所有端点仍走 OpenAI-compatible adapter（D-002 不变）。路由配置只读运行时环境变量（`NOVEL_LOCAL_*` / `NOVEL_COLAB_*` / `NOVEL_V4_*` / `NOVEL_REVIEW_*`），凭据不落盘。
+
+## D-010｜精修模式补"再审"，评审循环上限为一轮
+**Date:** 2026-09-15  
+**Status:** ACTIVE
+
+Product Spec §4 定义精修 = "计划 → 正文 → 双审校 → 局部修订 → **再审**"，此前实现缺最后一环：修复后从未验证问题是否真正解决。补齐：repair 后自动 re-review，结果入 `ChapterResult.review_after_repair`。**循环上限设为一轮修复+复审**：复审仍不通过时不自动再次修复——自动循环容易在同一个问题上反复震荡并烧 token，此时把决定权交给作者（查看复审 JSON、手动再修或接受）。这符合 A8（局部修复优先）与"不被全自动流水线绑架"的 North Star 原则。
