@@ -1,5 +1,14 @@
 # Current State
 
+## 2026-09-15（第五轮）
+
+精修模式补"再审"（D-010）。
+
+- `ChapterResult` 新增 `review_after_repair` 与 `final_text` 属性；`run()` 与工作台两步流的精修路径都在 repair 后自动 re-review。
+- UI 新增"精修复审"展示（verdict 着色；仍不通过时默认展开），复审不通过不自动二轮修复，交作者决定。
+- 记忆抽取入口与正文展示统一走 `final_text`。
+- 测试 43 项全过（新增：revise→修复→复审的完整调用序列断言；pass 时不触发修复与复审）。
+
 ## 2026-09-15（第四轮）
 
 实现 Product Spec 的"锁定人物"机制。

@@ -361,18 +361,21 @@ with write_tab:
             )
             review_result = None
             revised = None
+            review_after_repair = None
             if mode != "快速草稿":
                 review_result = engine.review(bible, plan, characters, draft)
                 if mode == "精修" and review_result.verdict == "revise":
                     revised = engine.repair(draft, review_result, style_from_state())
+                    review_after_repair = engine.review(bible, plan, characters, revised)
             st.session_state.last_result = ChapterResult(
                 plan=plan,
                 draft=draft,
                 review=review_result,
                 ai_flavor=detect_ai_flavor(draft),
                 revised=revised,
+                review_after_repair=review_after_repair,
             )
-            final_text = revised or draft
+            final_text = st.session_state.last_result.final_text
             st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
             store.write_chapter(project_name, chapter_id, final_text)
             st.success("章节已按确认的计划生成并保存到本地项目目录。")
@@ -397,7 +400,7 @@ with write_tab:
                 extra_context=context.prompt_sections(),
             )
             st.session_state.last_result = result
-            final_text = result.revised or result.draft
+            final_text = result.final_text
             st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
             store.write_chapter(project_name, chapter_id, final_text)
             st.success("章节已生成并保存到本地项目目录。")
@@ -418,7 +421,7 @@ with write_tab:
     if result:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
-        st.text_area("正文", value=result.revised or result.draft, height=720)
+        st.text_area("正文", value=result.final_text, height=720)
         if st.session_state.last_overlap > 0.01:
             st.warning(
                 f"参考文本 18 字符片段哈希重合率 {st.session_state.last_overlap:.2%}，建议检查是否出现不必要的近似复用。"
@@ -426,6 +429,11 @@ with write_tab:
         if result.review:
             with st.expander("编辑审校", expanded=False):
                 st.json(result.review.model_dump())
+        if result.review_after_repair:
+            verdict = result.review_after_repair.verdict
+            icon = "🟢" if verdict == "pass" else "🟠"
+            with st.expander(f"{icon} 精修复审（verdict: {verdict}）", expanded=verdict != "pass"):
+                st.json(result.review_after_repair.model_dump())
         with st.expander("本地 AI 味信号", expanded=False):
             st.json(result.ai_flavor)
 
@@ -435,7 +443,7 @@ with write_tab:
         if st.button("抽取本章记忆并回写", use_container_width=True):
             try:
                 engine = NovelEngine(make_provider())
-                final_text = result.revised or result.draft
+                final_text = result.final_text
                 extraction = engine.extract_memory(
                     current_bible(),
                     [Character.model_validate(c) for c in st.session_state.characters],
