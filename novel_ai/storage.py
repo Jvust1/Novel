@@ -51,6 +51,8 @@ class ProjectStore:
         return path
 
     def recent_chapter_summaries(self, project: str, limit: int = 4) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
         rows = self.all_chapter_summaries(project)
         return rows[-limit:]
 
@@ -66,7 +68,7 @@ class ProjectStore:
         return rows
 
     def save_extraction(self, project: str, extraction: dict[str, Any]) -> Path:
-        """Persist one chapter's memory extraction and append its summary row."""
+        """Persist extraction, preserving an existing chapter's summary position."""
         chapter_id = str(extraction.get("chapter_id") or "chapter").strip() or "chapter"
         self.write_json(project, f"memory/extractions/{self.slugify(chapter_id)}.json", extraction)
         summary = {
@@ -75,8 +77,15 @@ class ProjectStore:
             "summary": extraction.get("summary", ""),
         }
         rows = self.all_chapter_summaries(project)
-        rows = [r for r in rows if str(r.get("chapter_id")) != chapter_id]
-        rows.append(summary)
+        for index, row in enumerate(rows):
+            if str(row.get("chapter_id")) == chapter_id:
+                rows = rows[:index] + [summary] + [
+                    later for later in rows[index + 1:]
+                    if str(later.get("chapter_id")) != chapter_id
+                ]
+                break
+        else:
+            rows.append(summary)
         path = self.project_dir(project) / "memory" / "chapter_summaries.jsonl"
         with path.open("w", encoding="utf-8") as f:
             for row in rows:
