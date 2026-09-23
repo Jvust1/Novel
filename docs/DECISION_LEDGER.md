@@ -48,10 +48,18 @@
 **Date:** 2026-09-14  
 **Status:** ACTIVE
 
-远端 `dev/multi-model-drive-backend-v0-2`（2026-08-24 停更）包含 ProviderRouter（按 TaskKind 角色回退路由）与 RoutedNovelEngine（writer/reviewer 分离），但其基线落后 main，整体合并会删除 main 的记忆/评测子系统。处理：只做 **additive 移植**（orchestration + routed_engine + 测试），补上 `extra_context` 透传；dev 分支本身保持不动。动机：A/B 评测与生产都受益于"草稿用便宜模型、审校用强模型"的角色分离；所有端点仍走 OpenAI-compatible adapter（D-002 不变）。路由配置只读运行时环境变量（`NOVEL_LOCAL_*` / `NOVEL_COLAB_*` / `NOVEL_V4_*` / `NOVEL_REVIEW_*`），凭据不落盘。
+远端 `dev/multi-model-drive-backend-v0-2`（2026-08-24 停更）包含 ProviderRouter（按 TaskKind 角色回退路由）与 RoutedNovelEngine（writer/reviewer 分离），但其基线落后 main，整体合并会删除 main 的记忆/评测子系统。处理：只做 **additive 移植**（orchestration + routed_engine + 测试），补上 `extra_context` 透传；dev 分支本身保持不动。动机：A/B 评测与生产都受益于“草稿用便宜模型、审校用强模型”的角色分离；所有端点仍走 OpenAI-compatible adapter（D-002 不变）。路由配置只读运行时环境变量（`NOVEL_LOCAL_*` / `NOVEL_COLAB_*` / `NOVEL_V4_*` / `NOVEL_REVIEW_*`），凭据不落盘。
 
-## D-010｜精修模式补"再审"，评审循环上限为一轮
+## D-010｜精修模式补“再审”，评审循环上限为一轮
 **Date:** 2026-09-15  
 **Status:** ACTIVE
 
-Product Spec §4 定义精修 = "计划 → 正文 → 双审校 → 局部修订 → **再审**"，此前实现缺最后一环：修复后从未验证问题是否真正解决。补齐：repair 后自动 re-review，结果入 `ChapterResult.review_after_repair`。**循环上限设为一轮修复+复审**：复审仍不通过时不自动再次修复——自动循环容易在同一个问题上反复震荡并烧 token，此时把决定权交给作者（查看复审 JSON、手动再修或接受）。这符合 A8（局部修复优先）与"不被全自动流水线绑架"的 North Star 原则。
+Product Spec §4 定义精修 = “计划 → 正文 → 双审校 → 局部修订 → **再审**”，此前实现缺最后一环：修复后从未验证问题是否真正解决。补齐：repair 后自动 re-review，结果入 `ChapterResult.review_after_repair`。**循环上限设为一轮修复+复审**：复审仍不通过时不自动再次修复——自动循环容易在同一个问题上反复震荡并烧 token，此时把决定权交给作者（查看复审 JSON、手动再修或接受）。这符合 A8（局部修复优先）与“不被全自动流水线绑架”的 North Star 原则。
+
+## D-011｜正式 A/B 人工评分在锁分前隐藏变体身份
+**Date:** 2026-09-23  
+**Status:** ACTIVE
+
+E-001 的首次真实 A/B 已执行，但旧 `scoring_pack.md` 会直接暴露 `A_baseline` / `B_memory`、provider 标识和长期记忆注入量，不满足后续 G1 对“盲化人工评分”的要求。正式质量门从本决策起采用：同一用例两个输出以稳定的匿名 sample ID 呈现；评分者只看题目、正文、12 维锚点，不看 A/B 映射和实验条件；全部评分与理由锁定后才打开独立 `blind_map.json` 解盲并聚合。
+
+该变化只改变评分呈现与校验，不修改 frozen benchmark、不修改首次真实运行正文、不把旧结果重新称为 unseen。旧评分接口继续保留兼容，但进入 Evaluation Ledger 的正式 E-001 质量结论应优先使用盲化完整网格。若评分不完整、sample/run/case 身份不一致或存在非法分值，聚合器必须 fail closed，不得用缺失值代零或提前解盲补分。

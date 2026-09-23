@@ -58,7 +58,7 @@
 
 ### 评分与回填流程
 
-人工填写 `runs/run-20260914-153013/scoring_sheet.csv`（12 维 × 1–5），然后 `python scripts/aggregate_scores.py runs/run-20260914-153013/scoring_sheet.csv --write`，把聚合结果（含 B−A delta）回填本节。**在回填前，任何关于"长期记忆层提升/未提升质量"的表述都是未验证假设（D-007 继续有效）。**
+人工填写评分网格（12 维 × 1–5），然后聚合并把结果（含 B−A delta）回填本节。**在回填前，任何关于“长期记忆层提升/未提升质量”的表述都是未验证假设（D-007 继续有效）。**
 
 ### 已冻结
 
@@ -72,4 +72,10 @@ SHA-256 已记录在 `benchmark_manifest.json`，由 `load_benchmark` 与测试�
 
 ### A/B 设计
 
-单变量对照：`A_baseline`（v0.1：仅近章摘要）vs `B_memory`（v0.2：注入 Canon/Active/Recall 长期记忆）。同一模型、同一温度、同一章纲，唯一变量是长期记忆层。评分沿用 E-000 的 12 维度人工 1–5 分，评分表由运行器自动生成。
+单变量对照：`A_baseline`（v0.1：仅近章摘要）vs `B_memory`（v0.2：注入 Canon/Active/Recall 长期记忆）。同一模型、同一温度、同一章纲，唯一变量是长期记忆层。评分沿用 E-000 的 12 维度人工 1–5 分。
+
+### 2026-09-23｜评分协议加固（尚无质量结果）
+
+发现旧评分包直接显示 A/B 变体名、provider 和长期记忆注入量，会让评分者提前知道实验条件。按 D-011 新增盲化评分工作流：`render_blind_scoring_pack.py` 为 6 个输出生成匿名样本 ID 与独立评分表；真实 variant 映射只进入单独 `blind_map.json`，锁分前不得向评分者展示；`aggregate_blind_scores.py` 只接受完整 72/72 网格，校验 sample/run/case/维度与 1–5 分值后才解盲聚合。
+
+实现提交 `6450c401b6df15cafafe9987d59e5a8f08cd7769` 已由 GitHub Actions run `35832776502` 验证：编译和完整 `pytest -q` 均成功。**这只是评测工具链验证，不是小说质量验证。** E-001 状态继续保持 `RUN_EXECUTED_AWAITING_HUMAN_SCORE`；在真人完成 72/72 分值及理由并锁分前，不得写入 A/B 胜负、记忆层收益或 RAG/知识图谱路线结论。

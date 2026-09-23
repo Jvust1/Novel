@@ -1,0 +1,24 @@
+{
+  "schema_version": "novel_checkpoint_v1",
+  "generated_at": "2026-09-23T07:39:01Z",
+  "project": "Novel",
+  "checkpoint_type": "BLIND_HUMAN_SCORING_WORKFLOW_READY",
+  "branch": "feat/blind-scoring-workflow-20260923",
+  "base_main_sha": "5577f4b102446f12acb7f103994d9f846af223e6",
+  "implementation_commit": "6450c401b6df15cafafe9987d59e5a8f08cd7769",
+  "pull_request": 15,
+  "ci": {
+    "run_id": 35832776502,
+    "status": "completed",
+    "conclusion": "success",
+    "compileall": "success",
+    "pytest": "success"
+  },
+  "frozen_benchmark_modified": false,
+  "model_run_performed": false,
+  "human_score_status": "PENDING",
+  "expected_human_score_cells": 72,
+  "quality_result_available": false,
+  "drive_changes_this_checkpoint": 0,
+  "next_action": "RECOVER_FIRST_REAL_RUN_AND_COMPLETE_BLIND_72_OF_72_HUMAN_SCORING"
+}

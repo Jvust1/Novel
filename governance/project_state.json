@@ -6,16 +6,16 @@
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
-    "human scoring of run-20260914-153013 scoring sheet (12 dims x 1-5)",
-    "aggregate scores into EVALUATION_LEDGER and decide next model tier for benchmarking",
-    "decide RAG / knowledge graph only after scored A/B results"
+    "G1 quality gate: complete blind human scoring for run-20260914-153013 (3 cases x 2 samples x 12 dimensions = 72 score cells, with rationale)",
+    "keep A/B variant identity hidden until the human score grid is locked, then aggregate and write evidence into EVALUATION_LEDGER",
+    "use scored A/B evidence to decide the next model tier and whether vector RAG / knowledge graph materially improves quality"
   ],
   "implemented": [
     "Streamlit local web workspace",
     "OpenAI-compatible provider",
     "outline-to-scene planning",
     "character-state-aware drafting schema",
-    "draft/review/local-repair pipeline",
+    "draft/review/local-repair/re-review pipeline",
     "post-chapter memory extraction (summary, facts, character/knowledge deltas, timeline, foreshadowing)",
     "rule-based idempotent memory write-back with knowledge-boundary consistency",
     "Canon/Active/Recall context assembler with per-layer char budgets",
@@ -27,16 +27,27 @@
     "AI-flavor heuristic scan",
     "non-reversible reference shingle signature and overlap warning",
     "local project storage",
-    "basic tests and GitHub Actions workflow"
+    "basic tests and GitHub Actions workflow",
+    "A/B-blind human scoring workflow with opaque sample IDs, separate unblinding map, rationale field, and fail-closed complete-grid aggregation"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [],
+  "active_work": {
+    "branch": "feat/blind-scoring-workflow-20260923",
+    "pull_request": 15,
+    "implementation_commit": "6450c401b6df15cafafe9987d59e5a8f08cd7769",
+    "implementation_ci_run": 35832776502,
+    "implementation_ci_result": "success",
+    "human_score_status": "PENDING",
+    "quality_claim_allowed": false
+  },
   "next_steps": [
-    "run scripts/run_benchmark.py against a real endpoint (set NOVEL_BASE_URL/NOVEL_MODEL env only)",
-    "fill runs/<run_id>/scoring_sheet.csv (12 dims x 1-5) and write aggregated results into EVALUATION_LEDGER",
-    "use A/B results to decide whether vector RAG or knowledge graph materially improves quality",
-    "optional: DOCX/PDF reference import and full style profile editor"
+    "recover the existing immutable run-20260914-153013 from its authoritative retained location; do not rerun it and call it first-real",
+    "render blind_scoring_pack.md and blind_scoring_sheet.csv while keeping blind_map.json hidden from the scorer",
+    "complete all 72 human score cells with concise rationale before unblinding",
+    "aggregate only after the grid is complete, archive durable scoring evidence according to artifact policy, and update EVALUATION_LEDGER",
+    "only after scored evidence: decide whether to keep/modify the memory layer, choose the next model tier, and revisit RAG / knowledge graph"
   ],
-  "updated_at": "2026-09-14"
+  "updated_at": "2026-09-23"
 }
