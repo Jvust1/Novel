@@ -1,0 +1,27 @@
+{
+  "schema_version": "novel_pending_sync_v1",
+  "updated_at": "2026-09-23T07:44:00Z",
+  "items": [
+    {
+      "id": "NOVEL-SYNC-FIRST-REAL-001",
+      "status": "OPEN",
+      "severity": "blocking",
+      "artifact": "run-20260914-153013",
+      "authoritative_reference": "docs/EVALUATION_LEDGER.md#E-001",
+      "observed": {
+        "github": "not present by repository search; runs/ is intentionally gitignored",
+        "google_drive": "not found by run id, scoring_pack, urban_dispute, or 20260914 benchmark-oriented searches in the connected Drive",
+        "chatgpt_library": "no relevant run artifact found by run-id / benchmark / case-name search"
+      },
+      "risk": "The first-real evidence may be unavailable to future agents and cannot be honestly replaced by a new run. Blind human scoring requires the exact original six outputs.",
+      "required_action": [
+        "locate the exact existing run-20260914-153013 directory without rerunning",
+        "verify run.json and six output files correspond to the historical E-001 run",
+        "compute hashes and create a non-destructive archive",
+        "store the archive under the authoritative Novel Drive folder 135EL_t49i-Xyhncd9ZIukQg7_y27cEf-",
+        "register Drive file ID/path/hash/version/purpose in governance/artifact_manifest.json",
+        "only then perform blind 72/72 human scoring"
+      ]
+    }
+  ]
+}

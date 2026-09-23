@@ -6,6 +6,7 @@
   "status": "active",
   "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
   "current_focus": [
+    "recover the exact retained bytes of first-real run-20260914-153013 and archive/register them without rerunning or overwriting history",
     "G1 quality gate: complete blind human scoring for run-20260914-153013 (3 cases x 2 samples x 12 dimensions = 72 score cells, with rationale)",
     "keep A/B variant identity hidden until the human score grid is locked, then aggregate and write evidence into EVALUATION_LEDGER",
     "use scored A/B evidence to decide the next model tier and whether vector RAG / knowledge graph materially improves quality"
@@ -31,22 +32,37 @@
     "A/B-blind human scoring workflow with opaque sample IDs, separate unblinding map, rationale field, and fail-closed complete-grid aggregation"
   ],
   "frozen": false,
-  "blocking_issues": [],
-  "pending_sync": [],
+  "blocking_issues": [
+    "The exact first-real run-20260914-153013 bytes are referenced by EVALUATION_LEDGER but are not discoverable in connected GitHub, connected Google Drive, or the ChatGPT Library during the 2026-09-23 recovery pass. Human scoring must not proceed from reconstructed or rerun outputs."
+  ],
+  "pending_sync": [
+    {
+      "id": "NOVEL-SYNC-FIRST-REAL-001",
+      "status": "OPEN",
+      "severity": "blocking",
+      "artifact": "run-20260914-153013",
+      "reason": "First-real benchmark evidence is historically described as local-only; current connected GitHub/Drive/Library recovery found no exact durable copy. This evidence must be preserved before the G1 human-score gate can be closed.",
+      "required_action": "Locate the exact existing run directory without rerunning; verify run_id and six output identities; compute hashes; archive a recoverable copy under the authoritative Novel Drive folder; register the Drive identity/hash in artifact_manifest; then render the blind scoring pack from those exact bytes."
+    }
+  ],
   "active_work": {
     "branch": "feat/blind-scoring-workflow-20260923",
     "pull_request": 15,
     "implementation_commit": "6450c401b6df15cafafe9987d59e5a8f08cd7769",
     "implementation_ci_run": 35832776502,
     "implementation_ci_result": "success",
-    "human_score_status": "PENDING",
+    "governance_commit": "6a4b29f819d904509619de507cc4d7446fdf9d39",
+    "governance_ci_run": 35833171050,
+    "governance_ci_result": "success",
+    "human_score_status": "BLOCKED_ON_EXACT_RUN_RECOVERY",
     "quality_claim_allowed": false
   },
   "next_steps": [
-    "recover the existing immutable run-20260914-153013 from its authoritative retained location; do not rerun it and call it first-real",
-    "render blind_scoring_pack.md and blind_scoring_sheet.csv while keeping blind_map.json hidden from the scorer",
+    "locate the exact pre-existing run-20260914-153013; do not regenerate it and label the rerun as first-real",
+    "archive the exact run evidence to the authoritative Novel Drive folder and register hashes/Drive identity in artifact_manifest, clearing NOVEL-SYNC-FIRST-REAL-001",
+    "render blind_scoring_pack.md and blind_scoring_sheet.csv from the recovered run while keeping blind_map.json hidden from the scorer",
     "complete all 72 human score cells with concise rationale before unblinding",
-    "aggregate only after the grid is complete, archive durable scoring evidence according to artifact policy, and update EVALUATION_LEDGER",
+    "aggregate only after the grid is complete and update EVALUATION_LEDGER",
     "only after scored evidence: decide whether to keep/modify the memory layer, choose the next model tier, and revisit RAG / knowledge graph"
   ],
   "updated_at": "2026-09-23"
