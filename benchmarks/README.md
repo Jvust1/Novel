@@ -19,6 +19,30 @@
 
 ## 评分
 
-- 运行结束生成 `runs/<run_id>/scoring_sheet.csv`，人工按 E-000 的 12 维度填 1–5 分。
-- 填完后用 `novel_ai.eval.load_scores` + `aggregate_scores` 聚合，结果记入 `docs/EVALUATION_LEDGER.md`。
-- `runs/` 在 `.gitignore` 中；正式结果只以聚合数字和结论进入 ledger，章节正文归档 Drive。
+### 推荐：盲化人工评分
+
+对已经完成的 run，先生成独立盲化包：
+
+```bash
+python scripts/render_blind_scoring_pack.py runs/<run_id>
+```
+
+会生成：
+
+- `blind_scoring_pack.md`：只显示匿名样本标签，不显示 A/B 变体、provider 标识或长期记忆注入量；交给评分者。
+- `blind_scoring_sheet.csv`：12 维 × 1–5 分，并单独保留 `rationale` 理由列。
+- `blind_map.json`：匿名样本到真实 variant 的映射；**评分锁定前不要给评分者查看**。
+
+完成全部评分后：
+
+```bash
+python scripts/aggregate_blind_scores.py runs/<run_id> --write
+```
+
+聚合器会先要求评分网格完整，再解盲并复用 canonical `aggregate_scores` 计算 A/B 结果，写入 `blind_scores_summary.json`。缺分、未知样本、run/case 不匹配或非法分值都会 fail closed。
+
+### 兼容旧流程
+
+- 运行结束仍生成 `runs/<run_id>/scoring_sheet.csv`，供既有流程使用。
+- `novel_ai.eval.load_scores` + `aggregate_scores` 仍保持兼容。
+- `runs/` 在 `.gitignore` 中；正文与盲化评分工作文件默认不入 GitHub。正式聚合数字、方法和结论进入 `docs/EVALUATION_LEDGER.md`；需要长期保存的正文/评分证据按 artifact policy 归档 Drive。
