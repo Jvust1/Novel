@@ -1,3 +1,15 @@
+## 2026-09-25 Windows 长篇写作工作台交付更新
+
+- 基于现有 Novel 写作/记忆/盲评流水线补齐 Windows 工作台：稿件编辑、历史版本、项目备份/新项目恢复、场景计划确认、记忆确认与项目隔离。
+- 发布源码固定为 `b91c2efda0d066511524a2fdc5a89412edf6eaff`；不修改 main、不自动合并。
+- Windows delivery run `36149411690` 成功；71 项 pytest 通过，0 fail/skip。
+- 原生 EXE 自检 6 项；Microsoft Edge 界面/退出/重启检查 8 项；包内 3,679 个文件逐项验证通过。
+- 修复 Windows 换行导致冻结 benchmark 哈希误报、窗口化标准流为空、冻结运行误判为开发模式、Streamlit HTTP 服务退出不完整等问题。
+- 便携包：`Novel-Windows-Portable.zip`，96,125,968 bytes，SHA-256 `e09abfe598ff8d25d947dc8d7b548bbfb883d53ad507c1609122ff5da861c475`。
+- Drive 完整交付归档：`Novel-Windows-完整交付-20260925.zip`，文件 ID `1bqhuhhbNt-L2EyKpqQdzwuk32VfExSV8`。
+- Draft PR #16 已创建，未合并。
+- 边界保持：真实模型文笔、长篇一致性和人工盲评仍未最终验收；不伪造人工评分。
+
 # Current State
 
 ## 2026-09-15（第五轮）
