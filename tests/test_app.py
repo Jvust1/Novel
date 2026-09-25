@@ -62,7 +62,29 @@ def test_plan_confirmation_flow_gate(monkeypatch, tmp_path):
 
     # 注入一个待确认计划后：② 启用，计划编辑器出现且可编辑
     at.session_state["pending_plan_json"] = json.dumps({"chapter_title": "测试章", "scenes": []})
+    from novel_ai.models import StoryBible
+    from novel_ai.project_session import plan_binding
+    bible = StoryBible(title="MyNovel",genre="",tone="",premise="",themes=[],world_rules=[],locked_facts=[],forbidden_moves=[])
+    at.session_state["pending_plan_meta"] = {"binding": plan_binding("MyNovel","001",bible.model_dump(),[],"","")}
     at.session_state["plan_new"] = True
     at.run()
     assert at.button(key="btn_draft").disabled is False
     assert at.text_area(key="plan_editor").value == at.session_state["pending_plan_json"]
+
+
+def test_switch_project_does_not_leak_characters(monkeypatch, tmp_path):
+    at = run_app(monkeypatch, tmp_path)
+    at.session_state["characters"] = [{"name":"OnlyA"}]
+    at.text_input(key="project_name").set_value("OtherBook").run()
+    assert not at.exception
+    assert at.session_state["characters"] == []
+    assert at.session_state["last_result"] is None
+
+
+def test_stale_plan_cannot_generate(monkeypatch,tmp_path):
+    at=run_app(monkeypatch,tmp_path)
+    at.session_state["pending_plan_json"] = '{"chapter_title":"old","scenes":[]}'
+    at.session_state["pending_plan_meta"] = {"binding":"wrong"}
+    at.run()
+    assert at.button(key="btn_draft").disabled
+    assert at.button(key="btn_oneshot").disabled

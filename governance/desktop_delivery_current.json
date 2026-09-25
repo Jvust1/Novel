@@ -1,0 +1,14 @@
+{
+  "schema": "desktop_delivery_v1",
+  "repository": "Jvust2/Novel",
+  "version": "2026.09.25-rc1",
+  "scope": "desktop integration and safe local workflows",
+  "state": "IMPLEMENTED_WINDOWS_CI_REQUIRED",
+  "branch": "feat/desktop-delivery-20260925",
+  "verification": "Read completed desktop-delivery workflow artifacts; no test success is preclaimed",
+  "main_modified": false,
+  "automatic_merge": false,
+  "real_provider_calls_in_tests": 0,
+  "existing_research_quality_gates": "PRESERVED",
+  "user_device_acceptance": false
+}
