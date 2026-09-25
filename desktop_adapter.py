@@ -1,5 +1,4 @@
 from pathlib import Path
-import json
 import os
 import socket
 import subprocess
@@ -27,6 +26,8 @@ class Service:
 
 def serve(port,home,root,stop):
     os.environ['NOVEL_DATA_DIR']=str(home/'data')
+    # A frozen install path is not site-packages; do not misdetect it as Streamlit development.
+    os.environ['STREAMLIT_GLOBAL_DEVELOPMENT_MODE']='false'
     from streamlit.web import bootstrap
     from streamlit.runtime import Runtime
     def stop_watcher():
@@ -38,6 +39,7 @@ def serve(port,home,root,stop):
             time.sleep(.1)
     threading.Thread(target=stop_watcher,daemon=True).start()
     options={
+        'global.developmentMode':False,
         'server.address':'127.0.0.1','server.port':port,'server.headless':True,
         'server.enableCORS':True,'server.enableXsrfProtection':True,'server.fileWatcherType':'none',
         'server.runOnSave':False,'server.maxUploadSize':100,
