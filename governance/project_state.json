@@ -65,5 +65,20 @@
     "aggregate only after the grid is complete and update EVALUATION_LEDGER",
     "only after scored evidence: decide whether to keep/modify the memory layer, choose the next model tier, and revisit RAG / knowledge graph"
   ],
-  "updated_at": "2026-09-23"
+  "updated_at": "2026-09-23",
+  "as_of": "2026-09-25",
+  "desktop_delivery": {
+    "state": "NATIVE_WINDOWS_DELIVERY_VERIFIED_ARCHIVED_USER_DEVICE_PENDING",
+    "release_source_commit": "b91c2efda0d066511524a2fdc5a89412edf6eaff",
+    "release_workflow_run": 36149411690,
+    "windows_pytest_passed": 71,
+    "portable_file": "Novel-Windows-Portable.zip",
+    "portable_bytes": 96125968,
+    "portable_sha256": "e09abfe598ff8d25d947dc8d7b548bbfb883d53ad507c1609122ff5da861c475",
+    "drive_file_id": "1bqhuhhbNt-L2EyKpqQdzwuk32VfExSV8",
+    "review_pr": 16,
+    "main_modified": false,
+    "automatic_merge": false,
+    "user_device_acceptance": false
+  }
 }
