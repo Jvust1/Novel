@@ -1,10 +1,9 @@
 from pathlib import Path
+import asyncio
 import os
 import socket
 import subprocess
 import sys
-import threading
-import time
 import uuid
 from desktop_runtime import wait_http
 
@@ -24,20 +23,22 @@ class Service:
         self.log.close()
 
 
+async def serve_until_stopped(server,stop):
+    await server.start()
+    try:
+        while not stop.exists():await asyncio.sleep(.1)
+    finally:
+        # Stop the HTTP server as well as the runtime; Runtime.stop alone leaves
+        # the Starlette/Uvicorn listener alive in current Streamlit releases.
+        server.stop()
+        await server.stopped
+
+
 def serve(port,home,root,stop):
     os.environ['NOVEL_DATA_DIR']=str(home/'data')
-    # A frozen install path is not site-packages; do not misdetect it as Streamlit development.
     os.environ['STREAMLIT_GLOBAL_DEVELOPMENT_MODE']='false'
     from streamlit.web import bootstrap
-    from streamlit.runtime import Runtime
-    def stop_watcher():
-        while not stop.exists():time.sleep(.2)
-        for _ in range(100):
-            try:
-                if Runtime.exists():Runtime.instance().stop();return
-            except RuntimeError:pass
-            time.sleep(.1)
-    threading.Thread(target=stop_watcher,daemon=True).start()
+    from streamlit.web.server import Server
     options={
         'global.developmentMode':False,
         'server.address':'127.0.0.1','server.port':port,'server.headless':True,
@@ -47,7 +48,10 @@ def serve(port,home,root,stop):
         'theme.font':'sans-serif',
     }
     bootstrap.load_config_options(options)
-    bootstrap.run(str(root/'app.py'),False,[],options)
+    script=str(root/'app.py')
+    sys.path.insert(0,str(root));sys.argv=[script]
+    bootstrap.prepare_streamlit_environment(script)
+    asyncio.run(serve_until_stopped(Server(script,False),stop))
 
 
 def start(home,root,intake=False):
@@ -79,5 +83,5 @@ def self_test(home,root):
     svc=start(home,root)
     try:wait_http(svc.health_url,svc.process)
     finally:svc.close()
-    assert svc.process.returncode==0
+    assert svc.process.returncode==0,(home/'service.log').read_text(encoding='utf-8',errors='replace')[-6000:]
     return {'ok':True,'checks':['packaged Streamlit startup','127.0.0.1 health','atomic manuscript save','history retained','new-project restore','graceful service stop'],'model_calls':0}
