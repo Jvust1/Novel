@@ -1,0 +1,38 @@
+{
+  "schema_version": "novel_checkpoint_v1",
+  "generated_at": "2026-09-23T07:44:00Z",
+  "project": "Novel",
+  "checkpoint_type": "BLIND_HUMAN_SCORING_WORKFLOW_READY_RUN_RECOVERY_BLOCKED",
+  "branch": "feat/blind-scoring-workflow-20260923",
+  "base_main_sha": "5577f4b102446f12acb7f103994d9f846af223e6",
+  "implementation_commit": "6450c401b6df15cafafe9987d59e5a8f08cd7769",
+  "governance_commit": "6a4b29f819d904509619de507cc4d7446fdf9d39",
+  "pull_request": 15,
+  "verified_ci": [
+    {
+      "run_id": 35832776502,
+      "head_sha": "6450c401b6df15cafafe9987d59e5a8f08cd7769",
+      "conclusion": "success"
+    },
+    {
+      "run_id": 35833171050,
+      "head_sha": "6a4b29f819d904509619de507cc4d7446fdf9d39",
+      "conclusion": "success"
+    }
+  ],
+  "frozen_benchmark_modified": false,
+  "model_run_performed": false,
+  "human_score_status": "BLOCKED_ON_EXACT_RUN_RECOVERY",
+  "expected_human_score_cells": 72,
+  "quality_result_available": false,
+  "first_real_run_recovery": {
+    "run_id": "run-20260914-153013",
+    "connected_github_found": false,
+    "connected_drive_found": false,
+    "chatgpt_library_found": false,
+    "rerun_allowed_as_replacement": false,
+    "pending_sync_id": "NOVEL-SYNC-FIRST-REAL-001"
+  },
+  "drive_changes_this_checkpoint": 0,
+  "next_action": "RECOVER_AND_ARCHIVE_EXACT_FIRST_REAL_RUN_THEN_COMPLETE_BLIND_72_OF_72_HUMAN_SCORING"
+}
