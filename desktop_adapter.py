@@ -37,7 +37,6 @@ def serve(port,home,root,stop):
             except RuntimeError:pass
             time.sleep(.1)
     threading.Thread(target=stop_watcher,daemon=True).start()
-    # Explicit same-host safety and privacy settings; no security disabling.
     options={
         'server.address':'127.0.0.1','server.port':port,'server.headless':True,
         'server.enableCORS':True,'server.enableXsrfProtection':True,'server.fileWatcherType':'none',
@@ -62,7 +61,10 @@ def start(home,root,intake=False):
                           cwd=home,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     svc=Service(proc,f'http://127.0.0.1:{port}',stop,log)
     try:wait_http(svc.health_url,proc)
-    except BaseException:svc.close();raise
+    except Exception as error:
+        svc.close()
+        detail=(home/'service.log').read_text(encoding='utf-8',errors='replace')[-6000:]
+        raise RuntimeError('本机服务未就绪。启动日志：\n'+detail) from error
     return svc
 
 
