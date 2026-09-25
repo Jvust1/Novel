@@ -1,0 +1,2 @@
+# Preserve Git blob bytes on every platform; do not rewrite frozen cases.
+* -text

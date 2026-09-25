@@ -1,0 +1,66 @@
+name: Verified Windows desktop delivery
+on:
+  push:
+    branches: [feat/desktop-delivery-20260925]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-delivery-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      DESKTOP_APP: Novel
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve source identity before build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force delivery/evidence | Out-Null
+          git archive --format=zip HEAD -o delivery/Novel-Source-and-Tests.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git rev-parse HEAD | Set-Content -Encoding utf8 delivery/SOURCE_COMMIT.txt
+          "NOVEL_BOOT_LOG=$env:GITHUB_WORKSPACE/delivery/evidence/boot.log" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements-dev.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pyinstaller==6.22.3 playwright==1.63.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m playwright install chromium
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip freeze | Set-Content -Encoding utf8 delivery/evidence/dependencies.txt
+      - name: Full source regression tests
+        shell: pwsh
+        run: |
+          python -m pytest tests -ra --junitxml=delivery/evidence/pytest.xml 2>&1 | Tee-Object delivery/evidence/pytest.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build EXE and verify native process, browser, and restart persistence
+        shell: pwsh
+        run: |
+          python tools/build_windows_delivery.py 2>&1 | Tee-Object delivery/evidence/build.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Novel-windows-${{ github.sha }}
+          path: delivery/
+          retention-days: 14
+          if-no-files-found: error

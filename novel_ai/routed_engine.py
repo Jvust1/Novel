@@ -49,8 +49,10 @@ class RoutedNovelEngine:
             reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider)
             review_result = reviewer.review(bible, plan, characters, draft)
         revised = None
+        review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = writer.repair(draft, review_result, style)
+            review_after_repair = reviewer.review(bible, plan, characters, revised)
         from .style_engine import detect_ai_flavor
 
         return ChapterResult(
@@ -59,4 +61,5 @@ class RoutedNovelEngine:
             review=review_result,
             ai_flavor=detect_ai_flavor(draft),
             revised=revised,
+            review_after_repair=review_after_repair,
         )

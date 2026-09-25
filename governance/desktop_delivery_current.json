@@ -1,0 +1,49 @@
+{
+  "schema": "desktop_delivery_v1",
+  "repository": "Jvust2/Novel",
+  "version": "2026.09.25-rc1",
+  "scope": "desktop integration and safe local workflows",
+  "state": "NATIVE_WINDOWS_DELIVERY_VERIFIED_ARCHIVED_USER_DEVICE_PENDING",
+  "branch": "feat/desktop-delivery-20260925",
+  "verification": "Distributed binaries are pinned to release_source_commit, not this subsequent governance-only publication.",
+  "release_source_commit": "b91c2efda0d066511524a2fdc5a89412edf6eaff",
+  "release_workflow_run": 36149411690,
+  "verification_result": {
+    "windows_pytest_top_level_passed": 71,
+    "failed": 0,
+    "skipped": 0,
+    "native_executable_checks": 6,
+    "actual_edge_browser_checks": 8,
+    "package_manifest_files_verified": 3679,
+    "zip_crc": "PASS",
+    "pe_architecture": "x64",
+    "fonts_distributed": 0,
+    "environment": "GitHub Windows Server 2025 / Microsoft Edge; not user hardware"
+  },
+  "portable": {
+    "file": "Novel-Windows-Portable.zip",
+    "bytes": 96125968,
+    "sha256": "e09abfe598ff8d25d947dc8d7b548bbfb883d53ad507c1609122ff5da861c475",
+    "launch": "Extract the entire archive and run Novel/Novel.exe; preserve _internal"
+  },
+  "archive": {
+    "status": "UPLOADED_METADATA_READBACK_VERIFIED",
+    "drive_folder_id": "135EL_t49i-Xyhncd9ZIukQg7_y27cEf-",
+    "drive_file_id": "1bqhuhhbNt-L2EyKpqQdzwuk32VfExSV8",
+    "file": "Novel-Windows-完整交付-20260925.zip",
+    "bytes": 95747628,
+    "uploaded_snapshot_sha256": "1c84f5cbcf22028bfd4075b3f6813c4efe1de6b9b6376ff94520040fd6bea860",
+    "github_artifact_id": 10871440377,
+    "contents": ["portable app", "exact source and tests", "verification evidence", "checksums"],
+    "readback_scope": "Drive ID, filename, bytes and parent verified; no claim of independent provider checksum readback"
+  },
+  "native_fixes": ["preserve Git bytes on Windows without editing frozen benchmark", "initialize windowed standard streams", "disable frozen development-mode misdetection", "stop and await complete HTTP server rather than runtime only"],
+  "main_modified": false,
+  "automatic_merge": false,
+  "real_provider_calls_in_tests": 0,
+  "existing_research_quality_gates": "PRESERVED",
+  "user_device_acceptance": false,
+  "limits": ["user must configure an existing model endpoint for AI writing", "real writing quality and long-form consistency not independently accepted", "no fabricated human blind scores", "unsigned executable"],
+  "pending_sync_this_release": [],
+  "other_project_pending_sync": "Unchanged; this receipt closes only the identified desktop artifacts"
+}

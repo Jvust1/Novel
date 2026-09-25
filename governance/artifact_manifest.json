@@ -4,10 +4,23 @@
     "name": "Novel",
     "id": "135EL_t49i-Xyhncd9ZIukQg7_y27cEf-"
   },
-  "artifacts": [],
+  "artifacts": [
+    {
+      "artifact_id": "novel-windows-delivery-20260925",
+      "file_name": "Novel-Windows-完整交付-20260925.zip",
+      "type": "generated_release",
+      "drive_file_id_or_path": "1bqhuhhbNt-L2EyKpqQdzwuk32VfExSV8",
+      "drive_parent_id": "135EL_t49i-Xyhncd9ZIukQg7_y27cEf-",
+      "size_bytes": 95747628,
+      "release_source_commit": "b91c2efda0d066511524a2fdc5a89412edf6eaff",
+      "purpose": "Verified Windows Novel writing workstation with exact source/tests and evidence.",
+      "status": "archived_verified_windows_ci_user_device_pending"
+    }
+  ],
   "notes": [
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
     "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived."
-  ]
+  ],
+  "last_updated": "2026-09-25"
 }
