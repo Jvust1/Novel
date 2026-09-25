@@ -1,0 +1,26 @@
+name: Desktop delivery
+on:
+  push:
+    branches: [feat/desktop-delivery-20260925]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export exact tracked source
+        run: |
+          mkdir -p delivery
+          git archive --format=zip HEAD -o delivery/Novel-source.zip
+          git rev-parse HEAD > delivery/SOURCE_COMMIT.txt
+          sha256sum delivery/Novel-source.zip > delivery/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Novel-source-${{ github.sha }}
+          path: delivery/
+          retention-days: 14
+          if-no-files-found: error
