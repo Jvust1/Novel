@@ -1,3 +1,7 @@
+# Current status
+
+This preflight document is historical reference only and is not a current operational requirement.
+
 # Pre-flight Checklist
 
 重大修改前检查：
