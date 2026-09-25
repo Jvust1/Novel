@@ -1,3 +1,11 @@
+## 2026-09-25 最新交付接手点
+
+- Windows 发布源码：`b91c2efda0d066511524a2fdc5a89412edf6eaff`。
+- Drive 完整交付文件 ID：`1bqhuhhbNt-L2EyKpqQdzwuk32VfExSV8`。
+- Draft PR：#16；未合并、不得自动合并。
+- 用户本人 Windows 设备验收仍未完成；发布包的自动验收环境为 GitHub hosted Windows / Microsoft Edge。
+- 真实模型文笔、长篇一致性与人工盲评仍是质量证据主门禁。
+
 # Handoff
 
 ## Novel v0.1-dev
