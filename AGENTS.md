@@ -1,3 +1,7 @@
+# Current status
+
+Legacy cross-project startup, safety, and sync rules below are historical reference only and are not current operational requirements.
+
 # AGENTS.md
 
 任何 GPT / Claude / Codex / DeepSeek / 本地 Agent 接手 Novel 前，按以下顺序恢复状态。
