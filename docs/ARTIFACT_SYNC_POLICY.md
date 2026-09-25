@@ -1,3 +1,7 @@
+# Current status
+
+This synchronization document is historical reference only and is not a current operational requirement.
+
 # Artifact Sync Policy
 
 This policy defines required synchronization behavior between a local/Work/Codex workspace, GitHub, and the project Google Drive vault.
