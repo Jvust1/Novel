@@ -1,15 +1,16 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "foundation-v0.2-commercial-target-defined",
+  "stage": "foundation-v0.2-open-source-integration",
   "version": "0.2.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
-    "build Reference Pack -> Style DNA + Story DNA extraction and blending",
-    "upgrade evaluation from single-chapter quality to human-feel, originality, opening-hook and commercial-readiness gates",
-    "add Fanqie-oriented Market Profile and release/feedback loop",
-    "finish human scoring of run-20260914-153013 and keep it as the continuity A/B baseline"
+    "build Story DNA schema/extractor on top of the new multi-source Reference Pack",
+    "add originality gate: shingle + fuzzy + embedding + event-sequence similarity",
+    "port hierarchical outline ideas from DOC/DOC StoryGen v2 behind frozen A/B tests",
+    "evaluate graph/RAG recall backends without replacing Canon/Active/Recall by default",
+    "add Fanqie opening/first-20-chapter commercial-readiness benchmark"
   ],
   "implemented": [
     "Streamlit local web workspace",
@@ -28,20 +29,27 @@
     "AI-flavor heuristic scan",
     "non-reversible reference shingle signature and overlap warning",
     "local project storage",
-    "basic tests and GitHub Actions workflow"
+    "basic tests and GitHub Actions workflow",
+    "open-source integration registry covering 38 upstream GitHub projects with license/adoption gates",
+    "multi-source non-reversible Reference Pack builder",
+    "optional jieba lexical statistics in Reference Pack",
+    "semantic similarity module with dependency-free fallback plus text2vec/FlagEmbedding adapters",
+    "capability-grouped optional dependency manifests",
+    "integration health-check and Reference Pack CLI scripts"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [],
   "next_steps": [
     "add StoryPatternProfile / Story DNA schema and extractor",
-    "build a Reference Pack workflow for multiple TXT/DOCX/PDF novels with weighting and per-source provenance",
-    "build originality gates for plot/character/event-sequence similarity in addition to text overlap",
-    "add MarketProfile and Fanqie Release Pack generation (title, blurb, tags, opening check, chapter preflight)",
-    "upgrade Human-feel Engine with character idiolect, rhythm variance, scene-detail and template-repetition checks",
+    "add Docling and MarkItDown advanced readers with deterministic fallback",
+    "build originality gates for lexical, embedding, character/world and event-sequence similarity",
+    "port DOC-style hierarchical outline expansion behind an experiment flag",
+    "implement Qdrant/LightRAG/HippoRAG/Graphiti recall adapters behind ContextAssembler and A/B gate them",
+    "add promptfoo/DeepEval regression configs for frozen chapter tests",
+    "add MarketProfile and Fanqie Release Pack generation",
     "add first-3-chapter / first-20-chapter benchmark cases and publishability blind scoring",
-    "run scripts/run_benchmark.py against stronger endpoints and complete the existing scoring ledger",
-    "add platform-feedback import so future arcs can respond to real reader data without rewriting published canon"
+    "finish human scoring of run-20260914-153013 and keep it as continuity baseline"
   ],
   "updated_at": "2026-09-27"
 }

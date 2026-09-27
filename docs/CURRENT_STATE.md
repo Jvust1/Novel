@@ -1,5 +1,48 @@
 # Current State
 
+## 2026-09-27（开源生态集成第一轮）
+
+围绕最终目标（多本参考小说 → Style DNA + Story DNA → 原创长篇 → 人味/原创性/番茄发布评测）完成第一轮开源能力纳入。
+
+### 本轮落地
+
+- 新增 `governance/open_source_registry.json`：首批 **38 个** GitHub 上游项目按许可证、优先级、集成模式和用途登记。
+- 新增 `docs/OPEN_SOURCE_INTEGRATION.md`：定义 direct-optional / adapter / research-port / experiment-candidate / external-runtime / architecture-reference-only 六种纳入方式，禁止无脑 vendor 整库。
+- 新增 `novel_ai/integrations.py`：运行时开源能力注册表与可选依赖探测。
+- 新增 `novel_ai/reference_pack.py`：可从多份 TXT/MD/DOCX/PDF 构建 Reference Pack；仅保存派生 Style Fingerprint、provenance 与不可逆 shingle 签名，不保存参考正文。
+- 新增 `novel_ai/semantic.py`：内置中文字符 n-gram 相似度，并提供 text2vec / FlagEmbedding 懒加载适配器，为原创性检查和 Recall 做准备。
+- 新增 `scripts/build_reference_pack.py` 与 `scripts/check_integrations.py`。
+- 新增 `requirements-extras/`：NLP、文档解析、Memory/RAG、评测、Provider 五组可选依赖，默认安装保持轻量。
+- 新增 3 组测试：integration registry、Reference Pack、semantic similarity。
+
+### 首批重点上游
+
+- 长篇故事：DOC / DOC StoryGen v2 / Re3。
+- 中文与语义：HanLP / jieba / text2vec / FlagEmbedding / sentence-transformers / RapidFuzz。
+- 文档导入：Docling / MarkItDown / Unstructured。
+- 长篇记忆实验：GraphRAG / LightRAG / HippoRAG / Graphiti / Mem0。
+- 向量存储：Qdrant / Chroma。
+- 模型运行/路由：LiteLLM / Ollama / vLLM。
+- 评测：DeepEval / Ragas / Promptfoo / Langfuse / story-evaluation-llm / OpenAI Evals。
+- 产品/上下文参考：SillyTavern、AI-Novel-Writing-Assistant（只做架构参考，受许可证策略约束）。
+
+### 许可证策略
+
+- MIT / Apache-2.0：可以依赖、适配或在保留 notice 的前提下移植必要实现。
+- AGPL-3.0：默认外部运行或架构参考，不把源码直接并入 Novel。
+- 未检测到许可证：只做架构参考，不复制代码。
+
+### 仍需继续
+
+本轮主要完成“生态接入口 + Reference Pack 基础”。下一轮优先：
+1. Story DNA schema 与事件/套路抽取；
+2. Docling/MarkItDown 高级 reader；
+3. shingle + fuzzy + embedding + event-sequence 四层原创性 Gate；
+4. DOC 风格层级大纲扩展；
+5. Graph/RAG Recall A/B adapter；
+6. 番茄前三章/前 20 章商业可读性 benchmark。
+
+
 ## 2026-09-15（第五轮）
 
 精修模式补"再审"（D-010）。

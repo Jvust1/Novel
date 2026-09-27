@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-09-27",
+  "project": "Novel",
+  "policy": {
+    "default": "Prefer dependency/adapters over vendoring upstream source.",
+    "license_gate": "MIT/Apache projects may be integrated subject to notices; AGPL stays external/reference unless separately reviewed; no-license repositories are architecture-reference-only.",
+    "quality_gate": "RAG/graph/agent frameworks are not enabled merely because they exist; benchmark before replacing the current deterministic core.",
+    "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
+  },
+  "counts": {
+    "total": 38,
+    "p0": 8,
+    "p1": 15,
+    "no_license": 2,
+    "agpl": 2
+  },
+  "entries": [
+    {
+      "key": "re3",
+      "repo": "yangkevin2/emnlp22-re3-story-generation",
+      "category": "story_generation",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P1",
+      "use": "递归 reprompt + revision；用于长篇生成/修订实验"
+    },
+    {
+      "key": "doc_story",
+      "repo": "yangkevin2/doc-story-generation",
+      "category": "story_generation",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P0",
+      "use": "详细大纲控制；吸收到 Story Forge 的层级规划"
+    },
+    {
+      "key": "doc_story_v2",
+      "repo": "facebookresearch/doc-storygen-v2",
+      "category": "story_generation",
+      "license": "Apache-2.0",
+      "mode": "research-port",
+      "priority": "P0",
+      "use": "Premise→Plan→Story 现代化实现；作为 Story DNA/长篇生成骨架参考"
+    },
+    {
+      "key": "chinese_novelist_skill",
+      "repo": "PenglongHuang/chinese-novelist-skill",
+      "category": "story_generation",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P1",
+      "use": "中文小说问答、偏好记忆、断点续写与校验流程"
+    },
+    {
+      "key": "booknlp",
+      "repo": "booknlp/booknlp",
+      "category": "literary_nlp",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P2",
+      "use": "人物/对白/叙事分析思想；英文中心，不作为中文默认后端"
+    },
+    {
+      "key": "hanlp",
+      "repo": "hankcs/HanLP",
+      "category": "chinese_nlp",
+      "license": "Apache-2.0",
+      "mode": "direct-optional",
+      "priority": "P1",
+      "use": "中文分词、词性、NER 等深层文本特征"
+    },
+    {
+      "key": "jieba",
+      "repo": "fxsjy/jieba",
+      "category": "chinese_nlp",
+      "license": "MIT",
+      "mode": "direct-optional",
+      "priority": "P0",
+      "use": "轻量中文分词与 Reference Pack 词汇统计"
+    },
+    {
+      "key": "text2vec",
+      "repo": "shibing624/text2vec",
+      "category": "embeddings",
+      "license": "Apache-2.0",
+      "mode": "adapter",
+      "priority": "P0",
+      "use": "中文语义向量、相似度、原创性/Recall 检索"
+    },
+    {
+      "key": "flagembedding",
+      "repo": "FlagOpen/FlagEmbedding",
+      "category": "embeddings",
+      "license": "MIT",
+      "mode": "adapter",
+      "priority": "P0",
+      "use": "BGE 向量/重排器；Reference similarity 与 Recall"
+    },
+    {
+      "key": "sentence_transformers",
+      "repo": "huggingface/sentence-transformers",
+      "category": "embeddings",
+      "license": "Apache-2.0",
+      "mode": "adapter",
+      "priority": "P1",
+      "use": "通用 embedding 备选"
+    },
+    {
+      "key": "rapidfuzz",
+      "repo": "rapidfuzz/RapidFuzz",
+      "category": "originality",
+      "license": "MIT",
+      "mode": "direct-optional",
+      "priority": "P0",
+      "use": "人名/短语/事件摘要近似匹配与去重"
+    },
+    {
+      "key": "docling",
+      "repo": "docling-project/docling",
+      "category": "document_ingest",
+      "license": "MIT",
+      "mode": "adapter",
+      "priority": "P0",
+      "use": "复杂 PDF/DOCX/版面解析，增强参考小说导入"
+    },
+    {
+      "key": "markitdown",
+      "repo": "microsoft/markitdown",
+      "category": "document_ingest",
+      "license": "MIT",
+      "mode": "adapter",
+      "priority": "P1",
+      "use": "多文档统一转 Markdown"
+    },
+    {
+      "key": "unstructured",
+      "repo": "Unstructured-IO/unstructured",
+      "category": "document_ingest",
+      "license": "Apache-2.0",
+      "mode": "adapter",
+      "priority": "P2",
+      "use": "文档 partition/metadata 备用路径"
+    },
+    {
+      "key": "graphrag",
+      "repo": "microsoft/graphrag",
+      "category": "memory_retrieval",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P1",
+      "use": "全局/局部图检索；仅在 A/B 证明收益后启用"
+    },
+    {
+      "key": "lightrag",
+      "repo": "HKUDS/LightRAG",
+      "category": "memory_retrieval",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P1",
+      "use": "轻量图+向量 Recall"
+    },
+    {
+      "key": "hipporag",
+      "repo": "OSU-NLP-Group/HippoRAG",
+      "category": "memory_retrieval",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P1",
+      "use": "关联式检索，适合长篇跨章关系回忆实验"
+    },
+    {
+      "key": "mem0",
+      "repo": "mem0ai/mem0",
+      "category": "memory_retrieval",
+      "license": "Apache-2.0",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "记忆抽取/检索模式参考"
+    },
+    {
+      "key": "graphiti",
+      "repo": "getzep/graphiti",
+      "category": "memory_retrieval",
+      "license": "Apache-2.0",
+      "mode": "experiment-candidate",
+      "priority": "P1",
+      "use": "带时间维度的知识图谱；适合人物/事件历史"
+    },
+    {
+      "key": "llama_index",
+      "repo": "run-llama/llama_index",
+      "category": "orchestration",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "索引/检索抽象，不替换 Novel 核心管线"
+    },
+    {
+      "key": "langchain",
+      "repo": "langchain-ai/langchain",
+      "category": "orchestration",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "外部工具和 retriever 接入模式"
+    },
+    {
+      "key": "haystack",
+      "repo": "deepset-ai/haystack",
+      "category": "orchestration",
+      "license": "Apache-2.0",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "可组合 pipeline 组件模式"
+    },
+    {
+      "key": "chroma",
+      "repo": "chroma-core/chroma",
+      "category": "vector_store",
+      "license": "Apache-2.0",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "本地向量库候选"
+    },
+    {
+      "key": "qdrant",
+      "repo": "qdrant/qdrant",
+      "category": "vector_store",
+      "license": "Apache-2.0",
+      "mode": "experiment-candidate",
+      "priority": "P1",
+      "use": "长篇项目向量库候选"
+    },
+    {
+      "key": "litellm",
+      "repo": "BerriAI/litellm",
+      "category": "model_routing",
+      "license": "MIT-core",
+      "mode": "adapter",
+      "priority": "P1",
+      "use": "统一多模型 Provider；企业目录不纳入"
+    },
+    {
+      "key": "ollama",
+      "repo": "ollama/ollama",
+      "category": "model_runtime",
+      "license": "MIT",
+      "mode": "external-runtime",
+      "priority": "P0",
+      "use": "本地模型运行时；Novel 已兼容 OpenAI-like 端点"
+    },
+    {
+      "key": "vllm",
+      "repo": "vllm-project/vllm",
+      "category": "model_runtime",
+      "license": "Apache-2.0",
+      "mode": "external-runtime",
+      "priority": "P1",
+      "use": "GPU 高吞吐 OpenAI-compatible serving"
+    },
+    {
+      "key": "deepeval",
+      "repo": "confident-ai/deepeval",
+      "category": "evaluation",
+      "license": "Apache-2.0",
+      "mode": "adapter",
+      "priority": "P1",
+      "use": "LLM 回归/自定义 rubric 测试"
+    },
+    {
+      "key": "ragas",
+      "repo": "vibrantlabsai/ragas",
+      "category": "evaluation",
+      "license": "Apache-2.0",
+      "mode": "adapter",
+      "priority": "P2",
+      "use": "Recall/RAG 质量指标"
+    },
+    {
+      "key": "promptfoo",
+      "repo": "promptfoo/promptfoo",
+      "category": "evaluation",
+      "license": "MIT",
+      "mode": "external-tool",
+      "priority": "P1",
+      "use": "模型×Prompt 矩阵与回归测试"
+    },
+    {
+      "key": "langfuse",
+      "repo": "langfuse/langfuse",
+      "category": "observability",
+      "license": "MIT-core",
+      "mode": "adapter",
+      "priority": "P2",
+      "use": "Prompt trace、成本、延迟、实验记录；EE 目录不纳入"
+    },
+    {
+      "key": "story_eval_dataset",
+      "repo": "lars76/story-evaluation-llm",
+      "category": "evaluation",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P1",
+      "use": "创意写作评价维度/数据集结构参考"
+    },
+    {
+      "key": "storybench",
+      "repo": "Nazuna-io/storybench",
+      "category": "evaluation",
+      "license": "NO_LICENSE_DETECTED",
+      "mode": "architecture-reference-only",
+      "priority": "P3",
+      "use": "并行创作评测架构；不复制代码"
+    },
+    {
+      "key": "ai_novel_assistant",
+      "repo": "sf621128/AI-Novel-Writing-Assistant",
+      "category": "product_reference",
+      "license": "NO_LICENSE_DETECTED",
+      "mode": "architecture-reference-only",
+      "priority": "P2",
+      "use": "Creative Hub/RAG/小说生产链路参考；不复制代码"
+    },
+    {
+      "key": "dspy",
+      "repo": "stanfordnlp/dspy",
+      "category": "prompt_optimization",
+      "license": "MIT",
+      "mode": "experiment-candidate",
+      "priority": "P2",
+      "use": "用冻结 benchmark 优化 prompt/program，而非凭感觉调 Prompt"
+    },
+    {
+      "key": "openai_evals",
+      "repo": "openai/evals",
+      "category": "evaluation",
+      "license": "MIT",
+      "mode": "research-port",
+      "priority": "P2",
+      "use": "可复现实验 registry 与 eval 结构"
+    },
+    {
+      "key": "sillytavern",
+      "repo": "SillyTavern/SillyTavern",
+      "category": "context_product",
+      "license": "AGPL-3.0",
+      "mode": "architecture-reference-only",
+      "priority": "P3",
+      "use": "Lorebook/World Info/上下文 UX 参考；不复制到 Novel"
+    },
+    {
+      "key": "koboldcpp",
+      "repo": "LostRuins/koboldcpp",
+      "category": "model_runtime",
+      "license": "AGPL-3.0",
+      "mode": "external-runtime",
+      "priority": "P3",
+      "use": "GGUF 外部运行时，可通过 API 使用，不嵌入源码"
+    }
+  ]
+}

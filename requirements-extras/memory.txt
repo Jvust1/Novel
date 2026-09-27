@@ -1,0 +1,10 @@
+# Experimental long-form memory / retrieval
+graphrag
+lightrag-hku
+mem0ai
+graphiti-core
+llama-index
+langchain
+haystack-ai
+chromadb
+qdrant-client

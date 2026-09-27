@@ -1,0 +1,7 @@
+# Chinese NLP / semantic similarity
+jieba
+hanlp
+text2vec
+FlagEmbedding
+sentence-transformers
+rapidfuzz
