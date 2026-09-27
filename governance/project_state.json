@@ -1,26 +1,27 @@
 {
   "project": "Novel",
-  "repository": "Jvust2/Novel",
-  "stage": "foundation-v0.1-runnable",
-  "version": "0.1.0-dev",
+  "repository": "Jvust/Novel",
+  "stage": "foundation-v0.2-commercial-target-defined",
+  "version": "0.2.0-dev",
   "status": "active",
-  "north_star": "Build a Chinese web-fiction AI writing assistant that prioritizes plot causality, character depth, long-form continuity, outline expansion, and a human-feeling composite prose style.",
+  "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
-    "human scoring of run-20260914-153013 scoring sheet (12 dims x 1-5)",
-    "aggregate scores into EVALUATION_LEDGER and decide next model tier for benchmarking",
-    "decide RAG / knowledge graph only after scored A/B results"
+    "build Reference Pack -> Style DNA + Story DNA extraction and blending",
+    "upgrade evaluation from single-chapter quality to human-feel, originality, opening-hook and commercial-readiness gates",
+    "add Fanqie-oriented Market Profile and release/feedback loop",
+    "finish human scoring of run-20260914-153013 and keep it as the continuity A/B baseline"
   ],
   "implemented": [
     "Streamlit local web workspace",
     "OpenAI-compatible provider",
     "outline-to-scene planning",
     "character-state-aware drafting schema",
-    "draft/review/local-repair pipeline",
+    "draft/review/local-repair/re-review pipeline",
     "post-chapter memory extraction (summary, facts, character/knowledge deltas, timeline, foreshadowing)",
     "rule-based idempotent memory write-back with knowledge-boundary consistency",
     "Canon/Active/Recall context assembler with per-layer char budgets",
     "frozen multi-genre A/B benchmark (novel-ab-v1, hash-locked) with run harness and scoring sheet",
-    "role-based multi-provider routing (ProviderRouter + RoutedNovelEngine, ported from stale dev branch)",
+    "role-based multi-provider routing (ProviderRouter + RoutedNovelEngine)",
     "surface style fingerprint extraction",
     "semantic style abstraction",
     "multi-reference weighted Style DNA blending",
@@ -33,10 +34,14 @@
   "blocking_issues": [],
   "pending_sync": [],
   "next_steps": [
-    "run scripts/run_benchmark.py against a real endpoint (set NOVEL_BASE_URL/NOVEL_MODEL env only)",
-    "fill runs/<run_id>/scoring_sheet.csv (12 dims x 1-5) and write aggregated results into EVALUATION_LEDGER",
-    "use A/B results to decide whether vector RAG or knowledge graph materially improves quality",
-    "optional: DOCX/PDF reference import and full style profile editor"
+    "add StoryPatternProfile / Story DNA schema and extractor",
+    "build a Reference Pack workflow for multiple TXT/DOCX/PDF novels with weighting and per-source provenance",
+    "build originality gates for plot/character/event-sequence similarity in addition to text overlap",
+    "add MarketProfile and Fanqie Release Pack generation (title, blurb, tags, opening check, chapter preflight)",
+    "upgrade Human-feel Engine with character idiolect, rhythm variance, scene-detail and template-repetition checks",
+    "add first-3-chapter / first-20-chapter benchmark cases and publishability blind scoring",
+    "run scripts/run_benchmark.py against stronger endpoints and complete the existing scoring ledger",
+    "add platform-feedback import so future arcs can respond to real reader data without rewriting published canon"
   ],
-  "updated_at": "2026-09-14"
+  "updated_at": "2026-09-27"
 }
