@@ -105,3 +105,18 @@ def test_docling_backend_is_explicit(monkeypatch):
 def test_unknown_backend_is_rejected():
     with pytest.raises(ValueError, match="未知 reader backend"):
         extract_reference_text("ref.txt", b"ignored", backend="unknown")
+
+
+def test_integration_probe_cli_runs_from_checkout():
+    import subprocess
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    result = subprocess.run(
+        [sys.executable, str(repo_root / "scripts" / "check_integrations.py")],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "Novel open-source integrations:" in result.stdout
