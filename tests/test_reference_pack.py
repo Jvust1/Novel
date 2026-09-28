@@ -19,4 +19,6 @@ def test_reference_pack_blends_multiple_sources():
     ], name="demo")
     assert pack.source_count == 2
     assert pack.blended_style.source_count == 2
+    assert pack.story_dna is not None
+    assert pack.story_dna.source_count == 2
     assert pack.name == "demo"
