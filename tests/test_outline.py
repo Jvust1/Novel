@@ -102,3 +102,49 @@ def test_validation_rejects_skipped_levels_and_duplicate_ids():
     )
     with pytest.raises(ValueError, match="id 重复"):
         validate_outline(duplicate)
+
+
+def test_outline_cli_runs_from_checkout(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    input_path = tmp_path / "outline_input.json"
+    output_path = tmp_path / "outline.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "title": "夜航者",
+                "premise": "一个值班员被迫重新调查旧案。",
+                "volumes": [
+                    {
+                        "title": "第一卷：回声",
+                        "chapters": [make_plan().model_dump()],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "build_outline.py"),
+            str(input_path),
+            "--out",
+            str(output_path),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    exported = json.loads(output_path.read_text(encoding="utf-8"))
+    assert "Wrote" in result.stdout
+    assert exported["root"]["level"] == "series"
+    assert exported["root"]["children"][0]["children"][0]["children"][0]["level"] == "chapter"
