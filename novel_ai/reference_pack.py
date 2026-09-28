@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from .models import StyleFingerprint
 from .reading import extract_reference_text
+from .story_dna import StoryDNA, build_story_dna
 from .style_engine import analyze_style, blend_styles, build_reference_signature
 
 
@@ -32,6 +33,7 @@ class ReferencePack(BaseModel):
     source_count: int
     sources: list[ReferenceSourceProfile]
     blended_style: StyleFingerprint
+    story_dna: StoryDNA | None = None
     notes: list[str] = Field(default_factory=list)
 
 
@@ -78,7 +80,8 @@ def build_reference_pack(
     *,
     name: str = "reference-pack",
 ) -> ReferencePack:
-    profiles = [build_reference_source(filename, data, weight=weight) for filename, data, weight in sources]
+    material = list(sources)
+    profiles = [build_reference_source(filename, data, weight=weight) for filename, data, weight in material]
     if not profiles:
         raise ValueError("Reference Pack 至少需要一个参考文件")
 
@@ -91,6 +94,7 @@ def build_reference_pack(
         source_count=len(profiles),
         sources=profiles,
         blended_style=blend_styles(weighted_styles, name=f"{name}-style"),
+        story_dna=build_story_dna(material, name=f"{name}-story-dna"),
         notes=[
             "Reference Pack 不保存参考小说正文，只保存派生特征与非可逆签名。",
             "Story DNA 语义抽取将在模型分析层完成；本模块只负责确定性输入与 provenance。",
