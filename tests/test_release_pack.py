@@ -72,3 +72,48 @@ def test_profile_tags_and_pack_tags_are_deduplicated_or_rejected():
         tags=["悬疑", "悬疑", "都市"],
     )
     assert pack.tags == ["悬疑", "都市"]
+
+
+def test_release_pack_cli_builds_reviewable_json(tmp_path):
+    corpus = make_corpus()
+    corpus_path = tmp_path / "corpus.json"
+    corpus_path.write_text(corpus.model_dump_json(), encoding="utf-8")
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "profile": make_profile().model_dump(),
+                "title": "夜班回声",
+                "one_line_hook": "一通电话指向下一场失踪。",
+                "short_blurb": "旧案与新案在夜班电话中交汇。",
+                "tags": ["悬疑", "都市"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "release_pack.json"
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "build_release_pack.py"),
+            str(corpus_path),
+            str(metadata_path),
+            "--out",
+            str(output_path),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "Wrote" in result.stdout
+    exported = json.loads(output_path.read_text(encoding="utf-8"))
+    assert exported["chapter_count"] == 3
+    assert exported["source_stage"] == "opening_3"
+    assert "章节1正文" not in output_path.read_text(encoding="utf-8")
