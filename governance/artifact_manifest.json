@@ -10,7 +10,7 @@
       "type": "google_doc_snapshot",
       "drive_file_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
       "drive_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
-      "content_sha256": "40705c5e2e5bd8ac8f5407c2104fbc1450a98b1935bd11704ed9803d4aa40fff",
+      "content_sha256": "959ae31b211c9e8481120f07f675e730c57be6b338faa8547871def34c6e5ee8",
       "version": "0.2.0-dev",
       "source_commit": "c9f365fbaad462db59d19e03647ad66290f781ac",
       "purpose": "Project-state and deliverables snapshot with current open PR records",
