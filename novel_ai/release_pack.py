@@ -91,6 +91,7 @@ def build_release_pack(
 
     Copy is supplied by the author/editor. This function only validates and
     records provenance; it never calls a model or writes chapter text.
+    The resulting pack is suitable for review before any platform submission.
     """
     corpus.validate_stage()
     return ReleasePack(
