@@ -132,6 +132,8 @@ def test_market_review_cli_creates_and_aggregates_sheet(tmp_path):
         text=True,
     )
     assert incomplete.returncode != 0
+    assert "评分表未填完" in incomplete.stderr
+    assert "Traceback" not in incomplete.stderr
     assert not output_path.exists()
 
     fill_sheet(sheet_path, reviewer="reviewer-a", score="4")
