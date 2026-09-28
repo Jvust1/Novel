@@ -68,3 +68,38 @@ def test_empty_inputs_fail_closed():
     result = evaluate_originality("", ["参考"])
     assert result.passed is False
     assert result.layers == []
+
+
+def test_originality_cli_runs_from_checkout(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    target = tmp_path / "target.txt"
+    reference = tmp_path / "reference.txt"
+    output = tmp_path / "originality.json"
+    target.write_text("山谷里下了一夜的大雪，商队明天才会进城。", encoding="utf-8")
+    reference.write_text("海边的渔船在黄昏前返航，码头亮起了灯。", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "check_originality.py"),
+            "--target",
+            str(target),
+            "--reference",
+            str(reference),
+            "--output",
+            str(output),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert output.exists()
+    assert json.loads(output.read_text(encoding="utf-8"))["passed"] is True
+    assert result.returncode == 0
