@@ -38,3 +38,32 @@ def test_story_dna_rejects_empty_sources():
         assert "至少需要一个参考文件" in str(exc)
     else:
         raise AssertionError("empty Story DNA input must fail closed")
+
+
+def test_zero_weight_source_does_not_change_aggregate_signals():
+    active = ("第一章 开始\n他走进房间。\n").encode("utf-8")
+    excluded = ("第一章 危险\n敌人追杀他，他必须逃走。\n门外突然传来警报。\n").encode("utf-8")
+    baseline = build_story_dna([("active.txt", active, 1.0)])
+    combined = build_story_dna(
+        [("active.txt", active, 1.0), ("excluded.txt", excluded, 0.0)]
+    )
+
+    for key in (
+        "avg_chapter_chars",
+        "opening_hook_ratio",
+        "cliffhanger_ratio",
+        "conflict_density_per_1000_chars",
+        "hook_types",
+    ):
+        assert combined.aggregate[key] == baseline.aggregate[key]
+    assert combined.source_count == 2
+
+
+def test_all_zero_weights_fall_back_to_equal_aggregate_weights():
+    first = ("第一章 开始\n他走进房间。\n").encode("utf-8")
+    second = ("第一章 危险\n敌人追杀他。\n").encode("utf-8")
+    sources = [("first.txt", first), ("second.txt", second)]
+    zero = build_story_dna([(name, data, 0.0) for name, data in sources])
+    equal = build_story_dna([(name, data, 1.0) for name, data in sources])
+
+    assert zero.aggregate == equal.aggregate
