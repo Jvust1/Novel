@@ -67,3 +67,48 @@ def test_all_zero_weights_fall_back_to_equal_aggregate_weights():
     equal = build_story_dna([(name, data, 1.0) for name, data in sources])
 
     assert zero.aggregate == equal.aggregate
+
+
+def test_story_and_reference_pack_clis_run_from_checkout(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    source = tmp_path / "reference.txt"
+    source.write_text("第一章 夜班电话\n电话突然响起。\n", encoding="utf-8")
+    story_output = tmp_path / "story_dna.json"
+    reference_output = tmp_path / "reference_pack.json"
+
+    story_result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "build_story_dna.py"),
+            str(source),
+            "--out",
+            str(story_output),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    reference_result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "build_reference_pack.py"),
+            str(source),
+            "--out",
+            str(reference_output),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert "Wrote" in story_result.stdout
+    assert "Wrote" in reference_result.stdout
+    assert json.loads(story_output.read_text(encoding="utf-8"))["source_count"] == 1
+    assert json.loads(reference_output.read_text(encoding="utf-8"))["source_count"] == 1
