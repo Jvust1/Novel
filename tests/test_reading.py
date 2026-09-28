@@ -1,4 +1,6 @@
 import io
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -67,3 +69,54 @@ def test_corrupt_pdf_raises_pdf_error_not_silent_empty():
 
     with pytest.raises((PdfReadError, ValueError)):
         extract_reference_text("bad.pdf", b"not a pdf at all")
+
+
+def test_markitdown_backend_is_explicit_and_uses_temp_input(monkeypatch):
+    class FakeMarkItDown:
+        def convert(self, path):
+            assert path.endswith("ref.txt")
+            return SimpleNamespace(text_content="MarkItDown output")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "markitdown",
+        SimpleNamespace(MarkItDown=FakeMarkItDown),
+    )
+    assert extract_reference_text("ref.txt", b"ignored", backend="markitdown") == "MarkItDown output"
+
+
+def test_docling_backend_is_explicit(monkeypatch):
+    converter_module = ModuleType("docling.document_converter")
+
+    class FakeDocumentConverter:
+        def convert(self, path):
+            assert path.endswith("ref.txt")
+            return SimpleNamespace(document=SimpleNamespace(export_to_markdown=lambda: "Docling output"))
+
+    converter_module.DocumentConverter = FakeDocumentConverter
+    package = ModuleType("docling")
+    package.document_converter = converter_module
+    monkeypatch.setitem(sys.modules, "docling", package)
+    monkeypatch.setitem(sys.modules, "docling.document_converter", converter_module)
+
+    assert extract_reference_text("ref.txt", b"ignored", backend="docling") == "Docling output"
+
+
+def test_unknown_backend_is_rejected():
+    with pytest.raises(ValueError, match="未知 reader backend"):
+        extract_reference_text("ref.txt", b"ignored", backend="unknown")
+
+
+def test_integration_probe_cli_runs_from_checkout():
+    import subprocess
+    from pathlib import Path
+
+    repo_root = Path(__file__).parents[1]
+    result = subprocess.run(
+        [sys.executable, str(repo_root / "scripts" / "check_integrations.py")],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "Novel open-source integrations:" in result.stdout
