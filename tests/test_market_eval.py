@@ -95,3 +95,55 @@ def test_rejects_duplicate_or_missing_dimension(tmp_path):
         writer.writerows(rows)
     with pytest.raises(ValueError, match="缺失或重复"):
         load_market_scores(sheet, sample)
+
+
+def test_market_review_cli_creates_and_aggregates_sheet(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    sample = corpus()
+    corpus_path = tmp_path / "corpus.json"
+    corpus_path.write_text(sample.model_dump_json(), encoding="utf-8")
+    sheet_path = tmp_path / "scores.csv"
+    output_path = tmp_path / "summary.json"
+    repo_root = Path(__file__).parents[1]
+    command = [
+        sys.executable,
+        str(repo_root / "scripts" / "market_review.py"),
+        str(corpus_path),
+        "--sheet",
+        str(sheet_path),
+    ]
+
+    created = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, check=True)
+    assert "Blank scoring sheet" in created.stdout
+    assert sheet_path.exists()
+    with sheet_path.open(encoding="utf-8-sig", newline="") as handle:
+        blank_rows = list(csv.DictReader(handle))
+    assert all(row["score"] == "" for row in blank_rows)
+    assert "测试正文" not in sheet_path.read_text(encoding="utf-8-sig")
+
+    incomplete = subprocess.run(
+        [*command, "--aggregate", "--out", str(output_path)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    assert incomplete.returncode != 0
+    assert not output_path.exists()
+
+    fill_sheet(sheet_path, reviewer="reviewer-a", score="4")
+    subprocess.run(
+        [*command, "--aggregate", "--out", str(output_path)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    summary = json.loads(output_path.read_text(encoding="utf-8"))
+    assert summary["corpus_sha256"] == sample.fingerprint()
+    assert summary["reviewer_id"] == "reviewer-a"
+    assert summary["mean_score"] == 4.0
+    assert summary["publishability_verdict"] is None
