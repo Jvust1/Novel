@@ -172,12 +172,15 @@ def extract_story_pattern(filename: str, data: bytes, *, weight: float = 1.0) ->
     )
 
 
-def _weighted_mean(profiles: list[StoryPatternProfile], field: str) -> float:
-    weighted = [(profile.pacing.get(field, 0.0), profile.weight) for profile in profiles if profile.weight > 0]
-    if not weighted:
-        weighted = [(profile.pacing.get(field, 0.0), 1.0) for profile in profiles]
-    total = sum(weight for _, weight in weighted)
-    return round(sum(value * weight for value, weight in weighted) / total, 4)
+def _active_profiles(profiles: list[StoryPatternProfile]) -> list[tuple[StoryPatternProfile, float]]:
+    """Use positive weights; fall back to equal weights only when all are zero."""
+    active = [(profile, profile.weight) for profile in profiles if profile.weight > 0]
+    return active or [(profile, 1.0) for profile in profiles]
+
+
+def _weighted_mean(active: list[tuple[StoryPatternProfile, float]], field: str) -> float:
+    total = sum(weight for _, weight in active)
+    return round(sum(profile.pacing.get(field, 0.0) * weight for profile, weight in active) / total, 4)
 
 
 def build_story_dna(
@@ -193,40 +196,33 @@ def build_story_dna(
     if not profiles:
         raise ValueError("Story DNA 至少需要一个参考文件")
 
+    active = _active_profiles(profiles)
+    total_weight = sum(weight for _, weight in active)
     conflict_density: dict[str, float] = {}
     for key in _SIGNAL_PATTERNS:
-        values = [
-            (
-                profile.conflict_signals.get(key, 0) / max(profile.total_char_count, 1) * 1000,
-                profile.weight,
-            )
-            for profile in profiles
-        ]
-        total = sum(weight if weight > 0 else 1.0 for _, weight in values)
         conflict_density[key] = round(
-            sum(value * (weight if weight > 0 else 1.0) for value, weight in values) / total,
+            sum(
+                profile.conflict_signals.get(key, 0) / max(profile.total_char_count, 1) * 1000 * weight
+                for profile, weight in active
+            ) / total_weight,
             4,
         )
 
     aggregate = {
         "chapter_count_total": sum(profile.chapter_count for profile in profiles),
-        "avg_chapter_chars": _weighted_mean(profiles, "avg_chapter_chars"),
-        "chapter_chars_std": _weighted_mean(profiles, "chapter_chars_std"),
-        "short_chapter_ratio": _weighted_mean(profiles, "short_chapter_ratio"),
-        "long_chapter_ratio": _weighted_mean(profiles, "long_chapter_ratio"),
-        "dialogue_ratio": _weighted_mean(profiles, "dialogue_ratio"),
+        "avg_chapter_chars": _weighted_mean(active, "avg_chapter_chars"),
+        "chapter_chars_std": _weighted_mean(active, "chapter_chars_std"),
+        "short_chapter_ratio": _weighted_mean(active, "short_chapter_ratio"),
+        "long_chapter_ratio": _weighted_mean(active, "long_chapter_ratio"),
+        "dialogue_ratio": _weighted_mean(active, "dialogue_ratio"),
         "opening_hook_ratio": round(
-            sum(profile.opening_hook_ratio * (profile.weight if profile.weight > 0 else 1.0) for profile in profiles)
-            / sum(profile.weight if profile.weight > 0 else 1.0 for profile in profiles),
-            4,
+            sum(profile.opening_hook_ratio * weight for profile, weight in active) / total_weight, 4
         ),
         "cliffhanger_ratio": round(
-            sum(profile.cliffhanger_ratio * (profile.weight if profile.weight > 0 else 1.0) for profile in profiles)
-            / sum(profile.weight if profile.weight > 0 else 1.0 for profile in profiles),
-            4,
+            sum(profile.cliffhanger_ratio * weight for profile, weight in active) / total_weight, 4
         ),
         "conflict_density_per_1000_chars": conflict_density,
-        "hook_types": sorted({hook for profile in profiles for hook in profile.opening_hook_types}),
+        "hook_types": sorted({hook for profile, _ in active for hook in profile.opening_hook_types}),
     }
 
     recommendations: list[str] = []
