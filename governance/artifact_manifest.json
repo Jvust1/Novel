@@ -4,10 +4,23 @@
     "name": "Novel",
     "id": "135EL_t49i-Xyhncd9ZIukQg7_y27cEf-"
   },
-  "artifacts": [],
+  "artifacts": [
+    {
+      "name": "Novel_最新成果快照_2026-09-28",
+      "type": "google_doc_snapshot",
+      "drive_file_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
+      "drive_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
+      "content_sha256": "ae70ecab77e3aa12525d641a4cdc6a3177ed46daae187684e4ebb66a9fc7fbff",
+      "version": "0.2.0-dev",
+      "source_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
+      "purpose": "Project-state and deliverables snapshot after open-source ecosystem integration",
+      "status": "archived_verified"
+    }
+  ],
   "notes": [
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
-    "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived."
+    "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
+    "Latest Drive snapshot verified in 04_Snapshots on 2026-09-28; existing 2026-09-25 Windows delivery ZIP was not duplicated."
   ]
 }
