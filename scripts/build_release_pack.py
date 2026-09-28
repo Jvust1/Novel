@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+
+# Allow direct execution from the repository checkout: python scripts/build_release_pack.py
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from novel_ai.market_eval import load_market_corpus
 from novel_ai.release_pack import MarketProfile, build_release_pack, save_release_pack
