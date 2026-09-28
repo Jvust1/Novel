@@ -45,3 +45,7 @@ def main() -> int:
         return 0
     except (KeyError, OSError, ValueError) as exc:
         parser.error(str(exc))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
