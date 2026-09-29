@@ -1,0 +1,132 @@
+{
+  "name": "dsh-openwrite",
+  "version": "0.2.10",
+  "description": "OpenWrite 长篇小说领域后端接入 DeepSeek Harness：统一创作 Agent 预设 + 原生创作工作台",
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix packages/openwrite-bridge run build && npm --prefix packages/studio-panel run build && npm --prefix vendor/dsh-dog run build",
+    "test:dog": "npm --prefix packages/openwrite-bridge run build && .venv/bin/python conductor/test_dog_artifacts.py",
+    "test:epochs": "npm --prefix packages/studio-panel run test:epochs",
+    "test:components": "npm --prefix packages/studio-panel run test:components",
+    "test:e2e": "npm --prefix packages/studio-panel run test:e2e",
+    "test:preset": "node scripts/preset-smoke.mjs",
+    "test:contracts": "npm --prefix packages/openwrite-bridge run test:contracts",
+    "install-dsh": "bash scripts/install.sh",
+    "dev": "bash scripts/dev.sh",
+    "doctor": "node scripts/plugin-doctor.mjs",
+    "test:maintenance": "node --test scripts/plugin-doctor.test.mjs scripts/lifecycle.test.mjs packages/openwrite-bridge/scripts/runtime-lifecycle.test.mjs scripts/maintenance.test.mjs scripts/preset-lifecycle.test.mjs",
+    "check": "npm run check:plugin && npm run test:contracts",
+    "test:lifecycle": "node --test scripts/lifecycle.test.mjs",
+    "test:runtime": "node --test packages/openwrite-bridge/scripts/runtime-lifecycle.test.mjs",
+    "check:plugin": "npm run build && npm run doctor && npm run test:maintenance && npm run test:profiles && npm run test:preset && npm --prefix packages/openwrite-bridge run smoke && npm --prefix packages/studio-panel run smoke && npm run test:epochs && npm run test:components",
+    "test:profiles": "node scripts/profile-smoke.mjs",
+    "prepare": "node scripts/prepare.mjs",
+    "test:managed": "node --test packages/openwrite-bridge/scripts/managed-runtime.test.mjs packages/openwrite-bridge/scripts/tool-policy.test.mjs",
+    "test:release": "node scripts/release-smoke.mjs"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-include": "1.0.7",
+    "@deepseek-ai/dsh": "0.1.2-rc.1",
+    "js-yaml": "4.3.1"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "main": "plugin.mjs",
+  "types": "plugin.d.ts",
+  "exports": {
+    ".": {
+      "types": "./plugin.d.ts",
+      "default": "./plugin.mjs"
+    },
+    "./bridge": "./packages/openwrite-bridge/lib/index.js",
+    "./tools": "./packages/openwrite-bridge/lib/preset-tools.js",
+    "./panel": "./packages/studio-panel/lib/index.js",
+    "./dog": "./vendor/dsh-dog/lib/index.js",
+    "./package.json": "./package.json",
+    "./dog-tools": "./dog-tools.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "displayName": "小说创作（OpenWrite）",
+    "pluginType": "suite",
+    "compatibility": {
+      "dsh": "0.1.2-rc.1 || 0.1.5-alpha.1",
+      "profiles": [
+        "web"
+      ],
+      "dshReleases": {
+        "0.1.2-rc.1": "compatible",
+        "0.1.3-alpha.1": "unknown",
+        "0.1.3-alpha.2": "unknown",
+        "0.1.5-alpha.1": "compatible"
+      }
+    }
+  },
+  "files": [
+    "plugin.mjs",
+    "plugin.d.ts",
+    "cordis.patch.yml",
+    "packages/studio-panel/vendor",
+    "vendor/dsh-dog/package.json",
+    "vendor/dsh-dog/lib",
+    "vendor/dsh-dog/schemas",
+    "vendor/dsh-dog/LICENSE",
+    "vendor/dsh-dog/UPSTREAM.md",
+    "presets/openwrite",
+    "release/*.json",
+    "release/*.lock",
+    "release/*.whl",
+    "scripts/prepare.mjs",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "dog-tools.mjs",
+    "packages/openwrite-bridge/lib",
+    "packages/openwrite-bridge/package.json",
+    "packages/studio-panel/lib",
+    "packages/studio-panel/package.json",
+    "scripts/dog",
+    "scripts/maintenance.mjs",
+    "packages/openwrite-bridge/LICENSE",
+    "packages/studio-panel/LICENSE",
+    "release/licenses",
+    "release/wheels",
+    "release/*.in",
+    "docs",
+    "assets"
+  ],
+  "dependencies": {
+    "@deepseek-ai/schemastery": "3.18.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "fflate": "0.8.2",
+    "proper-lockfile": "4.1.2",
+    "tar": "7.5.7"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-home-paths": "0.1.2-rc.1 || 0.1.5-alpha.1",
+    "@deepseek-ai/dsh-settings": "0.1.2-rc.1 || 0.1.5-alpha.1",
+    "@deepseek-ai/dsh-tools": "0.1.2-rc.1 || 0.1.5-alpha.1"
+  },
+  "bin": {
+    "openwrite-maintenance": "scripts/maintenance.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LiPu-jpg/Openwrite.git"
+  },
+  "homepage": "https://github.com/LiPu-jpg/Openwrite#readme",
+  "bugs": {
+    "url": "https://github.com/LiPu-jpg/Openwrite/issues"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}
