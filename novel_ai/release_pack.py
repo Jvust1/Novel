@@ -4,9 +4,22 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from .market_eval import MarketCorpus
+from .market_eval import STAGE_SIZES, Stage, MarketCorpus
+
+
+def _clean_items(items: Iterable[str], field_name: str) -> list[str]:
+    """Validate list-like metadata without accidentally iterating strings."""
+    if isinstance(items, (str, bytes)) or items is None:
+        raise ValueError(f"{field_name} 必须是字符串列表")
+    try:
+        values = list(items)
+    except TypeError as exc:
+        raise ValueError(f"{field_name} 必须是字符串列表") from exc
+    if any(not isinstance(item, str) for item in values):
+        raise ValueError(f"{field_name} 必须是字符串列表")
+    return list(dict.fromkeys(item.strip() for item in values if item.strip()))
 
 
 class MarketProfile(BaseModel):
@@ -48,7 +61,7 @@ class ReleasePack(BaseModel):
     tags: list[str] = Field(default_factory=list)
     chapter_count: int
     corpus_sha256: str
-    source_stage: str
+    source_stage: Stage
     content_warnings: list[str] = Field(default_factory=list)
     manual_checks: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
@@ -73,6 +86,15 @@ class ReleasePack(BaseModel):
         if len(value) != 64 or any(char not in "0123456789abcdef" for char in value.lower()):
             raise ValueError("corpus_sha256 必须是 64 位十六进制摘要")
         return value.lower()
+
+    @model_validator(mode="after")
+    def validate_provenance(self) -> "ReleasePack":
+        expected = STAGE_SIZES[self.source_stage]
+        if self.chapter_count != expected:
+            raise ValueError(
+                f"chapter_count 必须与 source_stage={self.source_stage} 匹配，当前应为 {expected}"
+            )
+        return self
 
 
 def build_release_pack(
@@ -100,12 +122,12 @@ def build_release_pack(
         one_line_hook=one_line_hook,
         short_blurb=short_blurb,
         long_blurb=long_blurb,
-        tags=list(dict.fromkeys(tag.strip() for tag in tags if tag.strip())),
+        tags=_clean_items(tags, "tags"),
         chapter_count=len(corpus.chapters),
         corpus_sha256=corpus.fingerprint(),
         source_stage=corpus.stage,
-        content_warnings=list(dict.fromkeys(item.strip() for item in content_warnings if item.strip())),
-        manual_checks=list(dict.fromkeys(item.strip() for item in manual_checks if item.strip())),
+        content_warnings=_clean_items(content_warnings, "content_warnings"),
+        manual_checks=_clean_items(manual_checks, "manual_checks"),
         notes=[
             "Release Pack 只记录作者/编辑提供的发布元数据与语料摘要，不保存章节正文。",
             "平台曝光、推荐、签约与收益不能由此结构化包保证。",
@@ -116,10 +138,9 @@ def build_release_pack(
 def save_release_pack(pack: ReleasePack, path: str | Path) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(pack.model_dump(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    with target.open("x", encoding="utf-8") as handle:
+        json.dump(pack.model_dump(), handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
     return target
 
 
