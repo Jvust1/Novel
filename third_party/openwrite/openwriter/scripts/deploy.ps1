@@ -1,0 +1,81 @@
+param([switch]$CheckOnly)
+. "$PSScriptRoot/delivery-common.ps1"
+$delivery = Get-DeliveryContext
+$target = 'local-app'
+Invoke-DeliveryCommand -File greprag -Arguments @('deploy-gate', '--target', $target)
+Invoke-DeliveryCommand -File node -Arguments @('scripts/check-build-inputs.mjs')
+if ($CheckOnly) { return }
+
+Invoke-DeliveryCommand -File greprag -Arguments @('deploy-lock', 'acquire', '--target', $target, '--pid', "$PID", '--label', 'OpenWriter local app')
+$failure = $null
+try {
+  Invoke-DeliveryCommand -File greprag -Arguments @('deploy-gate', '--target', $target, '--ignore-lock')
+  $sha = (Invoke-DeliveryCommand -File git -Arguments @('rev-parse', 'HEAD')).Trim()
+  $entry = Join-Path $delivery.root 'packages/openwriter/dist/bin/pad.js'
+  $listeners = @(Get-NetTCPConnection -LocalPort 5050 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique)
+  if ($listeners.Count -gt 1) { throw 'More than one process owns port 5050.' }
+  $primary = $null
+  if ($listeners.Count -eq 1) {
+    $primary = Get-CimInstance Win32_Process -Filter "ProcessId=$($listeners[0])"
+    if (!(Test-DeliveryListenerEntry -CommandLine $primary.CommandLine -Entry $entry)) { throw 'Port 5050 is not the canonical OpenWriter entrypoint.' }
+  }
+  Push-Location (Join-Path $delivery.root 'packages/openwriter')
+  try { Invoke-DeliveryCommand -File npm -Arguments @('run', 'build') } finally { Pop-Location }
+  Invoke-DeliveryCommand -File node -Arguments @('scripts/stamp-build.mjs', $sha)
+  $stamp = Get-Content -Raw packages/openwriter/dist/build-info.json | ConvertFrom-Json
+
+  $activeDocId = $null
+  if ($primary) {
+    $documents = Invoke-RestMethod http://localhost:5050/api/documents
+    $activeDocId = ($documents | Where-Object isActive | Select-Object -First 1).docId
+    $saved = Invoke-RestMethod http://localhost:5050/api/save -Method Post
+    if (!$saved.success) { throw 'OpenWriter did not acknowledge saving.' }
+    $currentListeners = @(Get-NetTCPConnection -LocalPort 5050 -State Listen | Select-Object -ExpandProperty OwningProcess -Unique)
+    $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($primary.ProcessId)"
+    if ($currentListeners.Count -ne 1 -or $currentListeners[0] -ne $primary.ProcessId -or !$current -or !(Test-DeliveryListenerEntry -CommandLine $current.CommandLine -Entry $entry)) {
+      throw 'The primary process changed during the build. Retry without stopping it.'
+    }
+    Stop-Process -Id $primary.ProcessId
+  }
+
+  $logs = Join-Path $delivery.root '.greprag/runtime/local-app'
+  New-Item -ItemType Directory -Path $logs -Force | Out-Null
+  $nodePath = (Get-Command node).Source
+  Start-DeliveryServerProcess -FilePath $nodePath -ArgumentList @($entry, '--no-open') -WorkingDirectory (Join-Path $delivery.root 'packages/openwriter') -LogDirectory $logs
+  Invoke-DeliveryCommand -File greprag -Arguments @('deploy-verify', '--origin', 'http://localhost:5050', '--sha', $sha, '--attempts', '5')
+  $running = Invoke-RestMethod http://localhost:5050/__build.json -TimeoutSec 30
+  if ($running.artifact -ne $stamp.artifact) { throw 'The running artifact differs from the verified build.' }
+  # Recorded as soon as it is proven: reopening the document is a courtesy, and
+  # its failure must not leave a verified deploy unrecorded.
+  Invoke-DeliveryCommand -File greprag -Arguments @('deploy-record', '--target', $target, '--sha', $sha)
+  $listener = @(Get-NetTCPConnection -LocalPort 5050 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique) -join ', '
+  Write-Output "OpenWriter $sha verified on port 5050 (PID $listener)."
+  if ($activeDocId) {
+    try {
+      $documents = Invoke-RestMethod http://localhost:5050/api/documents -TimeoutSec 30
+      $restore = $documents | Where-Object { $_.docId -eq $activeDocId } | Select-Object -First 1
+      if ($restore) {
+        # Windows PowerShell sends a string body as Latin-1, turning an em dash in a filename into a hyphen.
+        $body = [Text.Encoding]::UTF8.GetBytes((@{ filename = $restore.filename } | ConvertTo-Json))
+        Invoke-RestMethod http://localhost:5050/api/documents/switch -Method Post -ContentType 'application/json; charset=utf-8' -Body $body -TimeoutSec 30 | Out-Null
+      }
+    } catch {
+      Write-Output "Deployed and recorded, but the previously open document was not reopened: $($_.Exception.Message)"
+    }
+  }
+} catch {
+  # Held so the lock comes off first and the guidance lands last.
+  $failure = $_
+} finally {
+  & greprag deploy-lock release --target $target
+}
+
+if ($failure) {
+  Exit-DeliveryFailure -Summary "Deploy stopped: $($failure.Exception.Message)" -NextSteps @(
+    'Nothing was recorded as deployed. The running app was left alone unless'
+    'the message above says it was stopped.'
+    '  ./scripts/deploy.ps1 -CheckOnly        shows what would ship'
+    '  .greprag/runtime/local-app/stderr.log  startup output, if it restarted'
+    'Fix the cause, then run ./scripts/deploy.ps1 again.'
+  )
+}
