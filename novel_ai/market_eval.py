@@ -83,13 +83,21 @@ class MarketScore(BaseModel):
     score: int = Field(ge=1, le=5)
     note: str = ""
 
+    @field_validator("reviewer_id")
+    @classmethod
+    def normalize_reviewer(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("reviewer_id 不能为空")
+        return value
+
 
 def make_market_scoring_sheet(corpus: MarketCorpus, path: str | Path) -> Path:
-    """Emit unfilled human-review rows. The corpus is never written to the sheet."""
+    """Create a new blank sheet; never overwrite an existing review or input."""
     corpus.validate_stage()
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    with target.open("w", encoding="utf-8-sig", newline="") as handle:
+    with target.open("x", encoding="utf-8-sig", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(
             ["project", "stage", "corpus_sha256", "reviewer_id", "dimension", "label", "score", "note", "anchor"]
@@ -106,20 +114,41 @@ def load_market_scores(path: str | Path, corpus: MarketCorpus) -> list[MarketSco
     corpus.validate_stage()
     rows: list[MarketScore] = []
     with Path(path).open(encoding="utf-8-sig", newline="") as handle:
-        for row in csv.DictReader(handle):
-            if not (row.get("score") or "").strip():
-                raise ValueError("评分表未填完，不得汇总")
-            rows.append(
-                MarketScore(
-                    project=row["project"],
-                    stage=row["stage"],
-                    corpus_sha256=row["corpus_sha256"],
-                    reviewer_id=row["reviewer_id"],
-                    dimension=row["dimension"],
-                    score=int(row["score"]),
-                    note=row.get("note", ""),
+        reader = csv.DictReader(handle, strict=True)
+        try:
+            fields = reader.fieldnames
+            if not fields:
+                raise ValueError("评分表缺少 CSV 表头")
+            if any(not field.strip() for field in fields):
+                raise ValueError("评分表表头包含空列名")
+            if len(fields) != len(set(fields)):
+                raise ValueError("评分表表头包含重复列名")
+            required = {"project", "stage", "corpus_sha256", "reviewer_id", "dimension", "score"}
+            missing = required - set(fields)
+            if missing:
+                raise ValueError("评分表缺少必需列: " + ", ".join(sorted(missing)))
+            for row in reader:
+                line = reader.line_num
+                if None in row or any(value is None for value in row.values()):
+                    raise ValueError(f"评分表第 {line} 行列数与表头不一致")
+                score_text = row["score"].strip()
+                if not score_text:
+                    raise ValueError(f"评分表未填完：第 {line} 行 score 为空，不得汇总")
+                if score_text not in {"1", "2", "3", "4", "5"}:
+                    raise ValueError(f"评分表第 {line} 行 score 必须为 1 到 5 的整数")
+                rows.append(
+                    MarketScore(
+                        project=row["project"],
+                        stage=row["stage"],
+                        corpus_sha256=row["corpus_sha256"],
+                        reviewer_id=row["reviewer_id"],
+                        dimension=row["dimension"],
+                        score=int(score_text),
+                        note=row.get("note", ""),
+                    )
                 )
-            )
+        except csv.Error as exc:
+            raise ValueError(f"评分表 CSV 格式错误（第 {reader.line_num} 行附近）: {exc}") from exc
     expected = {key for key, _, _ in MARKET_RUBRIC}
     actual = [row.dimension for row in rows]
     if len(rows) != len(expected) or set(actual) != expected:

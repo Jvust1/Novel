@@ -22,10 +22,12 @@ from novel_ai.market_eval import (
 def main() -> int:
     parser = argparse.ArgumentParser(description="Prepare or aggregate offline market-readability review.")
     parser.add_argument("corpus", type=Path, help="Owned chapter corpus JSON")
-    parser.add_argument("--sheet", type=Path, required=True, help="CSV scoring sheet")
+    parser.add_argument("--sheet", type=Path, required=True, help="CSV scoring sheet (creation requires a new path)")
     parser.add_argument("--aggregate", action="store_true", help="Read a completed sheet instead of creating one")
-    parser.add_argument("--out", type=Path, help="Write aggregate JSON")
+    parser.add_argument("--out", type=Path, help="Write aggregate JSON to a new path (requires --aggregate)")
     args = parser.parse_args()
+    if args.out and not args.aggregate:
+        parser.error("--out 仅能与 --aggregate 一起使用")
 
     try:
         corpus = load_market_corpus(args.corpus)
@@ -39,10 +41,13 @@ def main() -> int:
         output = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)
-            args.out.write_text(output, encoding="utf-8")
+            with args.out.open("x", encoding="utf-8") as handle:
+                handle.write(output)
         else:
             print(output)
         return 0
+    except FileExistsError as exc:
+        parser.error(f"输出文件已存在，请更换文件名：{exc.filename}")
     except (KeyError, OSError, ValueError) as exc:
         parser.error(str(exc))
 

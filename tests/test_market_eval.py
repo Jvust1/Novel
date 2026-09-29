@@ -1,4 +1,8 @@
 import csv
+import json
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -149,3 +153,152 @@ def test_market_review_cli_creates_and_aggregates_sheet(tmp_path):
     assert summary["reviewer_id"] == "reviewer-a"
     assert summary["mean_score"] == 4.0
     assert summary["publishability_verdict"] is None
+
+
+def test_recreating_sheet_preserves_completed_scores(tmp_path):
+    sample = corpus()
+    sheet = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    fill_sheet(sheet)
+    original = sheet.read_bytes()
+    with pytest.raises(FileExistsError):
+        make_market_scoring_sheet(sample, sheet)
+    assert sheet.read_bytes() == original
+
+
+def edit_sheet(path, change):
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.reader(handle))
+    change(rows)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        csv.writer(handle).writerows(rows)
+
+
+@pytest.mark.parametrize(
+    "kind, message",
+    [
+        ("duplicate_header", "重复列名"),
+        ("missing_header", "缺少必需列.*reviewer_id"),
+        ("blank_header", "空列名"),
+        ("extra_cell", "第 2 行.*列数"),
+        ("missing_cell", "第 2 行.*列数"),
+        ("empty_file", "表头"),
+        ("broken_quote", "CSV 格式错误"),
+    ],
+)
+def test_rejects_malformed_csv(tmp_path, kind, message):
+    sample = corpus()
+    sheet = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    fill_sheet(sheet)
+
+    def change(rows):
+        if kind == "duplicate_header":
+            for row in rows:
+                row.append(row[6])
+        elif kind == "missing_header":
+            for row in rows:
+                row.pop(3)
+        elif kind == "blank_header":
+            rows[0][-1] = ""
+        elif kind == "extra_cell":
+            rows[1].append("unexpected")
+        elif kind == "missing_cell":
+            rows[1].pop()
+
+    edit_sheet(sheet, change)
+    if kind == "empty_file":
+        sheet.write_text("", encoding="utf-8")
+    elif kind == "broken_quote":
+        with sheet.open("a", encoding="utf-8") as handle:
+            handle.write('"unterminated')
+    with pytest.raises(ValueError, match=message):
+        load_market_scores(sheet, sample)
+
+
+@pytest.mark.parametrize("score", ["0", "6", "4.5", "four"])
+def test_rejects_invalid_score_with_row_number(tmp_path, score):
+    sample = corpus()
+    sheet = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    fill_sheet(sheet, score=score)
+    with pytest.raises(ValueError, match="第 2 行.*1.*5.*整数"):
+        load_market_scores(sheet, sample)
+
+
+def test_reviewer_whitespace_and_quoted_notes_roundtrip(tmp_path):
+    sample = corpus()
+    sheet = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    fill_sheet(sheet)
+    note = '开场清晰, "转折"需要铺垫\n第二条建议'
+
+    def change(rows):
+        rows[1][3] = " reviewer-a "
+        rows[1][7] = note
+
+    edit_sheet(sheet, change)
+    rows = load_market_scores(sheet, sample)
+    assert rows[0].note == note
+    assert aggregate_market_scores(rows)["reviewer_id"] == "reviewer-a"
+
+
+def cli_command(corpus_path, sheet_path):
+    repo_root = Path(__file__).resolve().parents[1]
+    return [
+        sys.executable, str(repo_root / "scripts" / "market_review.py"),
+        str(corpus_path), "--sheet", str(sheet_path),
+    ]
+
+
+@pytest.mark.parametrize("target", ["corpus", "sheet", "summary"])
+def test_cli_preserves_existing_output_and_input_files(tmp_path, target):
+    sample = corpus()
+    corpus_path = tmp_path / "corpus.json"
+    corpus_path.write_text(sample.model_dump_json(), encoding="utf-8")
+    sheet = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    fill_sheet(sheet)
+    summary = tmp_path / "summary.json"
+    summary.write_text('{"previous_review": true}', encoding="utf-8")
+    paths = {"corpus": corpus_path, "sheet": sheet, "summary": summary}
+    originals = {key: path.read_bytes() for key, path in paths.items()}
+    command = cli_command(corpus_path, sheet)
+    commands = [
+        [*command, "--aggregate", "--out", str(paths[target])],
+        cli_command(corpus_path, paths[target]),
+    ]
+    for command in commands:
+        result = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True)
+        assert result.returncode == 2
+        assert "已存在" in result.stderr
+        assert "Traceback" not in result.stderr
+        assert {key: path.read_bytes() for key, path in paths.items()} == originals
+
+
+def test_cli_rejects_malformed_csv_without_writing_summary(tmp_path):
+    sample = corpus()
+    corpus_path = tmp_path / "corpus.json"
+    corpus_path.write_text(sample.model_dump_json(), encoding="utf-8")
+    sheet = tmp_path / "scores.csv"
+    sheet.write_text('"unterminated', encoding="utf-8")
+    summary = tmp_path / "summary.json"
+    result = subprocess.run(
+        [*cli_command(corpus_path, sheet), "--aggregate", "--out", str(summary)],
+        cwd=tmp_path, capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert "CSV 格式错误" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not summary.exists()
+
+
+def test_cli_requires_aggregate_for_output_path(tmp_path):
+    sample = corpus()
+    corpus_path = tmp_path / "corpus.json"
+    corpus_path.write_text(sample.model_dump_json(), encoding="utf-8")
+    sheet = tmp_path / "scores.csv"
+    summary = tmp_path / "summary.json"
+    result = subprocess.run(
+        [*cli_command(corpus_path, sheet), "--out", str(summary)],
+        cwd=tmp_path, capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert "--out" in result.stderr and "--aggregate" in result.stderr
+    assert not sheet.exists()
+    assert not summary.exists()
