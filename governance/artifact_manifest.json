@@ -10,7 +10,7 @@
       "type": "google_doc_snapshot",
       "drive_file_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
       "drive_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
-      "content_sha256": "e271c786d8346a9ed8fce1c34bfe3d093490622d9d8d3322ab5c846b2736cd70",
+      "content_sha256": "fa551801422deacf36254a62c10a2e9db2154d9a535cbdcec5b30c50a6d7e3dc",
       "version": "0.2.0-dev",
       "source_commit": "c9f365fbaad462db59d19e03647ad66290f781ac",
       "purpose": "Project-state and deliverables snapshot with current open PR records",
@@ -21,6 +21,6 @@
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
     "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
-    "Latest Drive snapshot verified in 04_Snapshots on 2026-09-28; source commit and content SHA-256 are synchronized to the current snapshot."
+    "Latest Drive snapshot verified in 04_Snapshots on 2026-09-29 after the market-review workflow update; source commit and content SHA-256 are synchronized to the current snapshot."
   ]
 }
