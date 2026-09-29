@@ -1,0 +1,27 @@
+{
+  "name": "@openwriter/plugin-x-api",
+  "version": "0.1.0",
+  "description": "Post tweets from OpenWriter",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@xdevplatform/xdk": "^0.4.0",
+    "twitter-text": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "typescript": "^5.6.0"
+  },
+  "openwriter": {
+    "displayName": "X / Twitter",
+    "category": "social-media"
+  },
+  "files": [
+    "dist/",
+    "package.json"
+  ]
+}
