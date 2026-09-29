@@ -7,4 +7,4 @@ llama-index
 langchain
 haystack-ai
 chromadb
-qdrant-client
+qdrant-client==1.19.1  # Apache-2.0; provenance: third_party/qdrant-client/NOTICE.md
