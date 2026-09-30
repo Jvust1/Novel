@@ -39,7 +39,7 @@ def _dialogue_for_character(text: str, name: str) -> list[str]:
     n = re.escape(name.strip())
     patterns = [
         rf"{n}[^。！？\n]{{0,8}}{_SPEECH_VERBS}[：:]?[“\"]([^”\"]+)[”\"]",
-        rf"[“\"]([^”\"]+)[”\"][，,]?[^{re.escape('。！？\n')}]{{0,8}}{n}[^。！？\n]{{0,6}}{_SPEECH_VERBS}",
+        rf'[“"]([^”"]+)[”"][，,]?[^。！？\\n]{{0,8}}{n}[^。！？\\n]{{0,6}}{_SPEECH_VERBS}',
     ]
     rows: list[str] = []
     for pattern in patterns:

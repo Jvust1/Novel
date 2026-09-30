@@ -63,7 +63,7 @@ def _bigram_diversity(text: str) -> float:
     chars = [c for c in _compact(text) if c not in _PUNCT]
     if len(chars) < 2:
         return 0.0
-    grams = [chars[i : i + 2] for i in range(len(chars) - 1)]
+    grams = ["".join(chars[i : i + 2]) for i in range(len(chars) - 1)]
     return round(len(set(grams)) / len(grams), 4)
 
 
@@ -167,7 +167,11 @@ def analyze_prose_quality(text: str) -> ProseQualityReport:
     para_lengths = [len(_compact(p)) for p in paragraphs]
 
     repeated_sentence_count = 0
-    sentence_counter = Counter(s for s in sentences if len(_compact(s)) >= 6)
+    sentence_counter = Counter(
+        s
+        for s in sentences
+        if len([ch for ch in _compact(s) if ch not in _PUNCT]) >= 4
+    )
     for count in sentence_counter.values():
         if count > 1:
             repeated_sentence_count += count - 1

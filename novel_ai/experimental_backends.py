@@ -37,6 +37,7 @@ EXPERIMENTAL_BACKENDS: tuple[ExperimentalBackend, ...] = (
     ExperimentalBackend("langgraph", "langgraph", "orchestration", "durable stateful editorial workflow"),
     ExperimentalBackend("pydantic_ai", "pydantic_ai", "orchestration", "typed editorial agent"),
     ExperimentalBackend("outlines", "outlines", "structured_output", "constrained structured generation"),
+    ExperimentalBackend("guidance", "guidance", "structured_output", "regex/CFG/JSON constrained generation"),
     ExperimentalBackend("guardrails", "guardrails", "validation", "post-generation validation"),
     ExperimentalBackend("agent_framework", "agent_framework", "orchestration", "production multi-agent editorial workflow"),
     ExperimentalBackend("deepeval", "deepeval", "evaluation", "LLM regression metrics"),
