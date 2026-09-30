@@ -20,7 +20,7 @@
       "artifact_id": "novel-openwrite-mass-import-20260930",
       "type": "github_source_integration",
       "branch": "feat/openwrite-mass-import-20260929",
-      "status": "ACTIVE_WORK_BRANCH_RECONCILED_WITH_LATEST_MAIN",
+      "status": "DRAFT_PR_MERGEABLE_CI_INFRA_NOT_STARTED",
       "source_files_total": 766,
       "upstreams": [
         {
@@ -55,7 +55,17 @@
         "benchmark completion_gate record"
       ],
       "main_modified": false,
-      "pr_number": 26
+      "pr_number": 26,
+      "last_reconciled_merge_commit": "ccd04181af10e49d69be51efd2ea228f969f8ab2",
+      "pr_mergeable": true,
+      "behind_main": 0,
+      "ci": {
+        "run_id": 36683805241,
+        "job_id": 109784953898,
+        "status": "INFRA_NOT_STARTED",
+        "steps": 0,
+        "logs_available": false
+      }
     }
   ],
   "notes": [
