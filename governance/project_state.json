@@ -6,8 +6,8 @@
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
-    "build Story DNA schema/extractor on top of the new multi-source Reference Pack",
-    "add originality gate: shingle + fuzzy + embedding + event-sequence similarity",
+    "validate persistent long-form consistency gates on real multi-chapter projects",
+    "freeze regression benchmarks for voice drift, timeline contradictions, foreshadow lifecycle and tension density",
     "port hierarchical outline ideas from DOC/DOC StoryGen v2 behind frozen A/B tests",
     "evaluate graph/RAG recall backends without replacing Canon/Active/Recall by default",
     "add Fanqie opening/first-20-chapter commercial-readiness benchmark"
@@ -79,7 +79,15 @@
     "Story DNA long-form trope frequency dashboard",
     "Story DNA clustering with scikit-learn KMeans and deterministic fallback",
     "optional UMAP Story DNA projection",
-    "online/rolling chapter rhythm and style drift detection via River or deterministic fallback"
+    "online/rolling chapter rhythm and style drift detection via River or deterministic fallback",
+    "per-character Voice DNA persisted from attributed dialogue metrics",
+    "voice drift merged into chapter review/repair",
+    "per-character behavior-pattern repetition guard from Story DNA beats",
+    "timeline contradiction detector persisted into long-form health",
+    "foreshadowing lifecycle history with resolved-state regression protection",
+    "foreshadowing age/stagnation/resolve-lifetime statistics",
+    "whole-book climax/low-density and streak analysis",
+    "long-form health guard context injected into next chapter ContextAssembler"
   ],
   "frozen": false,
   "blocking_issues": [],

@@ -1,3 +1,15 @@
+## 2026-09-30 — character voice / behavior / timeline / foreshadow / tension engineering
+
+- Added per-character Voice DNA from attributed dialogue: average line length, short/long-line ratio, question/exclamation/ellipsis habits, pronoun density and ending particles. Raw dialogue is not stored in Voice DNA.
+- Voice DNA is persisted per accepted chapter; long-term baselines detect character-voice drift. Medium/high drift is merged into Review/Repair.
+- Added character behavior-pattern repetition guard from Story DNA beats (objective → opposition → choice → cost → state change), scoped to the same POV character.
+- Timeline consistency checks detect comparable time reversals and the same event assigned conflicting structured time hints.
+- Foreshadowing now retains lifecycle history. Resolved clues cannot silently regress to planted/advanced; attempted regressions are recorded as lifecycle warnings.
+- Added foreshadow lifecycle statistics: status counts, resolved ratio, average resolution lifetime, overdue and stagnant unresolved clues.
+- Added whole-book climax/low-density analysis with recent-window density and consecutive high/low streak warnings.
+- Long-form health is persisted at `memory/longform_health.json` and its bounded guard context automatically enters the next chapter's ContextAssembler.
+- Streamlit exposes all five long-form engineering panels and highlights timeline contradictions / overdue foreshadowing / tension-density warnings.
+
 ## 2026-09-30 — long-form Story DNA analytics dashboard
 
 - Added pinned scikit-learn, River, Plotly and UMAP submodules.

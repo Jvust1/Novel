@@ -24,6 +24,14 @@ from .prompts import (
 )
 from .provider import OpenAICompatibleProvider
 from .quality_gate import analyze_prose_quality, quality_review_payload
+from .longform_consistency import (
+    aggregate_voice_baseline,
+    behavior_repetition,
+    behavior_review_payload,
+    character_voice_dna,
+    voice_drift,
+    voice_review_payload,
+)
 from .reference_similarity import analyze_reference_similarity, similarity_review_payload
 from .style_engine import detect_ai_flavor
 from .story_dna import story_dna_from_plan
@@ -81,6 +89,8 @@ class ChapterResult:
     story_dna: dict[str, Any] | None = None
     workflow_report: dict[str, Any] | None = None
     story_dna_similarity_report: dict[str, Any] | None = None
+    voice_dna_report: dict[str, Any] | None = None
+    behavior_repetition_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
@@ -241,13 +251,17 @@ class NovelEngine:
         extra_context: str = "",
         reference_hashes: set[str] | None = None,
         historical_story_dna: list[dict[str, Any]] | None = None,
+        historical_voice_dna: list[dict[str, Any]] | None = None,
     ) -> ChapterResult:
         plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
         story_dna_obj = story_dna_from_plan(plan)
         dna_similarity = compare_story_dna(story_dna_obj.to_dict(), historical_story_dna or [])
+        behavior_report = behavior_repetition(story_dna_obj.to_dict(), historical_story_dna or [])
         draft_context = extra_context
         if dna_similarity.should_avoid:
-            draft_context = (extra_context + "\n\n" + dna_similarity.avoid_context).strip()
+            draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
+        if behavior_report.get("should_avoid"):
+            draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
         draft = self.draft(
             bible,
             plan,
@@ -259,6 +273,10 @@ class NovelEngine:
             draft_context,
         )
         local_signals = detect_ai_flavor(draft)
+        voice_current = character_voice_dna(draft, [c.name for c in characters])
+        voice_baseline = aggregate_voice_baseline(historical_voice_dna or [])
+        voice_alerts = voice_drift(voice_current, voice_baseline)
+        voice_report = {"current": voice_current, "baseline": voice_baseline, "alerts": voice_alerts}
         story_dna = story_dna_obj.to_dict()
         workflow_report = workflow_summary(plan, draft, target_chars=target_chars)
         quality = analyze_prose_quality(draft)
@@ -270,13 +288,26 @@ class NovelEngine:
         review_result = merge_quality_issues(review_result, quality_payload)
         review_result = merge_quality_issues(review_result, similarity_payload)
         review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
+        review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
+        review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = self.repair(draft, review_result, style)
             revised_quality = analyze_prose_quality(revised)
+            revised_similarity = similarity_review_payload(
+                analyze_reference_similarity(revised, reference_hashes=reference_hashes)
+            )
+            revised_voice = character_voice_dna(revised, [c.name for c in characters])
+            revised_voice_alerts = voice_drift(revised_voice, voice_baseline)
+            voice_report["revised"] = revised_voice
+            voice_report["revised_alerts"] = revised_voice_alerts
             review_after_repair = self.review(bible, plan, characters, revised)
             review_after_repair = merge_quality_issues(review_after_repair, quality_review_payload(revised_quality))
+            review_after_repair = merge_quality_issues(review_after_repair, revised_similarity)
+            review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
+            review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
+            review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
         return ChapterResult(
             plan=plan,
             draft=draft,
@@ -287,6 +318,8 @@ class NovelEngine:
             story_dna=story_dna,
             workflow_report=workflow_report,
             story_dna_similarity_report=dna_similarity.to_dict(),
+            voice_dna_report=voice_report,
+            behavior_repetition_report=behavior_report,
             revised=revised,
             review_after_repair=review_after_repair,
         )

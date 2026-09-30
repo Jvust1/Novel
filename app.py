@@ -9,6 +9,15 @@ from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
 from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
 from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
+from novel_ai.longform_consistency import (
+    aggregate_voice_baseline,
+    behavior_repetition,
+    behavior_review_payload,
+    build_longform_health,
+    character_voice_dna,
+    voice_drift,
+    voice_review_payload,
+)
 from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
@@ -374,9 +383,12 @@ with write_tab:
                 if str(row.get("chapter_id")) != chapter_id
             ]
             dna_similarity = compare_story_dna(story_dna_obj.to_dict(), dna_history)
+            behavior_report = behavior_repetition(story_dna_obj.to_dict(), dna_history)
             draft_context = meta.get("extra", "")
             if dna_similarity.should_avoid:
                 draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
+            if behavior_report.get("should_avoid"):
+                draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
             draft = engine.draft(
                 bible,
                 plan,
@@ -389,6 +401,13 @@ with write_tab:
             )
             quality = analyze_prose_quality(draft)
             quality_payload = quality_review_payload(quality)
+            voice_current = character_voice_dna(draft, [c.name for c in characters])
+            voice_baseline = aggregate_voice_baseline([
+                row for row in store.load_voice_dna_history(project_name)
+                if str(row.get("chapter_id")) != chapter_id
+            ])
+            voice_alerts = voice_drift(voice_current, voice_baseline)
+            voice_report = {"current": voice_current, "baseline": voice_baseline, "alerts": voice_alerts}
             review_result = None
             revised = None
             review_after_repair = None
@@ -396,6 +415,8 @@ with write_tab:
                 review_result = engine.review(bible, plan, characters, draft)
                 review_result = merge_quality_issues(review_result, quality_payload)
                 review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
+                review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
+                review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
                 if mode == "精修" and review_result.verdict == "revise":
                     revised = engine.repair(draft, review_result, style_from_state())
                     revised_quality = quality_review_payload(analyze_prose_quality(revised))
@@ -409,6 +430,8 @@ with write_tab:
                 quality_report=quality_payload,
                 story_dna=story_dna_obj.to_dict(),
                 story_dna_similarity_report=dna_similarity.to_dict(),
+                voice_dna_report=voice_report,
+                behavior_repetition_report=behavior_report,
                 revised=revised,
                 review_after_repair=review_after_repair,
             )
@@ -437,6 +460,7 @@ with write_tab:
                 extra_context=context.prompt_sections(),
                 reference_hashes=st.session_state.reference_hashes,
                 historical_story_dna=[row for row in store.load_story_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
+                historical_voice_dna=[row for row in store.load_voice_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
             )
             st.session_state.last_result = result
             final_text = result.final_text
@@ -496,6 +520,19 @@ with write_tab:
         if result.story_dna:
             with st.expander("Story DNA", expanded=False):
                 st.json(result.story_dna)
+        if result.voice_dna_report:
+            alerts = result.voice_dna_report.get("revised_alerts") or result.voice_dna_report.get("alerts") or []
+            if alerts:
+                st.warning("人物口吻 DNA 漂移：" + "；".join(
+                    f"{row['character']}={row['score']:.1%}" for row in alerts[:3]
+                ))
+            with st.expander("人物口吻 DNA", expanded=False):
+                st.json(result.voice_dna_report)
+        if result.behavior_repetition_report:
+            if result.behavior_repetition_report.get("should_avoid"):
+                st.warning(f"人物行为模式重复：最高 {result.behavior_repetition_report.get('max_score',0):.1%}")
+            with st.expander("人物行为模式重复", expanded=False):
+                st.json(result.behavior_repetition_report)
         if result.story_dna_similarity_report:
             score = result.story_dna_similarity_report.get("max_score", 0)
             if result.story_dna_similarity_report.get("should_avoid"):
@@ -537,11 +574,31 @@ with write_tab:
                 graph = build_story_graph(st.session_state.characters, new_state)
                 store.write_json(project_name, "memory/story_graph.json", graph)
                 if result.story_dna:
+                    prior_voice = [
+                        row for row in store.load_voice_dna_history(project_name)
+                        if str(row.get("chapter_id")) != chapter_id
+                    ]
+                    prior_dna = [
+                        row for row in store.load_story_dna_history(project_name)
+                        if str(row.get("chapter_id")) != chapter_id
+                    ]
+                    chapter_order = [str(row.get("chapter_id","")) for row in store.all_chapter_summaries(project_name)]
+                    health = build_longform_health(
+                        current_text=final_text,
+                        character_names=[c["name"] for c in st.session_state.characters if c.get("name")],
+                        voice_history=prior_voice,
+                        current_story_dna=result.story_dna,
+                        story_dna_history=prior_dna,
+                        story_state=new_state,
+                        chapter_order=chapter_order,
+                    )
+                    store.save_voice_dna(project_name, chapter_id, health["voice_dna"])
+                    store.save_longform_health(project_name, health)
                     store.save_story_dna(project_name, chapter_id, result.story_dna)
                     analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
                     store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
                 st.session_state.last_extraction = extraction.model_dump()
-                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA 长期状态已更新。")
+                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA、人物口吻 DNA 与长篇一致性状态均已更新。")
             except Exception as exc:
                 st.exception(exc)
 
@@ -578,6 +635,32 @@ with write_tab:
             st.json(drift if drift else {"status":"暂无显著漂移"})
         if not dna_history and not analytics_history:
             st.info("还没有足够的长期数据。章节定稿并回写后会自动累积。")
+
+    with st.expander("长篇一致性健康状态", expanded=False):
+        health = store.load_longform_health(project_name)
+        if health:
+            if health.get("timeline_contradictions"):
+                st.error(f"检测到 {len(health['timeline_contradictions'])} 个时间线矛盾候选。")
+            if health.get("foreshadow_lifecycle",{}).get("overdue"):
+                st.warning(f"过期伏笔候选：{len(health['foreshadow_lifecycle']['overdue'])}")
+            if health.get("tension_density",{}).get("warnings"):
+                for warning in health["tension_density"]["warnings"]:
+                    st.warning(warning)
+            st.markdown("#### 人物口吻 DNA / 漂移")
+            st.json({
+                "baseline": health.get("voice_baseline",{}),
+                "drift": health.get("voice_drift",[]),
+            })
+            st.markdown("#### 人物行为模式重复")
+            st.json(health.get("behavior_repetition",{}))
+            st.markdown("#### 时间线矛盾")
+            st.json(health.get("timeline_contradictions",[]))
+            st.markdown("#### 伏笔生命周期")
+            st.json(health.get("foreshadow_lifecycle",{}))
+            st.markdown("#### 高潮 / 低谷密度")
+            st.json(health.get("tension_density",{}))
+        else:
+            st.info("尚未生成长篇一致性健康状态；章节定稿并执行记忆回写后自动建立。")
 
     with st.expander("长期记忆状态（story_state）", expanded=False):
         state = store.load_story_state(project_name)
