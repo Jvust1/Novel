@@ -33,3 +33,15 @@ def test_foreshadow_overdue_and_tension_density():
     history=[{"chapter_id":str(i),"story_dna":{"beats":[{}],"hook_count":1,"choice_count":1,"cost_count":1,"state_change_count":1,"tension_curve":"高潮"}} for i in range(6)]
     density=tension_density(history)
     assert density["warnings"]
+
+
+def test_trailing_speaker_dialogue_keeps_sentence_punctuation():
+    text = "“你先走。”，林舟低声说。"
+    dna = character_voice_dna(text, ["林舟"])
+    assert dna["林舟"]["line_count"] == 1
+
+
+def test_trailing_speaker_does_not_cross_sentence_or_line_boundaries():
+    for boundary in ("。", "！", "？", "\n"):
+        text = f"“别走”{boundary}林舟说。"
+        assert character_voice_dna(text, ["林舟"]) == {}, repr(boundary)
