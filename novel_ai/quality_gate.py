@@ -167,7 +167,11 @@ def analyze_prose_quality(text: str) -> ProseQualityReport:
     para_lengths = [len(_compact(p)) for p in paragraphs]
 
     repeated_sentence_count = 0
-    sentence_counter = Counter(s for s in sentences if len(_compact(s)) >= 6)
+    sentence_counter = Counter(
+        s
+        for s in sentences
+        if len([ch for ch in _compact(s) if ch not in _PUNCT]) >= 4
+    )
     for count in sentence_counter.values():
         if count > 1:
             repeated_sentence_count += count - 1
