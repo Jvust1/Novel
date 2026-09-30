@@ -145,3 +145,56 @@ def recall_backend_capabilities() -> dict[str, bool]:
         "graphiti": "graphiti_core",
     }
     return {key: importlib.util.find_spec(module) is not None for key, module in modules.items()}
+
+
+
+class _SentenceTransformerRecallEncoder:
+    def __init__(self, model: object) -> None:
+        encode = getattr(model, "encode", None)
+        if not callable(encode):
+            raise TypeError("SentenceTransformer-like model must provide encode()")
+        self._model = model
+
+    def encode(self, texts: Sequence[str]) -> Sequence[Sequence[float]]:
+        values = self._model.encode(
+            list(texts),
+            normalize_embeddings=True,
+            convert_to_numpy=False,
+        )
+        tolist = getattr(values, "tolist", None)
+        return tolist() if callable(tolist) else values
+
+
+def create_sentence_transformer_recall(
+    model_name_or_path: str,
+    *,
+    local_files_only: bool = True,
+    model_factory: object | None = None,
+    **model_kwargs: object,
+) -> LocalSemanticRecall:
+    """Create a local-first Sentence Transformers RecallBackend.
+
+    No model download occurs by default. Tests and custom runtimes may inject a
+    model_factory compatible with SentenceTransformer(...).
+    """
+    model_name = str(model_name_or_path).strip()
+    if not model_name:
+        raise ValueError("model_name_or_path cannot be empty")
+    if model_factory is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as exc:
+            raise RuntimeError(
+                "sentence-transformers is optional; install requirements-extras/nlp.txt"
+            ) from exc
+        model_factory = SentenceTransformer
+    if not callable(model_factory):
+        raise TypeError("model_factory must be callable")
+    model = model_factory(
+        model_name,
+        local_files_only=local_files_only,
+        **model_kwargs,
+    )
+    backend = LocalSemanticRecall(_SentenceTransformerRecallEncoder(model))
+    backend.name = "sentence-transformers-local"
+    return backend
