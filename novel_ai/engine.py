@@ -27,6 +27,7 @@ from .quality_gate import analyze_prose_quality, quality_review_payload
 from .reference_similarity import analyze_reference_similarity, similarity_review_payload
 from .style_engine import detect_ai_flavor
 from .story_dna import story_dna_from_plan
+from .story_dna_memory import compare_story_dna, story_dna_review_payload
 from .workflow_guard import workflow_summary
 
 
@@ -79,6 +80,7 @@ class ChapterResult:
     similarity_report: dict[str, Any] | None = None
     story_dna: dict[str, Any] | None = None
     workflow_report: dict[str, Any] | None = None
+    story_dna_similarity_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
@@ -238,8 +240,14 @@ class NovelEngine:
         auto_repair: bool = False,
         extra_context: str = "",
         reference_hashes: set[str] | None = None,
+        historical_story_dna: list[dict[str, Any]] | None = None,
     ) -> ChapterResult:
         plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
+        story_dna_obj = story_dna_from_plan(plan)
+        dna_similarity = compare_story_dna(story_dna_obj.to_dict(), historical_story_dna or [])
+        draft_context = extra_context
+        if dna_similarity.should_avoid:
+            draft_context = (extra_context + "\n\n" + dna_similarity.avoid_context).strip()
         draft = self.draft(
             bible,
             plan,
@@ -248,10 +256,10 @@ class NovelEngine:
             style,
             target_chars,
             user_notes,
-            extra_context,
+            draft_context,
         )
         local_signals = detect_ai_flavor(draft)
-        story_dna = story_dna_from_plan(plan).to_dict()
+        story_dna = story_dna_obj.to_dict()
         workflow_report = workflow_summary(plan, draft, target_chars=target_chars)
         quality = analyze_prose_quality(draft)
         quality_payload = quality_review_payload(quality)
@@ -261,6 +269,7 @@ class NovelEngine:
         review_result = self.review(bible, plan, characters, draft) if review else None
         review_result = merge_quality_issues(review_result, quality_payload)
         review_result = merge_quality_issues(review_result, similarity_payload)
+        review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
@@ -277,6 +286,7 @@ class NovelEngine:
             similarity_report=similarity_payload,
             story_dna=story_dna,
             workflow_report=workflow_report,
+            story_dna_similarity_report=dna_similarity.to_dict(),
             revised=revised,
             review_after_repair=review_after_repair,
         )

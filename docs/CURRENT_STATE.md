@@ -1,3 +1,13 @@
+## 2026-09-30 — persistent Story DNA and cross-chapter pattern guard
+
+- Story DNA is now durable project state under `memory/story_dna/<chapter>.json` and can be reloaded across sessions.
+- Before drafting a new chapter, Novel compares the approved plan's event sequence and structural pattern against historical Story DNA.
+- Similarity weighting: event-sequence 78% + structural/tension features 22%; medium/high matches produce explicit review issues.
+- When a match crosses the threshold, a causal-diversification constraint is injected before drafting: change character choices, resistance source, causal chain, cost, state change or information-release order; surface synonym swapping is explicitly discouraged.
+- The same Story DNA guard is active in both NovelEngine and RoutedNovelEngine.
+- Streamlit shows the Story DNA history and the current chapter's cross-chapter similarity report.
+- Accepted chapters persist their Story DNA during memory writeback, alongside story_state, summaries and Story Graph.
+
 ## 2026-09-30 — Story DNA and Chinese structure fusion
 
 - Pinned chinese-novelist-skill, OpenSPG/KAG and PaddleNLP.

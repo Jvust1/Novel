@@ -16,7 +16,8 @@ from novel_ai.reference_similarity import analyze_reference_similarity, similari
 from novel_ai.release_eval import build_release_quality_snapshot
 from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
-from novel_ai.story_dna import story_structure_capabilities
+from novel_ai.story_dna import story_structure_capabilities, story_dna_from_plan
+from novel_ai.story_dna_memory import compare_story_dna, story_dna_review_payload
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -364,6 +365,15 @@ with write_tab:
             plan_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
             plan = ChapterPlan.model_validate(json.loads(plan_json))
             meta = st.session_state.pending_plan_meta
+            story_dna_obj = story_dna_from_plan(plan)
+            dna_history = [
+                row for row in store.load_story_dna_history(project_name)
+                if str(row.get("chapter_id")) != chapter_id
+            ]
+            dna_similarity = compare_story_dna(story_dna_obj.to_dict(), dna_history)
+            draft_context = meta.get("extra", "")
+            if dna_similarity.should_avoid:
+                draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
             draft = engine.draft(
                 bible,
                 plan,
@@ -372,7 +382,7 @@ with write_tab:
                 style_from_state(),
                 int(target_chars),
                 user_notes,
-                meta.get("extra", ""),
+                draft_context,
             )
             quality = analyze_prose_quality(draft)
             quality_payload = quality_review_payload(quality)
@@ -382,6 +392,7 @@ with write_tab:
             if mode != "快速草稿":
                 review_result = engine.review(bible, plan, characters, draft)
                 review_result = merge_quality_issues(review_result, quality_payload)
+                review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
                 if mode == "精修" and review_result.verdict == "revise":
                     revised = engine.repair(draft, review_result, style_from_state())
                     revised_quality = quality_review_payload(analyze_prose_quality(revised))
@@ -393,6 +404,8 @@ with write_tab:
                 review=review_result,
                 ai_flavor=detect_ai_flavor(draft),
                 quality_report=quality_payload,
+                story_dna=story_dna_obj.to_dict(),
+                story_dna_similarity_report=dna_similarity.to_dict(),
                 revised=revised,
                 review_after_repair=review_after_repair,
             )
@@ -420,6 +433,7 @@ with write_tab:
                 auto_repair=mode == "精修",
                 extra_context=context.prompt_sections(),
                 reference_hashes=st.session_state.reference_hashes,
+                historical_story_dna=[row for row in store.load_story_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
             )
             st.session_state.last_result = result
             final_text = result.final_text
@@ -479,6 +493,12 @@ with write_tab:
         if result.story_dna:
             with st.expander("Story DNA", expanded=False):
                 st.json(result.story_dna)
+        if result.story_dna_similarity_report:
+            score = result.story_dna_similarity_report.get("max_score", 0)
+            if result.story_dna_similarity_report.get("should_avoid"):
+                st.warning(f"历史 Story DNA 套路/事件链近似：最高 {score:.1%}，已把去重约束注入本章生成与审校。")
+            with st.expander("跨章节 Story DNA 重复检测", expanded=False):
+                st.json(result.story_dna_similarity_report)
         if result.workflow_report:
             with st.expander("写作流程阶段检查", expanded=False):
                 st.json(result.workflow_report)
@@ -513,14 +533,23 @@ with write_tab:
                 store.save_extraction(project_name, extraction.model_dump())
                 graph = build_story_graph(st.session_state.characters, new_state)
                 store.write_json(project_name, "memory/story_graph.json", graph)
+                if result.story_dna:
+                    store.save_story_dna(project_name, chapter_id, result.story_dna)
                 st.session_state.last_extraction = extraction.model_dump()
-                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要已更新。")
+                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA 长期状态已更新。")
             except Exception as exc:
                 st.exception(exc)
 
         if st.session_state.last_extraction:
             with st.expander("本次抽取结果", expanded=False):
                 st.json(st.session_state.last_extraction)
+
+    with st.expander("Story DNA 历史库", expanded=False):
+        dna_history = store.load_story_dna_history(project_name)
+        if dna_history:
+            st.json(dna_history[-12:])
+        else:
+            st.info("还没有已持久化的 Story DNA。章节定稿并执行记忆回写后开始累积。")
 
     with st.expander("长期记忆状态（story_state）", expanded=False):
         state = store.load_story_state(project_name)

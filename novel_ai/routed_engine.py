@@ -7,6 +7,8 @@ from .models import Character, StoryBible, StyleFingerprint
 from .quality_gate import analyze_prose_quality, quality_review_payload
 from .reference_similarity import analyze_reference_similarity, similarity_review_payload
 from .orchestration import ProviderRouter, TaskKind
+from .story_dna import story_dna_from_plan
+from .story_dna_memory import compare_story_dna, story_dna_review_payload
 
 
 class RoutedNovelEngine:
@@ -34,9 +36,15 @@ class RoutedNovelEngine:
         auto_repair: bool = False,
         extra_context: str = "",
         reference_hashes: set[str] | None = None,
+        historical_story_dna: list[dict[str, Any]] | None = None,
     ) -> ChapterResult:
         writer = NovelEngine(self.router.provider_for(TaskKind.DRAFT).provider)
         plan = writer.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
+        story_dna = story_dna_from_plan(plan)
+        dna_similarity = compare_story_dna(story_dna.to_dict(), historical_story_dna or [])
+        draft_context = extra_context
+        if dna_similarity.should_avoid:
+            draft_context = (extra_context + "\n\n" + dna_similarity.avoid_context).strip()
         draft = writer.draft(
             bible,
             plan,
@@ -45,7 +53,7 @@ class RoutedNovelEngine:
             style,
             target_chars,
             user_notes,
-            extra_context,
+            draft_context,
         )
         review_result = None
         if review:
@@ -57,6 +65,7 @@ class RoutedNovelEngine:
                 review_result,
                 similarity_review_payload(analyze_reference_similarity(draft, reference_hashes=reference_hashes)),
             )
+            review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
         revised = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = writer.repair(draft, review_result, style)
@@ -73,5 +82,7 @@ class RoutedNovelEngine:
             ai_flavor=detect_ai_flavor(draft),
             quality_report=quality_payload,
             similarity_report=similarity_payload,
+            story_dna=story_dna.to_dict(),
+            story_dna_similarity_report=dna_similarity.to_dict(),
             revised=revised,
         )

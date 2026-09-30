@@ -70,7 +70,11 @@
     "explicit PaddleNLP UIE adapter for Chinese story structure extraction",
     "portable Story Graph to KAG record export",
     "story structure capability matrix for PaddleNLP/KAG/DeepKE",
-    "chinese-novelist-skill pinned and absorbed as workflow concepts rather than direct core dependency"
+    "chinese-novelist-skill pinned and absorbed as workflow concepts rather than direct core dependency",
+    "Story DNA persisted per accepted chapter under memory/story_dna/",
+    "historical Story DNA loaded before chapter generation",
+    "cross-chapter event-sequence + structural-pattern similarity gate",
+    "high Story DNA similarity injects anti-repetition constraints before drafting and review/repair"
   ],
   "frozen": false,
   "blocking_issues": [],
