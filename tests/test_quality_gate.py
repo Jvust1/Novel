@@ -31,3 +31,13 @@ def test_quality_review_payload_is_compact_and_serializable():
     assert "score" in payload
     assert "metrics" in payload
     assert "issues" in payload
+
+
+def test_bigram_diversity_counts_unique_hashable_pairs():
+    from novel_ai.quality_gate import _bigram_diversity
+
+    assert _bigram_diversity("") == 0.0
+    assert _bigram_diversity("甲") == 0.0
+    assert _bigram_diversity("甲乙丙") == 1.0
+    assert _bigram_diversity("甲乙甲乙") == 0.6667
+    assert _bigram_diversity("甲，乙\n甲，乙。") == 0.6667
