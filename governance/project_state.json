@@ -147,21 +147,24 @@
       "number": 26,
       "url": "https://github.com/Jvust/Novel/pull/26",
       "draft": true,
-      "mergeable": true
+      "mergeable": true,
+      "behind_main": 0
     },
     "ci": {
-      "run_id": 36658882876,
+      "run_id": 36683805241,
       "status": "INFRA_NOT_STARTED",
-      "job_id": 109709020142,
-      "runner_id": 0,
+      "job_id": 109784953898,
+      "runner": "ubuntu-latest",
       "steps": 0,
-      "note": "GitHub Actions job failed before runner allocation; no test steps executed and no job log blob exists."
+      "logs_available": false,
+      "note": "GitHub hosted runner was not allocated; this is not a pytest/compile failure."
     },
     "complete_submodule": {
       "path": "third_party/openwrite/openwriter-full",
       "repo": "travsteward/openwriter",
       "commit": "142002677685298d45569ac132af11e7ed8e70e2",
       "license": "MIT"
-    }
+    },
+    "last_reconciled_merge_commit": "ccd04181af10e49d69be51efd2ea228f969f8ab2"
   }
 }
