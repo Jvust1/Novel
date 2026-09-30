@@ -72,3 +72,18 @@
 	path = vendor/deepke
 	url = https://github.com/zjunlp/DeepKE.git
 	branch = main
+
+[submodule "vendor/datasketch"]
+	path = vendor/datasketch
+	url = https://github.com/ekzhu/datasketch.git
+	branch = master
+
+[submodule "vendor/networkx"]
+	path = vendor/networkx
+	url = https://github.com/networkx/networkx.git
+	branch = main
+
+[submodule "vendor/qdrant-client"]
+	path = vendor/qdrant-client
+	url = https://github.com/qdrant/qdrant-client.git
+	branch = master
