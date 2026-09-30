@@ -1,4 +1,11 @@
-from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig, is_loopback_url
+from novel_ai.provider import (
+    LiteLLMConfig,
+    LiteLLMProvider,
+    OpenAICompatibleProvider,
+    ProviderConfig,
+    is_loopback_url,
+    sglang_provider_config,
+)
 
 
 def test_loopback_detection_covers_common_local_forms():
@@ -64,3 +71,45 @@ def test_provider_keeps_env_proxy_for_remote(monkeypatch):
     except RuntimeError:
         pass
     assert seen["trust_env"] is not False
+
+
+
+def test_litellm_provider_passes_primary_and_fallback_models():
+    seen = {}
+
+    def completion(**kwargs):
+        seen.update(kwargs)
+        return {"choices": [{"message": {"content": "完成"}}]}
+
+    provider = LiteLLMProvider(
+        LiteLLMConfig(
+            models=("openai/model-a", "anthropic/model-b"),
+            api_key="secret",
+            api_base="https://gateway.example/v1",
+            timeout=30,
+        ),
+        completion_func=completion,
+    )
+    text = provider.chat(
+        [{"role": "user", "content": "写作"}],
+        temperature=0.4,
+        max_tokens=1000,
+        response_format={"type": "json_object"},
+    )
+    assert text == "完成"
+    assert seen["model"] == "openai/model-a"
+    assert seen["fallbacks"] == ["anthropic/model-b"]
+    assert seen["api_key"] == "secret"
+    assert seen["api_base"] == "https://gateway.example/v1"
+    assert seen["timeout"] == 30
+
+
+def test_sglang_provider_config_normalizes_openai_v1_endpoint():
+    config = sglang_provider_config(
+        "http://127.0.0.1:30000",
+        "Qwen/test",
+        timeout=90,
+    )
+    assert config.base_url == "http://127.0.0.1:30000/v1"
+    assert config.model == "Qwen/test"
+    assert config.timeout == 90
