@@ -351,6 +351,9 @@ def build_longform_health(
     story_dna_history: Sequence[dict[str, Any]],
     story_state: dict[str, Any],
     chapter_order: Sequence[str],
+    observed_entities: Sequence[str] = (),
+    canonical_aliases: dict[str, Sequence[str]] | None = None,
+    entity_matcher: Any | None = None,
 ) -> dict[str, Any]:
     current_voice = character_voice_dna(current_text, character_names)
     voice_base = aggregate_voice_baseline(voice_history)
@@ -359,6 +362,15 @@ def build_longform_health(
     timeline = timeline_contradictions(story_state)
     foreshadow = foreshadow_lifecycle(story_state, chapter_order)
     tension = tension_density([*story_dna_history, {"chapter_id": chapter_order[-1] if chapter_order else "", "story_dna": current_story_dna}])
+    entity_alias_drift: list[dict[str, Any]] = []
+    if entity_matcher is not None and canonical_aliases and observed_entities:
+        finder = getattr(entity_matcher, "find_drift", None)
+        if not callable(finder):
+            raise TypeError("entity_matcher must provide find_drift()")
+        entity_alias_drift = [
+            item.to_dict() if callable(getattr(item, "to_dict", None)) else dict(item)
+            for item in finder(observed_entities, canonical_aliases)
+        ]
 
     guard_lines = ["【长篇一致性约束】"]
     for row in voice_alerts[:4]:
@@ -369,6 +381,11 @@ def build_longform_health(
         guard_lines.append(f"- 伏笔过期候选：{row['id']} 已悬置 {row['age_chapters']} 章")
     for warning in tension["warnings"][:3]:
         guard_lines.append(f"- 节奏：{warning}")
+    for row in entity_alias_drift[:4]:
+        guard_lines.append(
+            f"- 实体别名：{row.get('observed','')} 可能应为 {row.get('canonical','')} "
+            f"(相似度 {float(row.get('score',0.0)):.1f})"
+        )
     if len(guard_lines) == 1:
         guard_lines.append("- 当前未发现需要写入生成上下文的长篇一致性告警。")
 
