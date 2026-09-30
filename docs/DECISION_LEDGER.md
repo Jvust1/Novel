@@ -82,3 +82,16 @@ Product Spec §4 定义精修 = "计划 → 正文 → 双审校 → 局部修�
 4. 多种机器信号作为辅助。
 
 因此项目可以持续优化“像人写的”，但不声明任何模型输出能够 100% 通过所有 AI 检测。
+
+## D-013｜长篇健康状态回注
+**Date:** 2026-09-30
+**Status:** ACTIVE
+
+每章回写后保存人物口吻、行为重复、时间线、伏笔生命周期和章节强度健康状态；后续章节由 ContextAssembler 将摘要后的 guard_context 注入生成上下文。告警用于约束与复核，不自动覆盖作者的刻意人物变化。
+
+## D-014｜统一 RecallBackend
+**Date:** 2026-09-30
+**Status:** ACTIVE
+
+LocalSemanticRecall 与 Qdrant 使用共享 RecallDocument / RecallHit / RecallBackend 契约。旧 add/search 保持兼容，新 upsert/query 供统一上层调用。Qdrant 默认关闭，需经冻结评测后才考虑改变默认路径。
+
