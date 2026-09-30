@@ -32,3 +32,16 @@ def test_unrelated_story_dna_passes():
     }]
     report = compare_story_dna(current, history)
     assert report.max_score < 0.72
+
+
+def test_unrelated_or_reordered_events_do_not_match_at_paraphrase_threshold():
+    events = ["收到匿名电话", "被跟踪", "选择赴约", "失去证件", "得到仓库地址"]
+    current = dna([" | ".join(events)])
+    histories = [
+        dna(["参加家宴 | 隐瞒病情 | 选择离席 | 失去信任 | 决定道歉"]),
+        dna([" | ".join(reversed(events))]),
+    ]
+    for old in histories:
+        report = compare_story_dna(current, [{"chapter_id": "003", "story_dna": old}], threshold=0.55)
+        assert not report.should_avoid
+        assert report.matches == []

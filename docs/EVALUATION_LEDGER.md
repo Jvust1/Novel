@@ -143,3 +143,18 @@ Novel 的最终评测从“单章质量”扩展为四级：
 
 评测完成前，当前结论仅限于工程闭环已建立。
 
+## E-004｜Python 3.11 CI 修复与确定性回归
+**Date:** 2026-09-30  
+**Status:** CI_PASS_FROZEN_EVAL_PENDING
+
+- 修复 `longform_consistency.py` 中 Python 3.11 不接受的 f-string 反斜杠表达式，保留原对白归属字符边界。
+- 修复 `quality_gate.py` 的 bigram 列表不可哈希错误；重复句的最小长度条件保持不变，测试使用满足该条件的句子。
+- EPUB 已属支持扩展格式；区分“未知扩展名”与“缺少可选 Docling/MarkItDown 后端”的测试契约。
+- 事件链逐位置比较改用去标点文本的顺序字符对齐（`SequenceMatcher(..., autojunk=False)`），避免短中文近似措辞因共享 bigram 稀少而漏判。全部阈值、0.78/0.22 权重、位置对应与长度惩罚保持不变。
+- 增加对白换行/句末边界、bigram 空文本/重复/标点、事件顺序/空输入/长度惩罚，以及同阈值下无关/逆序事件链的负例回归。
+
+验证：代码提交 `f8b0f6daa46f1aa3dee558f21a62983ecbb3f614` 在 Python 3.11 上通过 `python -m compileall app.py novel_ai` 与完整 `pytest -q`：**183 passed, 1 skipped**。
+CI: https://github.com/Jvust1/Novel/actions/runs/36725711838  
+Draft PR: https://github.com/Jvust1/Novel/pull/33
+
+本次仅证明工程回归通过。事件链比较仍为词法启发式，不代表语义等价保证；冻结长篇 A/B 与人工质量评测仍待执行。
