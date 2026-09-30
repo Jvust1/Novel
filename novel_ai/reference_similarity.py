@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from difflib import SequenceMatcher
 import importlib.util
 import re
 from typing import Any, Sequence
@@ -64,9 +65,8 @@ def _max_score(text: str, refs: Sequence[str]) -> tuple[float, int | None]:
     return scores[idx], idx
 
 
-def _event_tokens(text: str) -> set[str]:
-    clean = re.sub(r"[^\w\u4e00-\u9fff]+", "", text or "", flags=re.UNICODE)
-    return _bigram_set(clean)
+def _event_text(text: str) -> str:
+    return re.sub(r"[^\w\u4e00-\u9fff]+", "", text or "", flags=re.UNICODE)
 
 
 def event_sequence_similarity(a: Sequence[str], b: Sequence[str]) -> float:
@@ -75,8 +75,12 @@ def event_sequence_similarity(a: Sequence[str], b: Sequence[str]) -> float:
     n = min(len(a), len(b))
     parts: list[float] = []
     for i in range(n):
-        x, y = _event_tokens(a[i]), _event_tokens(b[i])
-        parts.append((len(x & y) / len(x | y)) if x and y else 0.0)
+        x, y = _event_text(a[i]), _event_text(b[i])
+        # Preserve character order when adjacent-character bigrams are sparse.
+        parts.append(
+            SequenceMatcher(None, x, y, autojunk=False).ratio()
+            if x and y else 0.0
+        )
     return round((sum(parts) / n) * (n / max(len(a), len(b))), 6)
 
 
