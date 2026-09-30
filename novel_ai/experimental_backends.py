@@ -32,6 +32,7 @@ EXPERIMENTAL_BACKENDS: tuple[ExperimentalBackend, ...] = (
     ExperimentalBackend("haystack", "haystack", "orchestration", "pipeline composition"),
     ExperimentalBackend("chroma", "chromadb", "vector_store", "local vector store experiment"),
     ExperimentalBackend("dspy", "dspy", "prompt_optimization", "benchmark-driven prompt/program optimization"),
+    ExperimentalBackend("crewai", "crewai", "orchestration", "optional second-pass editorial Crew/Flow"),
 )
 
 
