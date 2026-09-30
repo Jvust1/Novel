@@ -1,0 +1,3 @@
+# Optional prompt/program and editorial orchestration
+dspy
+crewai
