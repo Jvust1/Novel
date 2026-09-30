@@ -69,15 +69,35 @@ def _event_tokens(text: str) -> set[str]:
     return _bigram_set(clean)
 
 
+def _flatten_events(items: Sequence[str]) -> list[str]:
+    rows: list[str] = []
+    for item in items:
+        rows.extend(
+            part.strip()
+            for part in re.split(r"[|｜]", str(item))
+            if part.strip()
+        )
+    return rows
+
+
 def event_sequence_similarity(a: Sequence[str], b: Sequence[str]) -> float:
-    if not a or not b:
+    left = _flatten_events(a)
+    right = _flatten_events(b)
+    if not left or not right:
         return 0.0
-    n = min(len(a), len(b))
+    n = min(len(left), len(right))
     parts: list[float] = []
     for i in range(n):
-        x, y = _event_tokens(a[i]), _event_tokens(b[i])
-        parts.append((len(x & y) / len(x | y)) if x and y else 0.0)
-    return round((sum(parts) / n) * (n / max(len(a), len(b))), 6)
+        x_tokens, y_tokens = _event_tokens(left[i]), _event_tokens(right[i])
+        jaccard = (
+            len(x_tokens & y_tokens) / len(x_tokens | y_tokens)
+            if x_tokens and y_tokens
+            else 0.0
+        )
+        # Fuzzy aligned-event comparison catches near-synonymous Chinese event
+        # labels while Jaccard keeps a deterministic dependency-free floor.
+        parts.append(max(jaccard, fuzzy_similarity(left[i], right[i])))
+    return round((sum(parts) / n) * (n / max(len(left), len(right))), 6)
 
 
 def analyze_reference_similarity(
