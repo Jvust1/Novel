@@ -114,6 +114,12 @@ OPTIONAL_RECALL_ADAPTERS: tuple[RecallAdapterSpec, ...] = (
         notes="可选 VectorStoreIndex RecallBackend；默认不启用，需和 local/Qdrant 做 A/B。",
     ),
     RecallAdapterSpec(
+        name="haystack",
+        package="haystack-ai",
+        mode="bm25-document-store",
+        notes="可选 Haystack RecallBackend；默认不启用，需与 local/LlamaIndex/Qdrant 做 A/B。",
+    ),
+    RecallAdapterSpec(
         name="qdrant",
         package="qdrant-client",
         mode="vector",
