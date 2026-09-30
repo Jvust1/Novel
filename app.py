@@ -15,6 +15,7 @@ from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
 from novel_ai.reference_similarity import analyze_reference_similarity, similarity_review_payload
 from novel_ai.release_eval import build_release_quality_snapshot
 from novel_ai.recall_backends import recall_backend_capabilities
+from novel_ai.experimental_backends import experimental_backend_matrix
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -57,6 +58,8 @@ with st.sidebar:
     st.caption("密钥不会由本应用写入项目文件。")
     with st.expander("可选 Recall 后端", expanded=False):
         st.json(recall_backend_capabilities())
+    with st.expander("实验编排/记忆/优化后端", expanded=False):
+        st.json(experimental_backend_matrix())
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)

@@ -174,7 +174,7 @@
       "repo": "mem0ai/mem0",
       "category": "memory_retrieval",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "记忆抽取/检索模式参考"
     },
@@ -192,7 +192,7 @@
       "repo": "run-llama/llama_index",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "索引/检索抽象，不替换 Novel 核心管线"
     },
@@ -201,7 +201,7 @@
       "repo": "langchain-ai/langchain",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "外部工具和 retriever 接入模式"
     },
@@ -210,7 +210,7 @@
       "repo": "deepset-ai/haystack",
       "category": "orchestration",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "可组合 pipeline 组件模式"
     },
@@ -219,7 +219,7 @@
       "repo": "chroma-core/chroma",
       "category": "vector_store",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "本地向量库候选"
     },
@@ -327,7 +327,7 @@
       "repo": "stanfordnlp/dspy",
       "category": "prompt_optimization",
       "license": "MIT",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P2",
       "use": "用冻结 benchmark 优化 prompt/program，而非凭感觉调 Prompt"
     },

@@ -1,3 +1,10 @@
+## 2026-09-30 — orchestration and optimization experiment layer
+
+- Pinned Mem0, LlamaIndex, LangChain, Haystack, Chroma and DSPy as reviewed submodules.
+- Added `novel_ai/experimental_backends.py`: one capability matrix and explicit chooser for memory/orchestration/vector-store/prompt-optimization experiments.
+- Heavy frameworks remain opt-in. The selector only chooses from a caller-provided preference list and falls back to `novel-core` when none are available.
+- This prevents framework sprawl from leaking into the deterministic core and makes future A/B experiments reproducible.
+
 ## 2026-09-30 — recall and evaluation backend fusion
 
 - Pinned GraphRAG, LightRAG, Graphiti, DeepEval, Ragas, sentence-transformers, FAISS and HanLP.
