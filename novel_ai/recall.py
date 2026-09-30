@@ -102,6 +102,12 @@ class RecallAdapterSpec:
 
 OPTIONAL_RECALL_ADAPTERS: tuple[RecallAdapterSpec, ...] = (
     RecallAdapterSpec(
+        name="mem0",
+        package="mem0ai",
+        mode="memory-layer",
+        notes="仅作为可选 RecallBackend；默认不启用，写入使用 infer=False 保持 Novel 结构化记忆权威。",
+    ),
+    RecallAdapterSpec(
         name="qdrant",
         package="qdrant-client",
         mode="vector",

@@ -10,6 +10,7 @@ pip install -r requirements-extras/reference.txt
 pip install -r requirements-extras/memory.txt
 pip install -r requirements-extras/eval.txt
 pip install -r requirements-extras/provider.txt
+pip install -r requirements-extras/orchestration.txt
 ```
 
 `all.txt` exists for disposable experiment environments, not as the recommended production install.

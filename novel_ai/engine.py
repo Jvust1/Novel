@@ -125,6 +125,40 @@ def merge_quality_issues(review: ChapterReview | None, quality: dict[str, Any]) 
     return review.model_copy(update={"issues": issues, "verdict": verdict})
 
 
+def apply_external_review_hooks(
+    review: ChapterReview | None,
+    hooks: list[Any] | None,
+    *,
+    draft: str,
+    plan: ChapterPlan,
+    bible: StoryBible,
+    characters: list[Character],
+) -> ChapterReview | None:
+    """Merge explicitly configured upstream review hooks into Novel's review.
+
+    Hooks are opt-in and must expose review_payload(...)->dict with an issues
+    list compatible with merge_quality_issues. No external framework is enabled
+    unless the caller passes a hook instance.
+    """
+    if review is None or not hooks:
+        return review
+    current = review
+    for hook in hooks:
+        review_payload = getattr(hook, "review_payload", None)
+        if not callable(review_payload):
+            raise TypeError("external review hook 必须提供 review_payload()")
+        payload = review_payload(
+            draft=draft,
+            plan=plan,
+            bible=bible,
+            characters=characters,
+        )
+        if not isinstance(payload, dict):
+            raise TypeError("external review hook 必须返回 dict")
+        current = merge_quality_issues(current, payload)
+    return current
+
+
 class NovelEngine:
     def __init__(self, provider: OpenAICompatibleProvider):
         self.provider = provider
@@ -252,6 +286,7 @@ class NovelEngine:
         reference_hashes: set[str] | None = None,
         historical_story_dna: list[dict[str, Any]] | None = None,
         historical_voice_dna: list[dict[str, Any]] | None = None,
+        external_review_hooks: list[Any] | None = None,
     ) -> ChapterResult:
         plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
         story_dna_obj = story_dna_from_plan(plan)
@@ -290,6 +325,14 @@ class NovelEngine:
         review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
         review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
         review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
+        review_result = apply_external_review_hooks(
+            review_result,
+            external_review_hooks,
+            draft=draft,
+            plan=plan,
+            bible=bible,
+            characters=characters,
+        )
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
@@ -308,6 +351,14 @@ class NovelEngine:
             review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
             review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
             review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
+            review_after_repair = apply_external_review_hooks(
+                review_after_repair,
+                external_review_hooks,
+                draft=revised,
+                plan=plan,
+                bible=bible,
+                characters=characters,
+            )
         return ChapterResult(
             plan=plan,
             draft=draft,
