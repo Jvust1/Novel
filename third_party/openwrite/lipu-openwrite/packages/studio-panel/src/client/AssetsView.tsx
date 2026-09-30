@@ -1,0 +1,1077 @@
+/**
+ * Assets view (资产): OpenWrite's structured canon library (Studio's 资料库)
+ * rendered natively as an Obsidian-like master-detail layout — left sidebar
+ * (segment switcher, search, compact asset rows with collapsible 设定
+ * subcategory groups, 新建 button) + main detail pane (header, two-column
+ * fields, 索引, 关系, markdown body) with a read/edit toggle and inline
+ * creation. Only the asset domain is writable; manuscript/outline mutations
+ * stay with the agent tools.
+ *
+ * Wire shapes (verified against OpenWrite tools/studio_http.py do_GET,
+ * tools/structured_assets.py, tools/world_query.py get_asset_relation_view,
+ * tools/studio_application.py workspace/_document_groups/read_document):
+ * - GET /api/assets?kind=X — enveloped { ok, data: { assets: [...] } }.
+ *   Summaries: character/world { kind, id, name, summary, asset_type,
+ *   aliases, tags, path }; progression adds { stage_count }.
+ * - GET /api/assets/{kind}/{id} — enveloped detail { kind, id, name,
+ *   data: <front-matter/YAML dict>, body_markdown, path, revision } +
+ *   character/world only: relation_view { confirmed, registered, suggested,
+ *   incoming, counts } with items { target, name, kind, note, origin,
+ *   direction, resolved }.
+ * - POST /api/assets / POST /api/assets/update — the write contract lives in
+ *   AssetEditor.tsx's header comment.
+ * - GET /api/workspace — NOT enveloped. documents.core[] is the 作品核心
+ *   document list; operations.reference_library is the 参考作品 (reference
+ *   works) list — Studio's data-view="deconstruct" surface, NOT the 资料库
+ *   nav entry (which is this structured asset library).
+ * - GET /api/document?path=<p> — NOT enveloped { path, title, content, ... }.
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { MarkdownText } from './MarkdownText.tsx'
+import type { ConvViewProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { StudioApiError, type StudioApiInjected } from './api.ts'
+import { AssetEditor, NewAssetForm, type AssetEditorSource, type RelationDraft } from './AssetEditor.tsx'
+import { DiscardDraftDialog } from './DiscardDraftDialog.tsx'
+import { latestAssetDraft, readAssetDraft, removeAssetDraft, removeAssetDraftIfUnchanged, writeAssetDraft, type AssetDraftContext, type AssetDraftRecord } from './asset-drafts.ts'
+import css from './views.module.css'
+
+/** One asset summary (the fields this view reads; the payload carries more). */
+interface AssetSummary {
+  kind: string
+  id: string
+  name: string
+  summary: string
+  assetType: string
+  aliases: string[]
+  tags: string[]
+  stageCount: number | null
+}
+
+/** One reference-work entry from operations.reference_library. */
+interface ReferenceEntry {
+  sourceId: string
+  title: string
+  intent: string
+  structureStatus: string
+  analysisStatus: string
+  analysisComplete: boolean
+  totalChars: number
+}
+
+interface ReferenceUnit {
+  unitId: string
+  kind: string
+  title: string
+  content: string
+}
+
+type ReferenceDetailState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; fullContent: string; content: string; units: ReferenceUnit[] }
+
+/** One 作品核心 document from workspace documents.core. */
+interface CoreDoc {
+  path: string
+  title: string
+  categoryLabel: string
+}
+
+/** One relation row of an asset detail. */
+interface RelationItem {
+  name: string
+  note: string
+  direction: 'outgoing' | 'incoming'
+  origin: string
+  resolved: boolean
+}
+
+/**
+ * Parsed asset detail: the editor-owned front-matter fields (name/summary/
+ * aliases/tags/scalars/related), the read-only leftovers (lists/objects), the
+ * resolved display relations, and the body. `revision` is the optimistic lock
+ * echoed back on update.
+ */
+interface AssetDetail {
+  revision: string
+  name: string
+  summary: string
+  aliases: string[]
+  tags: string[]
+  scalars: { key: string; value: string }[]
+  fields: { key: string; value: string }[]
+  /** List-typed whitelist fields (taboos/detail_refs): string entries. */
+  lists: { key: string; items: string[] }[]
+  related: RelationDraft[]
+  relations: RelationItem[]
+  body: string
+}
+
+/** Per-asset detail cache entry. */
+type DetailState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; detail: AssetDetail }
+
+type DocState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; title: string; content: string }
+
+type LoadState = 'loading' | 'error' | 'ready'
+
+type Segment = 'characters' | 'world' | 'progression' | 'references' | 'core'
+
+const SEGMENTS: readonly Segment[] = ['characters', 'world', 'progression', 'references', 'core']
+
+/** Front-matter keys the editor owns (excluded from the read-only field list). */
+const EDITOR_OWNED_FIELDS = new Set(['id', 'name', 'summary', 'aliases', 'tags', 'related'])
+/**
+ * Server-managed or non-writable keys rendered read-only. `role` is NOT in
+ * the server's CHARACTER_FIELDS/WORLD_FIELDS write whitelist — editing it
+ * would silently no-op, so it displays read-only.
+ */
+const READONLY_FIELDS = new Set(['state_updated_at', 'role'])
+/**
+ * Internal noise hidden entirely (neither read nor edit): `title` duplicates
+ * 名称 (name), `source` is creation provenance. Neither is in the server's
+ * write whitelists, so hiding drops nothing saveable.
+ */
+const HIDDEN_FIELDS = new Set(['title', 'source'])
+/**
+ * List-typed whitelist keys (structured_assets.py: CHARACTER_FIELDS has
+ * taboos/detail_refs, WORLD_FIELDS has detail_refs) rendered as proper list
+ * blocks in the read view and edited as one-entry-per-line textareas
+ * (Studio's assets.js line-join semantics).
+ */
+const LIST_FIELDS = new Set(['taboos', 'detail_refs'])
+
+/** Segments backed by writable structured assets (新建 lives there). */
+const CARDABLE_SEGMENTS: readonly Segment[] = ['characters', 'world', 'progression']
+
+/** Narrow one wire summary, tolerating missing/extra fields. */
+function parseAsset(raw: unknown): AssetSummary {
+  const record = (raw !== null && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  const strings = (value: unknown): string[] =>
+    Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item !== '') : []
+  return {
+    kind: text(record['kind']),
+    id: text(record['id']),
+    name: text(record['name']),
+    summary: text(record['summary']),
+    assetType: text(record['asset_type']),
+    aliases: strings(record['aliases']),
+    tags: strings(record['tags']),
+    stageCount: typeof record['stage_count'] === 'number' ? record['stage_count'] : null,
+  }
+}
+
+/** Unwrap the success envelope and narrow the asset list (empty on garbage). */
+function parseAssets(data: unknown): AssetSummary[] {
+  const envelope = (data !== null && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  const inner = (envelope['data'] !== null && typeof envelope['data'] === 'object' ? envelope['data'] : {}) as Record<string, unknown>
+  const list = Array.isArray(inner['assets']) ? inner['assets'] : []
+  return list.map(parseAsset)
+}
+
+/** Narrow one reference-work entry from operations.reference_library. */
+function parseReference(raw: unknown): ReferenceEntry {
+  const entry = (raw !== null && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const dig = (value: unknown): Record<string, unknown> =>
+    (value !== null && typeof value === 'object' ? value : {}) as Record<string, unknown>
+  const record = dig(entry['record'])
+  const structure = dig(entry['structure'])
+  const analysis = dig(entry['analysis'])
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  return {
+    sourceId: text(record['source_id']),
+    title: text(record['title']),
+    intent: text(record['intent']),
+    structureStatus: text(structure['status']),
+    analysisStatus: text(analysis['status']),
+    analysisComplete: analysis['complete'] === true,
+    totalChars: typeof record['total_chars'] === 'number' ? record['total_chars'] : 0,
+  }
+}
+
+function parseReferenceDetail(data: unknown): { fullContent: string; units: ReferenceUnit[] } {
+  const envelope = (data !== null && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  const inner = (envelope['data'] !== null && typeof envelope['data'] === 'object' ? envelope['data'] : envelope) as Record<string, unknown>
+  const text = (value: unknown): string => typeof value === 'string' ? value : ''
+  const units = (Array.isArray(inner['units']) ? inner['units'] : []).flatMap((raw): ReferenceUnit[] => {
+    if (raw === null || typeof raw !== 'object') return []
+    const unit = raw as Record<string, unknown>
+    return [{
+      unitId: text(unit['unit_id']),
+      kind: text(unit['kind']),
+      title: text(unit['title']),
+      content: text(unit['content']),
+    }]
+  })
+  return { fullContent: text(inner['content']), units }
+}
+
+/** Narrow one 作品核心 document summary. */
+function parseCoreDoc(raw: unknown): CoreDoc {
+  const record = (raw !== null && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  return {
+    path: text(record['path']),
+    title: text(record['title']),
+    categoryLabel: text(record['category_label']) || text(record['subtitle']),
+  }
+}
+
+/** Narrow the workspace payload's reference list and core documents. */
+function parseWorkspace(data: unknown): { references: ReferenceEntry[]; coreDocs: CoreDoc[] } {
+  const root = (data !== null && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  const dig = (value: unknown): Record<string, unknown> =>
+    (value !== null && typeof value === 'object' ? value : {}) as Record<string, unknown>
+  const operations = dig(root['operations'])
+  const documents = dig(root['documents'])
+  return {
+    references: (Array.isArray(operations['reference_library']) ? operations['reference_library'] : []).map(parseReference),
+    coreDocs: (Array.isArray(documents['core']) ? documents['core'] : []).map(parseCoreDoc),
+  }
+}
+
+/** Format one non-scalar front-matter value for the read-only field list. */
+function fieldValue(value: unknown): string {
+  if (Array.isArray(value)) return value.map(item => (typeof item === 'object' ? JSON.stringify(item) : String(item))).join('、')
+  if (value !== null && typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+/** Parse one relation-view item. */
+function parseRelation(raw: unknown, direction: 'outgoing' | 'incoming'): RelationItem {
+  const record = (raw !== null && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  return {
+    name: text(record['name']) || text(record['target']),
+    note: text(record['note']),
+    direction,
+    origin: text(record['origin']),
+    resolved: record['resolved'] !== false,
+  }
+}
+
+/** Parse one front-matter `related` entry (string or { target, kind, note }). */
+function parseRelatedDraft(raw: unknown): RelationDraft | null {
+  if (typeof raw === 'string') {
+    return raw.trim() === '' ? null : { target: raw.trim(), kind: 'related', note: '' }
+  }
+  if (raw !== null && typeof raw === 'object') {
+    const record = raw as Record<string, unknown>
+    const target = typeof record['target'] === 'string' ? record['target'].trim() : ''
+    if (target === '') return null
+    return {
+      target,
+      kind: typeof record['kind'] === 'string' && record['kind'] !== '' ? record['kind'] : 'related',
+      note: typeof record['note'] === 'string' ? record['note']
+        : typeof record['description'] === 'string' ? record['description'] : '',
+    }
+  }
+  return null
+}
+
+/** Narrow the asset detail payload (envelope unwrapped here). */
+function parseAssetDetail(data: unknown): AssetDetail {
+  const envelope = (data !== null && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  const inner = (envelope['data'] !== null && typeof envelope['data'] === 'object' ? envelope['data'] : envelope) as Record<string, unknown>
+  const frontMatter = (inner['data'] !== null && typeof inner['data'] === 'object' ? inner['data'] : {}) as Record<string, unknown>
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  const scalars: { key: string; value: string }[] = []
+  const fields: { key: string; value: string }[] = []
+  const lists: { key: string; items: string[] }[] = []
+  for (const [key, value] of Object.entries(frontMatter)) {
+    if (EDITOR_OWNED_FIELDS.has(key) || HIDDEN_FIELDS.has(key)) continue
+    if (LIST_FIELDS.has(key)) {
+      // One row per entry; non-string entries keep a readable JSON form.
+      const items = (Array.isArray(value) ? value : [])
+        .map(item => (typeof item === 'string' ? item : JSON.stringify(item)))
+        .filter(item => item !== '')
+      if (items.length > 0) lists.push({ key, items })
+      continue
+    }
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      (READONLY_FIELDS.has(key) ? fields : scalars).push({ key, value: String(value) })
+    } else {
+      const formatted = fieldValue(value)
+      if (formatted !== '' && formatted !== 'null') fields.push({ key, value: formatted })
+    }
+  }
+  const relationView = (inner['relation_view'] !== null && typeof inner['relation_view'] === 'object' ? inner['relation_view'] : {}) as Record<string, unknown>
+  const relationList = (key: string, direction: 'outgoing' | 'incoming'): RelationItem[] =>
+    (Array.isArray(relationView[key]) ? relationView[key] : []).map(item => parseRelation(item, direction))
+  return {
+    revision: text(inner['revision']),
+    name: text(inner['name']) || text(frontMatter['name']),
+    summary: text(frontMatter['summary']),
+    aliases: Array.isArray(frontMatter['aliases'])
+      ? frontMatter['aliases'].filter((item): item is string => typeof item === 'string' && item !== '')
+      : [],
+    tags: Array.isArray(frontMatter['tags'])
+      ? frontMatter['tags'].filter((item): item is string => typeof item === 'string' && item !== '')
+      : [],
+    scalars,
+    fields,
+    lists,
+    related: (Array.isArray(frontMatter['related']) ? frontMatter['related'] : [])
+      .map(parseRelatedDraft)
+      .filter((item): item is RelationDraft => item !== null),
+    relations: [
+      ...relationList('confirmed', 'outgoing'),
+      ...relationList('registered', 'outgoing'),
+      ...relationList('incoming', 'incoming'),
+    ],
+    body: typeof inner['body_markdown'] === 'string' ? inner['body_markdown'] : '',
+  }
+}
+
+/** Update only the saved field, preserving the editor's other local drafts. */
+function withSavedField(detail: AssetDetail, field: string, value: unknown): AssetDetail {
+  if (field === 'name' || field === 'summary') return { ...detail, [field]: String(value ?? '') }
+  if (field === 'aliases' || field === 'tags') {
+    return { ...detail, [field]: Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [] }
+  }
+  if (LIST_FIELDS.has(field)) {
+    const items = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+    return { ...detail, lists: [...detail.lists.filter(item => item.key !== field), { key: field, items }] }
+  }
+  return { ...detail, scalars: [...detail.scalars.filter(item => item.key !== field), { key: field, value: String(value ?? '') }] }
+}
+
+/** Narrow the document payload (NOT enveloped). */
+function parseDocument(data: unknown): { title: string; content: string } {
+  const record = (data !== null && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  return {
+    title: typeof record['title'] === 'string' ? record['title'] : '',
+    content: typeof record['content'] === 'string' ? record['content'] : '',
+  }
+}
+
+/** Client-side search: name/id/assetType/aliases/tags/summary, case-insensitive substring. */
+function matchesQuery(asset: AssetSummary, query: string): boolean {
+  const haystack = [
+    asset.name, asset.id, asset.assetType, asset.summary, ...asset.aliases, ...asset.tags,
+  ].join('\n').toLowerCase()
+  return haystack.includes(query)
+}
+
+/** Full assets-view props: conversation-view runtime share & injected fetch & locale seat. */
+export type AssetsViewProps =
+  ConvViewProps & InjectFace<StudioApiInjected> & PropsLocale<'studio-panel'> & {
+    refreshEpoch?: number
+    draftContext?: AssetDraftContext | undefined
+    onDraftStateChange?: (state: { dirty: boolean; busy: boolean; discard: () => void }) => void
+  }
+
+export function AssetsView({ fetchStudioApi, postStudioApi, t, refreshEpoch = 0, draftContext, onDraftStateChange }: AssetsViewProps) {
+  const [initialRecovery] = useState(() => draftContext ? latestAssetDraft(draftContext) : null)
+  const [state, setState] = useState<LoadState>('loading')
+  const [assets, setAssets] = useState<AssetSummary[]>([])
+  const [references, setReferences] = useState<ReferenceEntry[]>([])
+  const [referenceDetails, setReferenceDetails] = useState<ReadonlyMap<string, ReferenceDetailState>>(new Map())
+  const [coreDocs, setCoreDocs] = useState<CoreDoc[]>([])
+  const [error, setError] = useState('')
+  const [segment, setSegment] = useState<Segment>(initialRecovery?.kind === 'world' ? 'world' : 'characters')
+  const [query, setQuery] = useState('')
+  /** Selected sidebar row key: `${kind}:${id}` / `doc:${path}` / `ref:${sourceId}`. */
+  const [selected, setSelected] = useState<string | null>(initialRecovery ? `${initialRecovery.kind}:${initialRecovery.id}` : null)
+  const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(new Set())
+  const [details, setDetails] = useState<ReadonlyMap<string, DetailState>>(new Map())
+  const [documents, setDocuments] = useState<ReadonlyMap<string, DocState>>(new Map())
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<{ message: string; conflict: boolean } | null>(null)
+  /** Keep each asset's optimistic lock separate when cached editors are revisited. */
+  const revisionsRef = useRef(new Map<string, string>())
+  /** Bumped only on conflict-refetch/cancel so the editor remounts with server truth. */
+  const [draftEpoch, setDraftEpoch] = useState(0)
+  /** Field key with an in-flight single-field autosave. */
+  const [fieldBusy, setFieldBusy] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [createBusy, setCreateBusy] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(initialRecovery !== null)
+  const [restoredKey, setRestoredKey] = useState('')
+  const [draftStorageFailed, setDraftStorageFailed] = useState(false)
+  const recoveries = useRef(new Map<string, AssetDraftRecord>())
+  const discardedEditor = useRef('')
+  const [pendingDiscard, setPendingDiscard] = useState<(() => void) | null>(null)
+  const busy = saving || fieldBusy !== null || createBusy
+  const editorState = useRef({ dirty, selected, busy })
+  editorState.current = { dirty, selected, busy }
+  const discardCurrentDraft = useCallback(() => {
+    // A live editor may flush during its layout cleanup. An explicitly
+    // discarded instance must not recreate the recovery after removal.
+    discardedEditor.current = `${selected}:${draftEpoch}`
+    setDraftEpoch(previous => previous + 1)
+    if (selected && draftContext) {
+      const [kind, ...rest] = selected.split(':')
+      removeAssetDraft({ ...draftContext, kind: kind ?? '', id: rest.join(':') })
+      recoveries.current.delete(selected)
+    }
+    setRestoredKey('')
+    setDraftStorageFailed(false)
+  }, [draftContext, draftEpoch, selected])
+  useEffect(() => { onDraftStateChange?.({ dirty, busy, discard: discardCurrentDraft }) }, [busy, dirty, discardCurrentDraft, onDraftStateChange])
+  useEffect(() => () => { onDraftStateChange?.({ dirty: false, busy: false, discard: () => {} }) }, [onDraftStateChange])
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => { window.removeEventListener('beforeunload', warn) }
+  }, [dirty])
+  const requestDiscard = (action: () => void) => {
+    if (busy) return
+    const proceed = () => { discardCurrentDraft(); action() }
+    if (dirty) setPendingDiscard(() => proceed)
+    else proceed()
+  }
+  // The detail cache doubles as the in-flight guard for keyed fetches.
+  const detailsRef = useRef(details)
+  detailsRef.current = details
+
+  const load = useCallback((silent = false) => {
+    if (!silent) setState('loading')
+    let cancelled = false
+    // The reference works and 作品核心 ride the workspace payload; their
+    // failure must not take the asset sections down with it (and vice versa).
+    const assetsPromise = fetchStudioApi('/assets').then(parseAssets)
+    const workspacePromise = fetchStudioApi('/workspace').then(parseWorkspace).catch(() => null)
+    void Promise.all([assetsPromise, workspacePromise])
+      .then(([assetList, workspace]) => {
+        if (cancelled) return
+        // A background deletion must not unmount an editor with local work.
+        const current = editorState.current
+        setAssets(previous => (current.dirty || current.busy) && current.selected !== null && !assetList.some(asset => `${asset.kind}:${asset.id}` === current.selected)
+          ? [...assetList, ...previous.filter(asset => `${asset.kind}:${asset.id}` === current.selected)]
+          : assetList)
+        setReferences(workspace?.references ?? [])
+        setCoreDocs(workspace?.coreDocs ?? [])
+        setError('')
+        setState('ready')
+      })
+      .catch((cause: unknown) => {
+        if (cancelled) return
+        setError(cause instanceof Error ? cause.message : String(cause))
+        if (!silent || (!editorState.current.dirty && !editorState.current.busy)) setState('error')
+      })
+    return () => { cancelled = true }
+  }, [fetchStudioApi])
+
+  useEffect(() => load(), [load])
+
+  const fetchDetail = useCallback((asset: AssetSummary, resetDraft = false) => {
+    if (resetDraft) setDraftEpoch(previous => previous + 1)
+    const key = `${asset.kind}:${asset.id}`
+    setDetails(previous => new Map(previous).set(key, { status: 'loading' }))
+    fetchStudioApi(`/assets/${asset.kind}/${encodeURIComponent(asset.id)}`)
+      .then((data) => {
+        const parsedDetail = parseAssetDetail(data)
+        const recovery = draftContext ? readAssetDraft({ ...draftContext, kind: asset.kind, id: asset.id }) : null
+        if (recovery) {
+          recoveries.current.set(key, recovery)
+          revisionsRef.current.set(key, recovery.baseRevision)
+          setRestoredKey(key)
+          if (recovery.baseRevision !== parsedDetail.revision) setSaveError({ message: t('assets.draft.conflict'), conflict: true })
+        } else revisionsRef.current.set(key, parsedDetail.revision)
+        setDetails(previous => new Map(previous).set(key, { status: 'ready', detail: parsedDetail }))
+      })
+      .catch((cause: unknown) => {
+        setDetails(previous => new Map(previous).set(key, {
+          status: 'error',
+          message: cause instanceof Error ? cause.message : String(cause),
+        }))
+      })
+  }, [draftContext, fetchStudioApi, t])
+
+  useEffect(() => {
+    if (!initialRecovery) return
+    fetchDetail({ kind: initialRecovery.kind, id: initialRecovery.id } as AssetSummary)
+  }, [fetchDetail, initialRecovery])
+
+  const previousEpoch = useRef(refreshEpoch)
+  useEffect(() => {
+    if (previousEpoch.current === refreshEpoch) return
+    previousEpoch.current = refreshEpoch
+    const current = editorState.current
+    if (!current.dirty && !current.busy) {
+      setDetails(new Map())
+      const active = assets.find(asset => `${asset.kind}:${asset.id}` === current.selected)
+      if (active) fetchDetail(active)
+    }
+    return load(true)
+  }, [assets, fetchDetail, load, refreshEpoch])
+
+  /** Select one sidebar row: clear transient editing state, lazy-load the detail. */
+  const selectAsset = (asset: AssetSummary) => {
+    const key = `${asset.kind}:${asset.id}`
+    const select = () => {
+      setSelected(key)
+      // Obsidian 哲学：选中即编辑——可编辑三类直接进编辑器，不再有只读卡片门。
+      setSaveError(null)
+      setCreating(false)
+      if (!detailsRef.current.has(key)) fetchDetail(asset)
+    }
+    if (key !== selected || creating) requestDiscard(select)
+    else select()
+  }
+
+  const selectDocument = (doc: CoreDoc) => {
+    const key = `doc:${doc.path}`
+    if (key !== selected) {
+      requestDiscard(() => { openDocument(doc) })
+      return
+    }
+    openDocument(doc)
+  }
+
+  const openDocument = (doc: CoreDoc) => {
+    const key = `doc:${doc.path}`
+    setSelected(key)
+    setCreating(false)
+    if (documents.has(key)) return
+    setDocuments(previous => new Map(previous).set(key, { status: 'loading' }))
+    fetchStudioApi(`/document?path=${encodeURIComponent(doc.path)}`)
+      .then((data) => {
+        setDocuments(previous => new Map(previous).set(key, { status: 'ready', ...parseDocument(data) }))
+      })
+      .catch((cause: unknown) => {
+        setDocuments(previous => new Map(previous).set(key, {
+          status: 'error',
+          message: cause instanceof Error ? cause.message : String(cause),
+        }))
+      })
+  }
+
+  const selectReference = (entry: ReferenceEntry, force = false) => {
+    const key = `ref:${entry.sourceId}`
+    if (key !== selected) {
+      requestDiscard(() => { openReference(entry, force) })
+      return
+    }
+    openReference(entry, force)
+  }
+
+  const openReference = (entry: ReferenceEntry, force = false) => {
+    const key = `ref:${entry.sourceId}`
+    setSelected(key)
+    setCreating(false)
+    if (!force && referenceDetails.has(key)) return
+    setReferenceDetails(previous => new Map(previous).set(key, { status: 'loading' }))
+    fetchStudioApi(`/reference-library/${encodeURIComponent(entry.sourceId)}`)
+      .then(data => {
+        const parsed = parseReferenceDetail(data)
+        setReferenceDetails(previous => new Map(previous).set(key, {
+          status: 'ready',
+          fullContent: parsed.fullContent,
+          content: parsed.fullContent,
+          units: parsed.units,
+        }))
+      })
+      .catch((cause: unknown) => {
+        setReferenceDetails(previous => new Map(previous).set(key, {
+          status: 'error',
+          message: cause instanceof Error ? cause.message : String(cause),
+        }))
+      })
+  }
+
+  /**
+   * Single-field autosave (Obsidian-style): one-key merge on the wire, the
+   * response's fresh revision silently re-arms the lock. Conflict → banner +
+   * draft-reset refetch (the editor remounts with server truth).
+   */
+  const saveField = (asset: AssetSummary, field: string, value: unknown) => {
+    const key = `${asset.kind}:${asset.id}`
+    const entry = details.get(key)
+    if (entry?.status !== 'ready') return
+    if (fieldBusy !== null) return
+    setFieldBusy(field)
+    setSaveError(null)
+    postStudioApi('/assets/update', {
+      kind: asset.kind,
+      id: asset.id,
+      revision: revisionsRef.current.get(key) || entry.detail.revision,
+      data: { [field]: value },
+    })
+      .then((data) => {
+        setFieldBusy(null)
+        const record = (data !== null && typeof data === 'object' ? data : {}) as { asset?: { revision?: unknown } }
+        const nextRevision = typeof record.asset?.revision === 'string' ? record.asset.revision : null
+        if (nextRevision !== null) revisionsRef.current.set(key, nextRevision)
+        recoveries.current.delete(key)
+        setDetails(previous => {
+          const current = previous.get(key)
+          if (current?.status !== 'ready') return previous
+          return new Map(previous).set(key, {
+            ...current,
+            detail: { ...withSavedField(current.detail, field, value), revision: nextRevision ?? current.detail.revision },
+          })
+        })
+        if (['name', 'summary', 'aliases', 'tags'].includes(field)) {
+          setAssets(previous => previous.map(item => `${item.kind}:${item.id}` === key ? { ...item, [field]: value } : item))
+        }
+      })
+      .catch((cause: unknown) => {
+        setFieldBusy(null)
+        const conflict = cause instanceof StudioApiError && cause.status === 409
+        setSaveError({ message: cause instanceof Error ? cause.message : String(cause), conflict })
+        // Keep the local body and relation draft visible on version conflicts.
+        // Only an explicit reload/discard replaces the editor with server data.
+      })
+  }
+
+  /** Save one editor draft: revision-locked update, then refresh detail + list. */
+  const saveAsset = (asset: AssetSummary, data: Record<string, unknown>, bodyMarkdown: string) => {
+    const key = `${asset.kind}:${asset.id}`
+    const entry = details.get(key)
+    if (entry?.status !== 'ready' || busy) return
+    const identity = draftContext ? { ...draftContext, kind: asset.kind, id: asset.id } : null
+    const submittedDraft = identity ? readAssetDraft(identity)?.draft : undefined
+    setSaving(true)
+    setSaveError(null)
+    postStudioApi('/assets/update', {
+      kind: asset.kind,
+      id: asset.id,
+      revision: revisionsRef.current.get(key) || entry.detail.revision,
+      data,
+      body_markdown: bodyMarkdown,
+    })
+      .then(() => {
+        if (identity && submittedDraft) removeAssetDraftIfUnchanged(identity, submittedDraft)
+        recoveries.current.delete(key)
+        setRestoredKey('')
+        setSaving(false)
+        // 留在编辑态：detail.revision 变化会让编辑器以服务端真值重挂。
+        fetchDetail(asset)
+        load(true)
+      })
+      .catch((cause: unknown) => {
+        setSaving(false)
+        const conflict = cause instanceof StudioApiError && cause.status === 409
+        setSaveError({
+          message: cause instanceof Error ? cause.message : String(cause),
+          conflict,
+        })
+      })
+  }
+
+  /** Create one asset, then refresh the list. */
+  const createAsset = (kind: 'character' | 'world' | 'progression', payload: { id: string; data: Record<string, unknown> }) => {
+    setCreateBusy(true)
+    setCreateError(null)
+    postStudioApi('/assets', { kind, id: payload.id, data: payload.data })
+      .then(() => {
+        setCreateBusy(false)
+        setCreating(false)
+        load(true)
+      })
+      .catch((cause: unknown) => {
+        setCreateBusy(false)
+        setCreateError(cause instanceof Error ? cause.message : String(cause))
+      })
+  }
+
+  const intentLabel = (intent: string): string => {
+    switch (intent) {
+      case 'continuation': return t('reference.intent.continuation')
+      case 'canon': return t('reference.intent.canon')
+      case 'migration': return t('reference.intent.migration')
+      default: return t('reference.intent.reference')
+    }
+  }
+
+
+  const segmentCount = (which: Segment): number => {
+    switch (which) {
+      case 'characters': return assets.filter(asset => asset.kind === 'character').length
+      case 'world': return assets.filter(asset => asset.kind === 'world').length
+      case 'progression': return assets.filter(asset => asset.kind === 'progression').length
+      case 'references': return references.length
+      case 'core': return coreDocs.length
+    }
+  }
+
+  const segmentLabel = (which: Segment): string => {
+    switch (which) {
+      case 'characters': return t('assets.segment.characters')
+      case 'world': return t('assets.segment.world')
+      case 'progression': return t('assets.segment.progression')
+      case 'references': return t('assets.segment.references')
+      case 'core': return t('assets.segment.core')
+    }
+  }
+
+  const toggleGroup = (type: string) => {
+    setCollapsedGroups(previous => {
+      const next = new Set(previous)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
+      return next
+    })
+  }
+
+  /* --- sidebar --- */
+
+  const q = query.trim().toLowerCase()
+
+  const renderAssetRow = (asset: AssetSummary) => {
+    const key = `${asset.kind}:${asset.id}`
+    const meta = asset.assetType !== ''
+      ? asset.assetType
+      : asset.stageCount !== null
+        ? `${asset.stageCount} ${t('assets.stages')}`
+        : ''
+    return (
+      <button
+        key={key}
+        type="button"
+        className={css.assetRow}
+        data-active={selected === key}
+        onClick={() => { selectAsset(asset) }}
+      >
+        <span className={`${css.assetRowName} ${css.mdInline}`}>
+          <MarkdownText text={asset.name || asset.id} />
+        </span>
+        {meta !== '' && <span className={css.assetRowMeta}>{meta}</span>}
+      </button>
+    )
+  }
+
+  const renderSidebarList = () => {
+    if (segment === 'references') {
+      const filtered = q === ''
+        ? references
+        : references.filter(entry => `${entry.title}\n${entry.sourceId}`.toLowerCase().includes(q))
+      if (filtered.length === 0) return <div className={css.sidebarEmpty}>{t('assets.references.empty')}</div>
+      return filtered.map(entry => {
+        const key = `ref:${entry.sourceId}`
+        return (
+          <button
+            key={key}
+            type="button"
+            className={css.assetRow}
+            data-active={selected === key}
+            onClick={() => {
+              selectReference(entry)
+            }}
+          >
+            <span className={`${css.assetRowName} ${css.mdInline}`}>
+              <MarkdownText text={entry.title || entry.sourceId} />
+            </span>
+            <span className={css.assetRowMeta}>{intentLabel(entry.intent)}</span>
+          </button>
+        )
+      })
+    }
+    if (segment === 'core') {
+      const filtered = q === ''
+        ? coreDocs
+        : coreDocs.filter(doc => `${doc.title}\n${doc.categoryLabel}\n${doc.path}`.toLowerCase().includes(q))
+      if (filtered.length === 0) return <div className={css.sidebarEmpty}>{t('assets.core.empty')}</div>
+      return filtered.map(doc => {
+        const key = `doc:${doc.path}`
+        return (
+          <button
+            key={key}
+            type="button"
+            className={css.assetRow}
+            data-active={selected === key}
+            onClick={() => { selectDocument(doc) }}
+          >
+            <span className={`${css.assetRowName} ${css.mdInline}`}>
+              <MarkdownText text={doc.title} />
+            </span>
+            {doc.categoryLabel !== '' && <span className={css.assetRowMeta}>{doc.categoryLabel}</span>}
+          </button>
+        )
+      })
+    }
+    // character / world / progression segments
+    const kind = segment === 'characters' ? 'character' : segment === 'progression' ? 'progression' : 'world'
+    const segmentAssets = assets.filter(asset => asset.kind === kind && (q === '' || matchesQuery(asset, q)))
+    if (segmentAssets.length === 0) return <div className={css.sidebarEmpty}>{t('assets.segment.empty')}</div>
+    if (segment !== 'world') return segmentAssets.map(renderAssetRow)
+    // 设定: collapsible subcategory groups by asset_type (unknown lands in 其他).
+    const byType = new Map<string, AssetSummary[]>()
+    for (const asset of segmentAssets) {
+      const type = asset.assetType || t('assets.other')
+      const list = byType.get(type)
+      if (list !== undefined) list.push(asset)
+      else byType.set(type, [asset])
+    }
+    return [...byType.entries()].map(([type, items]) => {
+      const collapsed = collapsedGroups.has(type)
+      return (
+        <div key={type}>
+          <button
+            type="button"
+            className={css.groupHeader}
+            aria-expanded={!collapsed}
+            onClick={() => { toggleGroup(type) }}
+          >
+            <span className={css.groupChevron}>{collapsed ? '▸' : '▾'}</span>
+            {type}
+            <span className={css.countChip}>{items.length}</span>
+          </button>
+          {!collapsed && items.map(renderAssetRow)}
+        </div>
+      )
+    })
+  }
+
+  /* --- main pane --- */
+
+  const renderAssetDetail = (asset: AssetSummary, key: string) => {
+    const entry = details.get(key)
+    if (entry === undefined || entry.status === 'loading') {
+      return <div className={css.notice}>{t('assets.detail.loading')}</div>
+    }
+    if (entry.status === 'error') {
+      return (
+        <div className={css.notice}>
+          <span className={css.errorText}>{entry.message}</span>
+          <button type="button" className={css.button} onClick={() => { fetchDetail(asset) }}>{t('retry')}</button>
+        </div>
+      )
+    }
+    const { detail } = entry
+    const editableKind = asset.kind === 'character' || asset.kind === 'world' || asset.kind === 'progression'
+    if (editableKind) {
+      const source: AssetEditorSource = recoveries.current.get(key)?.source ?? {
+        ...detail,
+        derivedRelations: detail.relations.filter(relation => relation.direction === 'incoming' || relation.origin === 'annotation'),
+      }
+      return (
+        <>
+        {(dirty || restoredKey === key) && <div className={css.detailNotice} role="status">
+          {draftStorageFailed ? t('creation.draft.unavailable') : restoredKey === key ? t('assets.draft.restored') : t('assets.draft.unsaved')}
+        </div>}
+        <AssetEditor
+          // Remount only on draft-epoch change (conflict/cancel refetch):
+          // field autosaves chain revisions WITHOUT resetting the other drafts.
+          key={`${key}:${draftEpoch}`}
+          kind={asset.kind}
+          source={source}
+          initialDraft={recoveries.current.get(key)?.draft}
+          onDraftChange={(draft, hasChanges) => {
+            if (discardedEditor.current === `${key}:${draftEpoch}`) return
+            if (!draftContext || !['character', 'world'].includes(asset.kind)) return
+            const identity = { ...draftContext, kind: asset.kind, id: asset.id }
+            if (hasChanges) setDraftStorageFailed(!writeAssetDraft({ ...identity, baseRevision: revisionsRef.current.get(key) || detail.revision, source, draft }))
+            else removeAssetDraft(identity)
+          }}
+          candidates={assets.filter(candidate => candidate.kind !== 'progression' && candidate.id !== asset.id)}
+          saving={saving}
+          saveError={saveError?.message ?? null}
+          conflict={saveError?.conflict === true}
+          onSave={(data, bodyMarkdown) => { saveAsset(asset, data, bodyMarkdown) }}
+          onFieldSave={(field, value) => { saveField(asset, field, value) }}
+          fieldBusy={fieldBusy}
+          onDirtyChange={setDirty}
+          onCancel={() => {
+            requestDiscard(() => {
+              // 取消=放弃本地草稿：epoch 重挂以服务端真值诚实重建。
+              setSaveError(null)
+              fetchDetail(asset, true)
+            })
+          }}
+          onRefresh={() => {
+            requestDiscard(() => { setSaveError(null); fetchDetail(asset, true) })
+          }}
+          t={t}
+        />
+        </>
+      )
+    }
+    // Unreachable: details are only fetched for the three editable kinds,
+    // which always take the editor branch above. Kept for exhaustiveness.
+    return null
+  }
+
+  const renderMain = () => {
+    // The create form owns the main pane while open.
+    if (creating && CARDABLE_SEGMENTS.includes(segment)) {
+      const kind = segment === 'characters' ? 'character' : segment === 'progression' ? 'progression' : 'world'
+      return (
+        <div className={css.createPanel}>
+          <NewAssetForm
+            kind={kind}
+            busy={createBusy}
+            error={createError}
+            onSubmit={(payload) => { createAsset(kind, payload) }}
+            onDirtyChange={setDirty}
+            onCancel={() => {
+              requestDiscard(() => { setCreating(false); setCreateError(null) })
+            }}
+            t={t}
+          />
+        </div>
+      )
+    }
+    if (selected === null) {
+      return <div className={css.notice}>{t('assets.selectHint')}</div>
+    }
+    if (selected.startsWith('doc:')) {
+      const path = selected.slice(4)
+      const docState = documents.get(selected)
+      return (
+        <div className={css.detail}>
+          {docState === undefined || docState.status === 'loading'
+            ? <div className={css.notice}>{t('assets.detail.loading')}</div>
+            : docState.status === 'error'
+              ? <div className={css.notice}><span className={css.errorText}>{docState.message}</span></div>
+              : (
+                <>
+                  <div className={css.detailHeader}>
+                    <div className={css.detailTitleRow}>
+                      <span className={`${css.detailTitle} ${css.mdInline}`}>
+                        <MarkdownText text={docState.title || path} />
+                      </span>
+                      <span className={css.kindBadge}>{path}</span>
+                    </div>
+                  </div>
+                  <div className={css.detailBody}><MarkdownText text={docState.content} /></div>
+                </>
+              )}
+        </div>
+      )
+    }
+    if (selected.startsWith('ref:')) {
+      const entry = references.find(item => `ref:${item.sourceId}` === selected)
+      if (entry === undefined) return <div className={css.notice}>{t('assets.selectHint')}</div>
+      const detail = referenceDetails.get(selected)
+      return (
+        <div className={css.detail}>
+          <div className={css.detailHeader}>
+            <div className={css.detailTitleRow}>
+              <span className={`${css.detailTitle} ${css.mdInline}`}>
+                <MarkdownText text={entry.title || entry.sourceId} />
+              </span>
+              <span className={css.kindBadge}>{intentLabel(entry.intent)}</span>
+            </div>
+            <div className={css.assetMeta}>
+              {entry.structureStatus !== '' && (
+                <span className={css.tag} data-confirmed={entry.structureStatus === 'confirmed'}>
+                  {entry.structureStatus === 'confirmed'
+                    ? t('reference.structure.confirmed')
+                    : t('reference.structure.awaiting_confirmation')}
+                </span>
+              )}
+              <span className={css.tag} data-confirmed={entry.analysisComplete}>
+                {entry.analysisComplete ? t('reference.analysis.complete') : entry.analysisStatus || t('reference.analysis.pending')}
+              </span>
+              {entry.totalChars > 0 && (
+                <span className={css.tag}>{Math.round(entry.totalChars / 1000)}k {t('reference.chars')}</span>
+              )}
+            </div>
+          </div>
+          {detail === undefined || detail.status === 'loading'
+            ? <div className={css.notice}>{t('reference.content.loading')}</div>
+            : detail.status === 'error'
+              ? <div className={css.notice}><span className={css.errorText}>{detail.message}</span><button type="button" className={css.button} onClick={() => { selectReference(entry, true) }}>{t('retry')}</button></div>
+              : (
+                <div className={css.referenceReader}>
+                  <div className={css.referenceUnits}>
+                    <button type="button" className={css.button} onClick={() => { setReferenceDetails(previous => new Map(previous).set(selected, { ...detail, content: detail.fullContent })) }}>{t('reference.content.full')}</button>
+                    {detail.units.map(unit => (
+                      <button key={unit.unitId} type="button" className={css.button} onClick={() => {
+                        setReferenceDetails(previous => new Map(previous).set(selected, { ...detail, status: 'ready', content: unit.content, units: detail.units }))
+                      }}>{unit.title || unit.unitId}</button>
+                    ))}
+                  </div>
+                  <div className={css.detailBody}><MarkdownText text={detail.content} /></div>
+                </div>
+              )}
+        </div>
+      )
+    }
+    const asset = assets.find(item => `${item.kind}:${item.id}` === selected)
+    if (asset === undefined) return <div className={css.notice}>{t('assets.selectHint')}</div>
+    return renderAssetDetail(asset, selected)
+  }
+
+  return (
+    <div className={css.libraryRoot}>
+      <div className={css.sidebar}>
+        <div className={css.sidebarSegments}>
+          {SEGMENTS.map(which => (
+            <button
+              key={which}
+              type="button"
+              className={css.segmentButton}
+              data-active={segment === which}
+              disabled={busy}
+              onClick={() => {
+                if (segment === which) return
+                requestDiscard(() => { setSegment(which); setSelected(null); setCreating(false) })
+              }}
+            >
+              {segmentLabel(which)}
+              <span className={css.countChip}>{segmentCount(which)}</span>
+            </button>
+          ))}
+        </div>
+        <input
+          className={css.searchInput}
+          type="search"
+          value={query}
+          placeholder={t('assets.searchPlaceholder')}
+          aria-label={t('assets.searchPlaceholder')}
+          onChange={event => { setQuery(event.target.value) }}
+        />
+        <div className={css.sidebarList}>
+          {state === 'ready' && error !== '' && <div className={css.sidebarEmpty} role="alert">{error}</div>}
+          {state === 'loading' && <div className={css.sidebarEmpty}>{t('loading')}</div>}
+          {state === 'error' && (
+            <div className={css.sidebarEmpty}>
+              <span className={css.errorText}>{error}</span>
+              <button type="button" className={css.button} onClick={() => { load() }}>{t('retry')}</button>
+            </div>
+          )}
+          {state === 'ready' && assets.length === 0 && references.length === 0 && coreDocs.length === 0 && (
+            <div className={css.sidebarEmpty}>{t('assets.empty')}</div>
+          )}
+          {state === 'ready' && renderSidebarList()}
+        </div>
+        <div className={css.sidebarFooter}>
+          {CARDABLE_SEGMENTS.includes(segment) && (
+            <button
+              type="button"
+              className={css.button}
+              disabled={creating || busy}
+              onClick={() => {
+                requestDiscard(() => { setCreating(true); setCreateError(null) })
+              }}
+            >
+              {t('assets.create.open')}
+            </button>
+          )}
+          <button type="button" className={css.button} disabled={busy} onClick={() => { load(dirty) }}>
+            {t('refresh')}
+          </button>
+        </div>
+      </div>
+      <div className={css.mainPane}>
+        {state === 'ready' || creating ? renderMain() : (
+          state === 'loading'
+            ? <div className={css.notice}>{t('loading')}</div>
+            : (
+              <div className={css.notice}>
+                <span className={css.errorText}>{error}</span>
+                <button type="button" className={css.button} onClick={() => { load() }}>{t('retry')}</button>
+              </div>
+            )
+        )}
+      </div>
+      {pendingDiscard !== null && <DiscardDraftDialog t={t}
+        onKeep={() => { setPendingDiscard(null) }}
+        onDiscard={() => { const proceed = pendingDiscard; setPendingDiscard(null); proceed() }} />}
+    </div>
+  )
+}
