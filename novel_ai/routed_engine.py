@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .engine import ChapterResult, NovelEngine
+from .engine import ChapterResult, NovelEngine, merge_quality_issues
 from .models import Character, StoryBible, StyleFingerprint
 from .quality_gate import analyze_prose_quality, quality_review_payload
 from .longform_consistency import (
@@ -74,8 +74,7 @@ class RoutedNovelEngine:
         review_result = None
         if review:
             reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider)
-            review_result = reviewer.review(bible, plan, characters, draft)
-            from .engine import merge_quality_issues
+            review_result = reviewer.review(bible, plan, characters, draft, draft_context)
             review_result = merge_quality_issues(review_result, quality_review_payload(analyze_prose_quality(draft)))
             review_result = merge_quality_issues(
                 review_result,
@@ -85,8 +84,24 @@ class RoutedNovelEngine:
             review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
             review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
         revised = None
+        review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
-            revised = writer.repair(draft, review_result, style)
+            revised = writer.repair(draft, review_result, style, draft_context)
+            review_after_repair = reviewer.review(bible, plan, characters, revised, draft_context)
+            review_after_repair = merge_quality_issues(
+                review_after_repair, quality_review_payload(analyze_prose_quality(revised))
+            )
+            review_after_repair = merge_quality_issues(
+                review_after_repair,
+                similarity_review_payload(analyze_reference_similarity(revised, reference_hashes=reference_hashes)),
+            )
+            revised_voice = character_voice_dna(revised, [c.name for c in characters])
+            revised_voice_alerts = voice_drift(revised_voice, voice_baseline)
+            voice_report["revised"] = revised_voice
+            voice_report["revised_alerts"] = revised_voice_alerts
+            review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
+            review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
+            review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
         from .style_engine import detect_ai_flavor
         quality_payload = quality_review_payload(analyze_prose_quality(draft))
         similarity_payload = similarity_review_payload(
@@ -105,4 +120,5 @@ class RoutedNovelEngine:
             voice_dna_report=voice_report,
             behavior_repetition_report=behavior_report,
             revised=revised,
+            review_after_repair=review_after_repair,
         )

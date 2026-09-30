@@ -327,6 +327,11 @@ with write_tab:
         help="North Star 原则：AI 先给结构化建议，作者可编辑后再生成正文，不被全自动流水线绑架。",
     )
 
+    diverse_recall = st.checkbox(
+        "多样化历史召回（实验）", value=False, key="diverse_recall",
+        help="用本章目标匹配历史摘要，再减少重复线索；仅本地字符匹配，不下载模型。尚未证明提升写作质量。",
+    )
+
     if "pending_plan_json" not in st.session_state:
         st.session_state.pending_plan_json = ""
     if "pending_plan_meta" not in st.session_state:
@@ -357,7 +362,9 @@ with write_tab:
     if make_plan:
         try:
             engine, bible, characters = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble()
+            context = ContextAssembler(store, project_name).assemble(
+                recall_query=chapter_goal if diverse_recall else ""
+            )
             plan = engine.plan(
                 bible, outline, chapter_goal, characters, context.recent_summaries, context.prompt_sections()
             )
@@ -365,6 +372,7 @@ with write_tab:
             st.session_state.pending_plan_meta = {
                 "recent": context.recent_summaries,
                 "extra": context.prompt_sections(),
+                "recall_report": context.recall_report,
             }
             st.session_state.plan_new = True
             st.rerun()
@@ -412,15 +420,15 @@ with write_tab:
             revised = None
             review_after_repair = None
             if mode != "快速草稿":
-                review_result = engine.review(bible, plan, characters, draft)
+                review_result = engine.review(bible, plan, characters, draft, draft_context)
                 review_result = merge_quality_issues(review_result, quality_payload)
                 review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
                 review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
                 review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
                 if mode == "精修" and review_result.verdict == "revise":
-                    revised = engine.repair(draft, review_result, style_from_state())
+                    revised = engine.repair(draft, review_result, style_from_state(), draft_context)
                     revised_quality = quality_review_payload(analyze_prose_quality(revised))
-                    review_after_repair = engine.review(bible, plan, characters, revised)
+                    review_after_repair = engine.review(bible, plan, characters, revised, draft_context)
                     review_after_repair = merge_quality_issues(review_after_repair, revised_quality)
             st.session_state.last_result = ChapterResult(
                 plan=plan,
@@ -445,7 +453,9 @@ with write_tab:
     if one_shot:
         try:
             engine, bible, characters = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble()
+            context = ContextAssembler(store, project_name).assemble(
+                recall_query=chapter_goal if diverse_recall else ""
+            )
             result = engine.run(
                 bible=bible,
                 outline=outline,

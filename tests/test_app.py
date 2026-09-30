@@ -1,6 +1,8 @@
 """Headless execution tests for the Streamlit workbench via streamlit.testing."""
 
 import json
+
+import pytest
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
@@ -66,3 +68,53 @@ def test_plan_confirmation_flow_gate(monkeypatch, tmp_path):
     at.run()
     assert at.button(key="btn_draft").disabled is False
     assert at.text_area(key="plan_editor").value == at.session_state["pending_plan_json"]
+
+
+def test_diverse_recall_is_explicit_and_off_by_default(monkeypatch, tmp_path):
+    at = run_app(monkeypatch, tmp_path)
+    assert at.checkbox(key="diverse_recall").value is False
+    at.checkbox(key="diverse_recall").check().run()
+    assert not at.exception
+    assert at.checkbox(key="diverse_recall").value is True
+
+
+@pytest.mark.parametrize("confirmed_plan", [True, False])
+def test_workbench_carries_recalled_evidence_through_confirmed_plan_and_repair(monkeypatch, tmp_path, confirmed_plan):
+    from novel_ai.provider import OpenAICompatibleProvider
+    from novel_ai.storage import ProjectStore
+
+    calls = []
+    def chat(self, messages, **kwargs):
+        system = messages[0]["content"]
+        calls.append(messages)
+        if "章节策划" in system:
+            return json.dumps({"chapter_title": "试读", "scenes": []})
+        if "严苛的网络小说章节编辑" in system:
+            return json.dumps({"verdict": "revise", "issues": []})
+        return "沈青收好仓库钥匙。林澄翻开账本。"
+    monkeypatch.setattr(OpenAICompatibleProvider, "chat", chat)
+    store = ProjectStore(tmp_path / "data")
+    for i in range(6):
+        store.save_extraction("MyNovel", {"chapter_id": f"{i:03}", "summary": "仓库钥匙藏在青瓷碗底。" if i == 0 else "村民去了集市。"})
+    at = run_app(monkeypatch, tmp_path)
+    for item in at.text_input:
+        if item.label == "Base URL":
+            item.set_value("http://never-called.invalid")
+        if item.label == "Model":
+            item.set_value("fake")
+    for item in at.text_area:
+        if item.label == "本章章纲 / 目标":
+            item.set_value("沈青寻找仓库钥匙。")
+    at.checkbox(key="diverse_recall").check()
+    at.radio[0].set_value("精修")
+    if confirmed_plan:
+        at.button(key="btn_plan").click().run()
+        assert not at.exception
+        assert "仓库钥匙藏在青瓷碗底" in at.session_state["pending_plan_meta"]["extra"]
+        at.button(key="btn_draft").click().run()
+    else:
+        at.button(key="btn_oneshot").click().run()
+    assert not at.exception
+    assert len(calls) == 5
+    assert all("仓库钥匙藏在青瓷碗底" in messages[-1]["content"] for messages in calls)
+    assert at.session_state["last_result"].review_after_repair is not None

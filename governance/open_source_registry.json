@@ -201,9 +201,18 @@
       "repo": "langchain-ai/langchain",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P2",
-      "use": "外部工具和 retriever 接入模式"
+      "use": "Opt-in local MMR history selection wired into generation, continuity review, repair and re-review; no LangChain runtime dependency",
+      "source_port": {
+        "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+        "path": "libs/core/langchain_core/vectorstores/utils.py",
+        "symbol": "maximal_marginal_relevance",
+        "local_path": "novel_ai/_vendor/langchain_mmr.py",
+        "license_path": "third_party/langchain/LICENSE",
+        "stars_checked": 147315,
+        "checked_at_utc": "2026-09-30T18:11:00Z"
+      }
     },
     {
       "key": "haystack",

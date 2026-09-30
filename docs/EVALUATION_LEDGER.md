@@ -143,3 +143,13 @@ Novel 的最终评测从“单章质量”扩展为四级：
 
 评测完成前，当前结论仅限于工程闭环已建立。
 
+
+## E-004｜LangChain MMR continuity pilot
+**Date:** 2026-09-30
+**Status:** OFFLINE_ENGINEERING_PILOT_ONLY
+
+Synthetic Chinese summaries cover a key-holder thread, a near-duplicate key thread, a separate ledger thread and irrelevant weather. The MMR port selects both relevant plot threads ahead of the duplicate. Tests verify deterministic selection, non-finite score rejection, bounded candidate memory, character/token budgets including labels, no match, zero recent count, unchanged Canon/Active, and an explicit default-off UI control.
+
+Mocked five-stage tests exercise both NovelEngine and RoutedNovelEngine: plan → draft → continuity review → repair → re-review, asserting that selected historical facts reach every request. Streamlit AppTest exercises plan confirmation → draft → repair → re-review without network/model access. These tests validate engineering propagation, not an LLM's factual compliance or story quality. The original frozen `novel-ab-v1` inputs and first-real evidence are not changed or rerun.
+
+Known limits: lexical bigrams miss synonyms and implications; at most 2,000 query/summary characters are scored; complete query-relevant sentence excerpts preserve matching late facts and negations when they fit; overlong sentences are omitted; similarity is not truth and does not override Canon, character knowledge, or human acceptance. Real long-form A/B, calibrated thresholds and human blind scores are not run.

@@ -6,6 +6,7 @@ from typing import Any
 from .models import StoryBible
 from .storage import ProjectStore
 from .token_budget import TokenCounter
+from .history_recall import select_history
 
 
 @dataclass
@@ -16,6 +17,7 @@ class WritingContext:
     longform_block: str = ""
     recent_summaries: list[dict[str, Any]] = field(default_factory=list)
     open_foreshadowing: list[dict[str, Any]] = field(default_factory=list)
+    recall_report: dict[str, Any] | None = None
 
     def prompt_sections(self) -> str:
         parts = [block for block in (self.canon_block, self.active_block, self.recall_block, self.longform_block) if block]
@@ -64,6 +66,7 @@ class ContextAssembler:
         *,
         recent_limit: int = 4,
         max_open_foreshadowing: int = 8,
+        recall_query: str = "",
     ) -> WritingContext:
         state = self.store.load_story_state(self.project)
         summaries = self.store.all_chapter_summaries(self.project)
@@ -86,6 +89,12 @@ class ContextAssembler:
 
         recent = summaries[-recent_limit:] if recent_limit > 0 else []
         older = summaries[:-recent_limit] if recent_limit > 0 and len(summaries) > recent_limit else []
+        if recall_query.strip():
+            # Explicit experiment; keep the historical chronological default intact.
+            older = summaries[:-recent_limit] if recent_limit > 0 else summaries
+            older, context.recall_report = select_history(
+                recall_query, older, summary_chars=max(0, self.recall_summary_chars)
+            )
         context.recent_summaries = recent
 
         foreshadowing = [
@@ -111,6 +120,26 @@ class ContextAssembler:
             context.longform_block = "【Longform 长篇一致性】\n" + _clip(guard, 1400)
 
         if older:
+            if context.recall_report is not None:
+                # Bound the entire block, including labels; zero means disabled.
+                header = "【Recall 多样化历史回顾（摘要线索，以 Canon 为准）】\n"
+                lines = []
+                included = []
+                for row in older:
+                    summary = row["recall_excerpt"]
+                    line = f"- {str(row.get('chapter_id', ''))[:80]} {summary}"
+                    candidate = header + "\n".join([*lines, line])
+                    if len(candidate) > max(0, self.recall_char_budget):
+                        continue
+                    if self.recall_token_budget is not None and self.token_counter is not None:
+                        if self.token_counter.count(candidate) > max(0, self.recall_token_budget):
+                            continue
+                    lines.append(line)
+                    included.append(str(row.get("chapter_id", "")))
+                context.recall_block = header + "\n".join(lines) if lines else ""
+                context.recall_report["included_chapter_ids"] = included
+                context.recall_report["prompt_chars"] = len(context.recall_block)
+                return context
             recall_lines = [
                 f"- {row.get('chapter_id', '')} {_clip(str(row.get('summary', '')), self.recall_summary_chars)}"
                 for row in older

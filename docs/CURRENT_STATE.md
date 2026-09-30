@@ -1,3 +1,12 @@
+# 2026-09-30 — LangChain MMR continuity pilot (draft branch)
+
+- Ported the MIT-licensed LangChain `maximal_marginal_relevance` selection loop from the existing pinned upstream `a9780cd3dd73135d21d7130b08711685f2700d51`; 147,315 stars verified through GitHub on this date
+- Added an explicit, default-off “多样化历史召回（实验）” workbench control. It scores accepted historical summaries against the chapter goal, diversifies the top 64 candidates, and includes at most eight bounded rows. Canon and Active retain their priority and content
+- Selected context now reaches planning, drafting, continuity review, one local repair and re-review. The role-routed engine also performs its previously missing post-repair review with the same reviewer role and deterministic checks
+- No LangChain install, NumPy requirement for the port, vector service, model download, or external call is introduced by retrieval. Routed auto-repair now adds one reviewer-provider call for post-repair checking, matching the normal engine. Existing chronological recall remains the default
+- Synthetic offline/provider-mocked tests establish routing, budget and selection behavior only. They do not establish better prose, semantic recall, or publishability. Frozen benchmark cases and past run evidence are unchanged
+- Exact provenance, runtime entry points and limitations: [LangChain recall pilot](upstream/langchain-mmr-continuity-2026-09-30.md)
+
 # 2026-09-30 — 长篇小说工程融合分支
 
 本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。

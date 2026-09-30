@@ -95,3 +95,11 @@ Product Spec §4 定义精修 = "计划 → 正文 → 双审校 → 局部修�
 
 LocalSemanticRecall 与 Qdrant 使用共享 RecallDocument / RecallHit / RecallBackend 契约。旧 add/search 保持兼容，新 upsert/query 供统一上层调用。Qdrant 默认关闭，需经冻结评测后才考虑改变默认路径。
 
+
+## D-015｜Opt-in LangChain MMR history and continuity evidence
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_DRAFT_BRANCH
+
+The existing ContextAssembler clipped chronological history from the oldest summaries and the editor/repair prompts did not receive its history. Reuse the small MIT LangChain MMR selection loop, adapted to deterministic character-bigram scores, to prioritize relevant but less redundant accepted summaries. Keep the existing upstream commit pin and include the full MIT license. Do not import the heavyweight framework or silently select a semantic/vector backend.
+
+The workbench experiment is default-off. Canon and Active stay authoritative; recalled summaries remain evidence, not character knowledge or instructions. Carry the assembled evidence through review and local repair, and keep one repair/re-review maximum. Expose source hashes and selected chapter IDs without storing manuscript text in provenance. Real long-form A/B evidence remains required before changing the default or claiming quality gains.
