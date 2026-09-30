@@ -5,11 +5,12 @@ import json
 import streamlit as st
 
 from novel_ai.context import ContextAssembler
-from novel_ai.engine import ChapterResult, NovelEngine
+from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
-from novel_ai.models import Character, MemoryExtraction, StoryBible, StyleFingerprint
+from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
+from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -359,19 +360,25 @@ with write_tab:
                 user_notes,
                 meta.get("extra", ""),
             )
+            quality = analyze_prose_quality(draft)
+            quality_payload = quality_review_payload(quality)
             review_result = None
             revised = None
             review_after_repair = None
             if mode != "快速草稿":
                 review_result = engine.review(bible, plan, characters, draft)
+                review_result = merge_quality_issues(review_result, quality_payload)
                 if mode == "精修" and review_result.verdict == "revise":
                     revised = engine.repair(draft, review_result, style_from_state())
+                    revised_quality = quality_review_payload(analyze_prose_quality(revised))
                     review_after_repair = engine.review(bible, plan, characters, revised)
+                    review_after_repair = merge_quality_issues(review_after_repair, revised_quality)
             st.session_state.last_result = ChapterResult(
                 plan=plan,
                 draft=draft,
                 review=review_result,
                 ai_flavor=detect_ai_flavor(draft),
+                quality_report=quality_payload,
                 revised=revised,
                 review_after_repair=review_after_repair,
             )
@@ -436,6 +443,9 @@ with write_tab:
                 st.json(result.review_after_repair.model_dump())
         with st.expander("本地 AI 味信号", expanded=False):
             st.json(result.ai_flavor)
+        if result.quality_report:
+            with st.expander("文本质量门", expanded=False):
+                st.json(result.quality_report)
 
         st.divider()
         st.subheader("章节后处理 · 记忆抽取")
@@ -477,9 +487,16 @@ with write_tab:
 with review_tab:
     st.subheader("独立文本审校")
     review_text = st.text_area("粘贴需要检查的正文", height=500)
-    if st.button("只做本地 AI 味扫描"):
+    if st.button("本地质量门 + AI 味扫描"):
         if review_text.strip():
-            st.json(detect_ai_flavor(review_text))
+            q = analyze_prose_quality(review_text)
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("#### 文本质量门")
+                st.json(q.to_dict())
+            with c2:
+                st.markdown("#### AI 味启发式信号")
+                st.json(detect_ai_flavor(review_text))
         else:
             st.warning("请先粘贴正文。")
 
