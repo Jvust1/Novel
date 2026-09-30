@@ -1,16 +1,16 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "foundation-v0.2-open-source-integration",
-  "version": "0.2.0-dev",
+  "stage": "longform-engineering-fusion-v0.3",
+  "version": "0.3.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
-    "validate persistent long-form consistency gates on real multi-chapter projects",
-    "freeze regression benchmarks for voice drift, timeline contradictions, foreshadow lifecycle and tension density",
-    "port hierarchical outline ideas from DOC/DOC StoryGen v2 behind frozen A/B tests",
-    "evaluate graph/RAG recall backends without replacing Canon/Active/Recall by default",
-    "add Fanqie opening/first-20-chapter commercial-readiness benchmark"
+    "harden character Voice DNA and behavior-repetition guard with real multi-chapter samples",
+    "validate timeline contradiction and foreshadow lifecycle heuristics against manually checked novels",
+    "calibrate whole-book tension/climax density by genre instead of one universal threshold",
+    "A/B shared RecallBackend implementations: deterministic local semantic vs optional Qdrant",
+    "connect hierarchical outline, market benchmark and release pack into one author workflow without making UI complexity the goal"
   ],
   "implemented": [
     "Streamlit local web workspace",
@@ -87,21 +87,31 @@
     "foreshadowing lifecycle history with resolved-state regression protection",
     "foreshadowing age/stagnation/resolve-lifetime statistics",
     "whole-book climax/low-density and streak analysis",
-    "long-form health guard context injected into next chapter ContextAssembler"
+    "long-form health guard context injected into next chapter ContextAssembler",
+    "character Voice DNA extraction, persisted baseline and drift review",
+    "character behavior-pattern repetition detection fed into draft context",
+    "timeline contradiction candidate detection",
+    "foreshadow lifecycle statistics with overdue/stagnant tracking",
+    "whole-book tension/climax/low-valley density analysis",
+    "persisted longform health guard re-injected by ContextAssembler into later chapters",
+    "shared RecallBackend contract across local semantic recall and optional Qdrant",
+    "four-layer originality gate CLI/module",
+    "hierarchical series/volume/arc/chapter/scene outline module",
+    "Fanqie-oriented market benchmark module",
+    "market release pack module"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [],
   "next_steps": [
-    "add StoryPatternProfile / Story DNA schema and extractor",
-    "add Docling and MarkItDown advanced readers with deterministic fallback",
-    "build originality gates for lexical, embedding, character/world and event-sequence similarity",
-    "port DOC-style hierarchical outline expansion behind an experiment flag",
-    "implement Qdrant/LightRAG/HippoRAG/Graphiti recall adapters behind ContextAssembler and A/B gate them",
-    "add promptfoo/DeepEval regression configs for frozen chapter tests",
-    "add MarketProfile and Fanqie Release Pack generation",
-    "add first-3-chapter / first-20-chapter benchmark cases and publishability blind scoring",
-    "finish human scoring of run-20260914-153013 and keep it as continuity baseline"
+    "run full pytest/CI on the fusion branch and fix any integration regressions",
+    "add frozen longform benchmark cases with known voice, timeline, foreshadow and tension failures",
+    "calibrate Voice DNA thresholds per character sample size and intentional character-state shifts",
+    "upgrade timeline checks from time-order heuristics to entity/event constraints where evidence is available",
+    "add foreshadow planted/touched/resolved transition provenance and per-arc statistics",
+    "A/B local semantic recall vs Qdrant before any backend becomes default",
+    "wire hierarchical outline + market review + release pack into the Streamlit author workflow",
+    "keep originality and human-feel quality as publishability gates rather than detector-gaming targets"
   ],
   "updated_at": "2026-09-30",
   "last_sync": {
