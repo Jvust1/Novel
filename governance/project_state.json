@@ -74,10 +74,10 @@
     },
     "vendored_file_counts": {
       "open_write": 94,
-      "lipu_openwrite": 143,
+      "lipu_openwrite": 207,
       "openwriter": 465
     },
-    "source_files_total": 702,
+    "source_files_total": 766,
     "main_modified": false
   }
 }
