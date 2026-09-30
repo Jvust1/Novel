@@ -57,8 +57,8 @@ def test_pdf_text_is_extracted():
     assert "Hello PDF extraction" in text
 
 
-def test_unsupported_extension_raises_clear_error():
-    with pytest.raises(ValueError, match="DOCX"):
+def test_epub_without_optional_reader_raises_clear_dependency_error():
+    with pytest.raises(ValueError, match="Docling|MarkItDown"):
         extract_reference_text("ref.epub", b"whatever")
 
 
