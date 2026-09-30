@@ -106,3 +106,52 @@ class OutlinesStructuredExtractor:
         if hasattr(value, "model_dump"):
             return response_model.model_validate(value.model_dump())
         return response_model.model_validate(value)
+
+
+
+class GuidanceStructuredExtractor:
+    """Use Guidance constrained JSON generation behind Novel's schema contract."""
+
+    name = "guidance"
+
+    def __init__(self, model: Any, *, json_factory: Any | None = None) -> None:
+        if not hasattr(model, "__iadd__") and not hasattr(model, "__add__"):
+            raise TypeError("Guidance model must support lm += ...")
+        if json_factory is None:
+            try:
+                from guidance import json as json_factory
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Guidance is optional; install requirements-extras/orchestration.txt before enabling it"
+                ) from exc
+        if not callable(json_factory):
+            raise TypeError("json_factory must be callable")
+        self._model = model
+        self._json_factory = json_factory
+
+    def extract(
+        self,
+        *,
+        response_model: type[ModelT],
+        messages: list[dict[str, str]],
+        temperature: float,
+    ) -> ModelT:
+        prompt = "\n\n".join(
+            f"[{item.get('role', 'user')}] {item.get('content', '')}"
+            for item in messages
+        )
+        lm = self._model
+        lm += prompt
+        lm += self._json_factory(
+            name="novel_structured_output",
+            schema=response_model,
+            temperature=temperature,
+        )
+        value = lm["novel_structured_output"]
+        if isinstance(value, response_model):
+            return value
+        if isinstance(value, str):
+            return response_model.model_validate_json(value)
+        if hasattr(value, "model_dump"):
+            return response_model.model_validate(value.model_dump())
+        return response_model.model_validate(value)
