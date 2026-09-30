@@ -160,8 +160,28 @@ def apply_external_review_hooks(
 
 
 class NovelEngine:
-    def __init__(self, provider: OpenAICompatibleProvider):
+    def __init__(self, provider: OpenAICompatibleProvider, structured_extractor: Any | None = None):
         self.provider = provider
+        self.structured_extractor = structured_extractor
+
+    def _structured(self, response_model: Any, messages: list[dict[str, str]], *, temperature: float) -> Any:
+        if self.structured_extractor is not None:
+            extract = getattr(self.structured_extractor, "extract", None)
+            if not callable(extract):
+                raise TypeError("structured_extractor 必须提供 extract()")
+            value = extract(response_model=response_model, messages=messages, temperature=temperature)
+            if isinstance(value, response_model):
+                return value
+            if hasattr(value, "model_dump"):
+                return response_model.model_validate(value.model_dump())
+            return response_model.model_validate(value)
+
+        raw = self.provider.chat(
+            messages,
+            temperature=temperature,
+            response_format={"type": "json_object"},
+        )
+        return response_model.model_validate(parse_json_object(raw))
 
     def enrich_style(self, text: str, surface: StyleFingerprint) -> StyleFingerprint:
         """Add semantic, high-level style traits without storing or reproducing source prose."""
@@ -195,12 +215,11 @@ class NovelEngine:
         recent_summaries: list[dict[str, Any]] | None = None,
         extra_context: str = "",
     ) -> ChapterPlan:
-        raw = self.provider.chat(
+        return self._structured(
+            ChapterPlan,
             plan_messages(bible, outline, chapter_goal, characters, recent_summaries or [], extra_context),
             temperature=0.45,
-            response_format={"type": "json_object"},
         )
-        return ChapterPlan.model_validate(parse_json_object(raw))
 
     def draft(
         self,
@@ -234,12 +253,11 @@ class NovelEngine:
         characters: list[Character],
         draft: str,
     ) -> ChapterReview:
-        raw = self.provider.chat(
+        return self._structured(
+            ChapterReview,
             review_messages(bible, plan.model_dump(), characters, draft),
             temperature=0.25,
-            response_format={"type": "json_object"},
         )
-        return ChapterReview.model_validate(parse_json_object(raw))
 
     def repair(
         self,
@@ -260,14 +278,14 @@ class NovelEngine:
         chapter_text: str,
     ) -> MemoryExtraction:
         """Extract structured memory deltas from an accepted chapter."""
-        raw = self.provider.chat(
+        memory = self._structured(
+            MemoryExtraction,
             memory_extraction_messages(bible, characters, chapter_id, chapter_text),
             temperature=0.2,
-            response_format={"type": "json_object"},
         )
-        data = parse_json_object(raw)
-        data.setdefault("chapter_id", chapter_id)
-        return MemoryExtraction.model_validate(data)
+        if not memory.chapter_id:
+            memory = memory.model_copy(update={"chapter_id": chapter_id})
+        return memory
 
     def run(
         self,
