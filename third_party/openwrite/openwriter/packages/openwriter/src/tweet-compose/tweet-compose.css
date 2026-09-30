@@ -1,0 +1,1291 @@
+/* =============================================================
+   Tweet Compose View — pixel-accurate X/Twitter design system
+   Activated via [data-view="tweet"] on <html>
+
+   Design tokens extracted from live x.com (Feb 2026):
+   - Font: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif
+   - Primary text: #0f1419 (light) / #e7e9ea (dark)
+   - Secondary text: #536471 (light) / #71767b (dark)
+   - X Blue: #1d9bf0
+   - Border: #eff3f4 (light) / #2f3336 (dark)
+   - Card border: #cfd9de (light) / #333639 (dark)
+   - Background: #ffffff (light) / #000000 (dark)
+   - Column width: 600px
+   ============================================================= */
+
+/* --- CSS custom properties for X design tokens --- */
+:root {
+  --x-font: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --x-text-primary: #0f1419;
+  --x-text-secondary: #536471;
+  --x-blue: #1d9bf0;
+  --x-red: #f4212e;
+  --x-green: #00ba7c;
+  --x-yellow: #ffd400;
+  --x-bg: #ffffff;
+  --x-bg-hover: rgba(0, 0, 0, 0.03);
+  --x-border: #eff3f4;
+  --x-border-card: #cfd9de;
+  --x-thread-line: #cfd9de;
+  --x-column-width: 600px;
+}
+
+[data-mode="dark"] {
+  --x-text-primary: #e7e9ea;
+  --x-text-secondary: #71767b;
+  --x-bg: #000000;
+  --x-bg-hover: rgba(255, 255, 255, 0.03);
+  --x-border: #2f3336;
+  --x-border-card: #333639;
+  --x-thread-line: #333639;
+}
+
+/* --- Reset ALL canvas/typography style effects when in tweet mode --- */
+[data-view="tweet"] .tiptap {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  min-height: auto !important;
+}
+
+/* Pending gutter line in tweet mode.
+ * Tweet layout strips editor padding (padding: 0 above), so the default
+ * left: -1rem would overflow into the avatar column. The flex gap between
+ * the avatar column (40px) and the text column is ~12px — left: -10px lands
+ * the 3px gutter cleanly inside that gap, visible below the avatar. */
+[data-view="tweet"] .pending-active::before {
+  left: -10px;
+}
+
+[data-view="tweet"] .editor-container {
+  background: transparent !important;
+}
+
+/* --- Global overrides when in tweet compose mode --- */
+[data-view="tweet"] .editor-container {
+  display: flex;
+  justify-content: center;
+}
+
+[data-view="tweet"] .ProseMirror {
+  max-width: 100% !important;
+  padding: 4px 0 !important;
+  font-family: var(--x-font) !important;
+  font-size: 20px !important;
+  line-height: 24px !important;
+  color: var(--x-text-primary) !important;
+}
+
+[data-view="tweet"] .ProseMirror p {
+  margin-bottom: 0 !important;
+}
+
+/* Double-Enter paragraph spacing: separate <p> nodes get visual gap
+   matching X's double-linebreak paragraph spacing */
+[data-view="tweet"] .ProseMirror p + p {
+  margin-top: 1em !important;
+}
+
+/* Base placeholder styling for all tweet modes */
+[data-view="tweet"] .ProseMirror p.is-editor-empty:first-child::before {
+  content: "Add a comment" !important;
+  color: var(--x-text-secondary) !important;
+  font-size: 20px !important;
+}
+
+/* Standalone tweet: "What's happening?" */
+.tweet-compose-box--standalone .ProseMirror p.is-editor-empty:first-child::before {
+  content: "What's happening?" !important;
+}
+
+/* Reply: "Post your reply" */
+.tweet-reply-thread .ProseMirror p.is-editor-empty:first-child::before {
+  content: "Post your reply" !important;
+}
+
+/* --- Compose wrapper (main column) --- */
+.tweet-compose-wrapper {
+  width: 100%;
+  max-width: var(--x-column-width);
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--x-font);
+  border: 1px solid var(--x-border);
+  border-radius: 16px;
+  height: fit-content;
+}
+
+/* --- Tweet context section (holds embedded tweet) --- */
+.tweet-context-section {
+  padding: 12px 16px 0;
+}
+
+.tweet-quote-section {
+  padding: 12px 0 0;
+}
+
+.tweet-quote-footer {
+  padding: 0 16px 12px;
+}
+.tweet-quote-footer .tweet-compose-footer {
+  margin-bottom: 0;
+}
+
+/* --- Tweet embed card --- */
+.tweet-embed-card {
+  border: 1px solid var(--x-border-card);
+  border-radius: 16px;
+  padding: 12px 16px;
+  background: var(--x-bg);
+  cursor: default;
+}
+
+.tweet-embed-card--clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tweet-embed-card--clickable:hover {
+  background: var(--x-bg-hover);
+}
+
+.tweet-embed-nested {
+  margin-top: 12px;
+}
+
+/* Author row — avatar + name/handle inline */
+.tweet-author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tweet-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.tweet-embed-nested .tweet-avatar {
+  width: 20px;
+  height: 20px;
+}
+
+.tweet-avatar-placeholder {
+  background: var(--x-border);
+}
+
+/* Name and handle on same line (X layout) */
+.tweet-author-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tweet-author-name {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tweet-author-handle {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--x-text-secondary);
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tweet-author-separator {
+  color: var(--x-text-secondary);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.tweet-author-timestamp {
+  color: var(--x-text-secondary);
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Tweet text */
+.tweet-text {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tweet-embed-nested .tweet-text {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+/* Media — grid layout by image count */
+.tweet-media {
+  margin-top: 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--x-border);
+  display: grid;
+  gap: 2px;
+}
+
+.tweet-media[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+
+.tweet-media[data-count="2"] {
+  grid-template-columns: 1fr 1fr;
+  height: 280px;
+}
+
+.tweet-media[data-count="3"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 280px;
+}
+
+.tweet-media[data-count="3"] .tweet-media-img:first-child {
+  grid-row: 1 / -1;
+}
+
+.tweet-media[data-count="4"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 280px;
+}
+
+.tweet-media-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tweet-media-video-placeholder {
+  width: 100%;
+  height: 200px;
+  background: var(--x-bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--x-text-secondary);
+  font-size: 14px;
+}
+
+/* --- Action bar (reply, retweet, like, bookmark, share) --- */
+.tweet-actions-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.tweet-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--x-text-secondary);
+  font-size: 13px;
+  line-height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: default;
+  font-family: var(--x-font);
+  border-radius: 9999px;
+  transition: color 0.2s;
+}
+
+.tweet-action svg {
+  width: 18.75px;
+  height: 18.75px;
+  flex-shrink: 0;
+}
+
+.tweet-action-reply:hover { color: var(--x-blue); }
+.tweet-action-retweet:hover { color: var(--x-green); }
+.tweet-action-like:hover { color: #f91880; }
+.tweet-action-bookmark:hover { color: var(--x-blue); }
+
+/* --- Reply thread layout (unified two-column) --- */
+.tweet-reply-thread {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px 0;
+}
+
+.tweet-reply-thread-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.tweet-reply-thread-line {
+  width: 2px;
+  flex: 1;
+  min-height: 12px;
+  background: var(--x-thread-line);
+  margin: 4px 0;
+}
+
+.tweet-reply-thread-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.tweet-reply-parent {
+  margin-bottom: 4px;
+}
+
+/* Parent tweet in reply thread uses timeline font size (not card size) */
+.tweet-reply-parent .tweet-text {
+  font-size: 17px;
+  line-height: 24px;
+}
+
+/* --- Replying to indicator (inline in thread) --- */
+.tweet-replying-to-inline {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--x-text-secondary);
+  padding: 8px 0 4px;
+}
+
+/* --- Replying to indicator (standalone, outside thread) --- */
+.tweet-replying-to {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--x-text-secondary);
+  padding: 4px 16px 8px 68px;
+}
+
+.tweet-reply-handle {
+  color: var(--x-blue);
+}
+
+/* --- Compose area --- */
+.tweet-compose-area {
+  display: flex;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+
+.tweet-compose-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tweet-compose-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: var(--x-border);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.tweet-compose-avatar-img {
+  object-fit: cover;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.tweet-compose-avatar-img:hover {
+  opacity: 0.85;
+}
+
+.tweet-handle-popover {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  z-index: 100;
+  background: var(--x-bg);
+  border: 1px solid var(--x-border-card);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tweet-handle-input {
+  font-family: var(--x-font);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  background: transparent;
+  border: 1px solid var(--x-border-card);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 160px;
+  outline: none;
+}
+
+.tweet-handle-input:focus {
+  border-color: var(--x-blue);
+}
+
+.tweet-handle-input::placeholder {
+  color: var(--x-text-secondary);
+}
+
+.tweet-compose-content {
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* Legacy compose box (for when no avatar layout) */
+.tweet-compose-box {
+  min-height: 72px; /* ~3 rows at 24px line-height */
+}
+
+.tweet-compose-box--standalone {
+  min-height: 96px;
+}
+
+/* Image NodeView: ensure outer wrapper doesn't bleed behind rounded card */
+.react-renderer.node-image {
+  line-height: 0;
+  background: transparent !important;
+  border-radius: 12px;
+  box-shadow: none !important;
+}
+
+/* Hide empty paragraphs adjacent to images (ProseMirror cursor placeholders) */
+.node-image + p:empty,
+.node-image + p:has(br:only-child) {
+  display: none;
+}
+
+/* === Tweet image card (NodeView) === */
+
+.tweet-image-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  width: 100%;
+  line-height: 0;
+  margin-top: 8px;
+}
+
+.tweet-image-card .tweet-image-card-img {
+  width: 100%;
+  display: block;
+  margin: 0;
+  border-radius: 0;
+}
+
+.tweet-image-card-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(15, 20, 25, 0.75);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+.tweet-image-card:hover .tweet-image-card-remove {
+  opacity: 1;
+}
+
+.tweet-image-card-remove:hover {
+  background: rgba(244, 33, 46, 0.85);
+}
+
+/* === Tweet preview grid (2+ images below editor, separate from ProseMirror) === */
+
+.tweet-preview-grid {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tweet-preview-grid .tweet-image-card {
+  border-radius: 0;
+  height: 100%;
+  background: #000;
+}
+
+.tweet-preview-grid .tweet-image-card-img {
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* 1 image: single card, natural aspect */
+.tweet-preview-grid[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+
+.tweet-preview-grid[data-count="1"] .tweet-image-card {
+  border-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="1"] .tweet-image-card-img {
+  max-height: 300px;
+}
+
+/* 2 images: side by side */
+.tweet-preview-grid[data-count="2"] {
+  grid-template-columns: 1fr 1fr;
+}
+
+.tweet-preview-grid[data-count="2"] .tweet-image-card {
+  height: 160px;
+}
+
+.tweet-preview-grid[data-count="2"] > :first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="2"] > :last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* 3 images: first full-width top, two side-by-side below */
+.tweet-preview-grid[data-count="3"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.tweet-preview-grid[data-count="3"] .tweet-image-card {
+  height: 160px;
+}
+
+.tweet-preview-grid[data-count="3"] > :first-child {
+  grid-column: 1 / -1;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="3"] > :nth-child(2) {
+  border-bottom-left-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="3"] > :nth-child(3) {
+  border-bottom-right-radius: 12px;
+}
+
+/* 4 images: 2×2 grid */
+.tweet-preview-grid[data-count="4"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.tweet-preview-grid[data-count="4"] .tweet-image-card {
+  height: 160px;
+}
+
+.tweet-preview-grid[data-count="4"] > :nth-child(1) {
+  border-top-left-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="4"] > :nth-child(2) {
+  border-top-right-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="4"] > :nth-child(3) {
+  border-bottom-left-radius: 12px;
+}
+
+.tweet-preview-grid[data-count="4"] > :nth-child(4) {
+  border-bottom-right-radius: 12px;
+}
+
+/* --- Compose footer: counter + post button --- */
+.tweet-compose-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0;
+  margin-top: 12px;
+  margin-bottom: -20px; /* absorb parent's padding-bottom */
+}
+
+.tweet-compose-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--x-border);
+}
+
+/* Inline footer (between tweets, not at bottom) */
+.tweet-compose-footer--inline {
+}
+
+/* --- Thread counter (e.g. "1/2") --- */
+.tweet-thread-counter {
+  font-family: var(--x-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* --- Character counter --- */
+.tweet-char-counter {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tweet-char-number {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--x-font);
+}
+
+/* --- Copy button (ghost pill) --- */
+.tweet-copy-btn {
+  font-family: var(--x-font);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-blue);
+  background: transparent;
+  color: var(--x-blue);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.tweet-copy-btn:hover:not(:disabled) {
+  background: rgba(29, 155, 240, 0.1);
+}
+
+.tweet-copy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tweet-copy-btn--copied {
+  border-color: var(--x-green);
+  color: var(--x-green);
+}
+
+.tweet-copy-btn--copied:hover:not(:disabled) {
+  background: rgba(0, 186, 124, 0.1);
+}
+
+/* --- Schedule button (icon-only pill) --- */
+.tweet-schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-border-card);
+  background: transparent;
+  color: var(--x-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tweet-schedule-btn:hover {
+  background: var(--x-bg-hover);
+  color: var(--x-blue);
+  border-color: var(--x-blue);
+}
+
+/* --- Post button --- */
+.tweet-post-btn {
+  font-family: var(--x-font);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--x-blue);
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.5;
+  min-width: 72px;
+  transition: opacity 0.15s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tweet-post-btn--active {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.tweet-post-btn--active:hover {
+  background: #1a8cd8;
+}
+
+.tweet-post-btn--active:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tweet-post-btn--success {
+  background: var(--x-green);
+  opacity: 1;
+  cursor: default;
+}
+
+.tweet-post-btn--error {
+  background: var(--x-red);
+  opacity: 1;
+  cursor: default;
+}
+
+.tweet-posted-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: auto;
+  font-family: var(--x-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green, #16a34a);
+  text-decoration: none;
+}
+
+.tweet-posted-status:hover {
+  text-decoration: underline;
+}
+
+.tweet-post-error {
+  font-family: var(--x-font);
+  font-size: 13px;
+  color: var(--x-red);
+  margin-right: auto;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.tweet-mark-sent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-border-card);
+  background: transparent;
+  color: var(--x-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tweet-mark-sent-btn:hover {
+  background: var(--x-bg-hover);
+  color: var(--x-blue);
+  border-color: var(--x-blue);
+}
+
+
+.tweet-mark-sent-btn--done {
+  border-color: #00ba7c;
+  color: #00ba7c;
+}
+
+.tweet-mark-sent-btn--done:hover {
+  background: rgba(0, 186, 124, 0.1);
+  color: #00ba7c;
+  border-color: #00ba7c;
+}
+
+/* Auto-plug opt-out pill. Default (on) reads as an active blue pill; off is
+ * muted to signal the post is excluded from engagement autoplugs. */
+.tweet-autoplug-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-border-card);
+  background: transparent;
+  color: var(--x-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tweet-autoplug-toggle:hover {
+  background: var(--x-bg-hover);
+}
+
+.tweet-autoplug-toggle--on {
+  color: var(--x-blue);
+  border-color: var(--x-blue);
+}
+
+/* Mark-as-posted URL popover — matches .tweet-handle-popover aesthetic
+ * (the @-handle editor on the compose avatar) so the X-themed surface
+ * stays consistent across all in-compose popovers. */
+.tweet-mark-sent-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tweet-mark-sent-url {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: var(--x-bg);
+  border: 1px solid var(--x-border-card);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tweet-mark-sent-url input {
+  font-family: var(--x-font);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  background: transparent;
+  border: 1px solid var(--x-border-card);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 260px;
+  outline: none;
+}
+
+.tweet-mark-sent-url input:focus {
+  border-color: var(--x-blue);
+}
+
+.tweet-mark-sent-url input::placeholder {
+  color: var(--x-text-secondary);
+}
+
+.tweet-mark-sent-url button {
+  background: var(--x-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tweet-mark-sent-url button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- Error state --- */
+.tweet-embed-error {
+  border: 1px solid var(--x-border-card);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  color: var(--x-text-secondary);
+  font-size: 15px;
+  line-height: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tweet-fallback-link {
+  color: var(--x-blue);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+/* --- Change-link control (replace quoted/replied tweet URL midstream) --- */
+.tweet-change-link {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.tweet-change-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--x-blue);
+  border: 1px solid var(--x-border-card);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-family: var(--x-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tweet-change-link-btn:hover {
+  background: var(--x-bg-hover);
+}
+
+.tweet-change-link-edit {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tweet-change-link-edit input {
+  font-family: var(--x-font);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  background: transparent;
+  border: 1px solid var(--x-border-card);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 280px;
+  outline: none;
+}
+
+.tweet-change-link-edit input:focus {
+  border-color: var(--x-blue);
+}
+
+.tweet-change-link-edit input::placeholder {
+  color: var(--x-text-secondary);
+}
+
+.tweet-change-link-edit button {
+  background: var(--x-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tweet-change-link-edit button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- Skeleton loading --- */
+.tweet-skeleton {
+  border: 1px solid var(--x-border-card);
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+
+.tweet-skeleton .tweet-skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--x-border);
+}
+
+.tweet-pulse {
+  animation: tweet-pulse-anim 1.5s ease-in-out infinite;
+}
+
+@keyframes tweet-pulse-anim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* --- Date / footer below tweet (used in detail view, not feed) --- */
+.tweet-footer {
+  display: none;
+}
+
+/* --- Separator between tweet and actions in non-card context --- */
+.tweet-detail-separator {
+  height: 1px;
+  background: var(--x-border);
+  margin-top: 12px;
+}
+
+/* --- XConnectPrompt: contextual activation --- */
+.x-connect-prompt {
+  border-top: 1px solid var(--x-border);
+  padding: 16px;
+  font-family: var(--x-font);
+}
+
+.x-connect-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.x-connect-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--x-text-primary);
+}
+
+.x-connect-cancel {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--x-text-secondary);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.x-connect-cancel:hover {
+  color: var(--x-text-primary);
+  background: var(--x-bg-hover);
+}
+
+.x-connect-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.x-connect-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.x-connect-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text-secondary);
+}
+
+.x-connect-input {
+  font-family: var(--x-font);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  background: transparent;
+  border: 1px solid var(--x-border-card);
+  border-radius: 8px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.x-connect-input:focus {
+  border-color: var(--x-blue);
+}
+
+.x-connect-input::placeholder {
+  color: var(--x-text-secondary);
+  opacity: 0.5;
+}
+
+.x-connect-error {
+  font-size: 13px;
+  color: var(--x-red);
+  margin-bottom: 8px;
+  line-height: 18px;
+}
+
+.x-connect-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.x-connect-dev-link {
+  font-size: 13px;
+  color: var(--x-blue);
+  text-decoration: none;
+}
+
+.x-connect-dev-link:hover {
+  text-decoration: underline;
+}
+
+.x-connect-btn {
+  font-family: var(--x-font);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 20px;
+  height: 32px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--x-blue);
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.x-connect-btn:hover:not(:disabled) {
+  background: #1a8cd8;
+}
+
+.x-connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Thread compose: multi-tweet editors --- */
+.tweet-thread-editors {
+  padding: 12px 16px 0;
+}
+
+.tweet-thread-item {
+  display: flex;
+  gap: 12px;
+  transition: opacity 0.15s;
+}
+
+.tweet-thread-item--inactive {
+  opacity: 0.45;
+}
+
+.tweet-thread-item--inactive:hover {
+  opacity: 0.7;
+}
+
+.tweet-thread-item--active {
+  opacity: 1;
+}
+
+.tweet-thread-item-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.tweet-thread-line {
+  width: 2px;
+  flex: 1;
+  min-height: 12px;
+  background: var(--x-thread-line);
+  margin: 4px 0;
+}
+
+.tweet-thread-item-right {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.tweet-thread-remove {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--x-text-secondary);
+  cursor: pointer;
+  border-radius: 9999px;
+  opacity: 0;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+  z-index: 1;
+}
+
+.tweet-thread-item:hover .tweet-thread-remove {
+  opacity: 1;
+}
+
+.tweet-thread-remove:hover {
+  color: var(--x-red);
+  background: rgba(244, 33, 46, 0.1);
+}
+
+.tweet-thread-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--x-border-card);
+  background: none;
+  color: var(--x-blue);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.tweet-thread-add:hover {
+  border-color: var(--x-blue);
+  background: rgba(29, 155, 240, 0.1);
+}
+
+.tweet-reply-parent-section {
+  padding: 12px 16px 0;
+}
+
+.tweet-reply-parent-card {
+  margin-bottom: 4px;
+}
+
+.tweet-reply-parent-section .tweet-replying-to {
+  padding: 8px 4px 0;
+}
