@@ -34,7 +34,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("doc_story", "yangkevin2/doc-story-generation", "story_generation", "MIT", "research-port", "detailed outline control for coherent long stories"),
     IntegrationSpec("doc_story_v2", "facebookresearch/doc-storygen-v2", "story_generation", "Apache-2.0", "research-port", "Premise -> Plan -> Story pipeline for modern chat/open models"),
     IntegrationSpec("chinese_novelist_skill", "PenglongHuang/chinese-novelist-skill", "story_generation", "MIT", "git-submodule+research-port", "Chinese novel planning, continuation and validation workflow"),
-    IntegrationSpec("spacy", "explosion/spaCy", "nlp_pipeline", "MIT", "git-submodule", "optional NLP pipeline for syntax/entity/style structure"),
+    IntegrationSpec("spacy", "explosion/spaCy", "nlp_pipeline", "MIT", "adapter+direct-optional", "PERSON entity extraction and character-consistency review hook", "spacy", "spacy"),
     IntegrationSpec("pycorrector", "shibing624/pycorrector", "chinese_quality", "Apache-2.0", "git-submodule", "Chinese spelling/grammar correction diagnostics"),
     IntegrationSpec("texthero", "jbesomi/texthero", "text_analysis", "MIT", "git-submodule", "text preprocessing and exploratory analysis"),
     IntegrationSpec("opencc", "BYVoid/OpenCC", "chinese_normalization", "Apache-2.0", "git-submodule", "Chinese script and lexical normalization"),
