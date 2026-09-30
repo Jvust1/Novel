@@ -95,6 +95,29 @@ class ProjectStore:
         record = {"chapter_id": chapter_id, "story_dna": story_dna}
         return self.write_json(project, f"memory/story_dna/{safe}.json", record)
 
+    def save_voice_dna(self, project: str, chapter_id: str, voice_dna: dict[str, Any]) -> Path:
+        safe = self.slugify(chapter_id or "chapter")
+        record = {"chapter_id": chapter_id, "voice_dna": voice_dna}
+        return self.write_json(project, f"memory/voice_dna/{safe}.json", record)
+
+    def load_voice_dna_history(self, project: str) -> list[dict[str, Any]]:
+        folder = self.project_dir(project) / "memory" / "voice_dna"
+        rows: list[dict[str, Any]] = []
+        for path in sorted(folder.glob("*.json")):
+            try:
+                row = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(row, dict) and isinstance(row.get("voice_dna"), dict):
+                    rows.append(row)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return rows
+
+    def save_longform_health(self, project: str, health: dict[str, Any]) -> Path:
+        return self.write_json(project, "memory/longform_health.json", health)
+
+    def load_longform_health(self, project: str) -> dict[str, Any]:
+        return self.read_json(project, "memory/longform_health.json", default={})
+
     def save_chapter_analytics(self, project: str, chapter_id: str, analytics: dict[str, Any]) -> Path:
         safe = self.slugify(chapter_id or "chapter")
         record = {"chapter_id": chapter_id, "analytics": analytics}

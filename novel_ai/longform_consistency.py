@@ -382,3 +382,32 @@ def build_longform_health(
         "tension_density": tension,
         "guard_context": "\n".join(guard_lines),
     }
+
+
+def behavior_review_payload(report: dict[str, Any]) -> dict[str, Any]:
+    issues = []
+    for row in list(report.get("alerts") or [])[:5]:
+        issues.append({
+            "category": "人物行为模式重复",
+            "severity": "high" if float(row.get("score", 0.0)) >= 0.88 else "medium",
+            "excerpt": "",
+            "reason": (
+                f"{row.get('character','(未知人物)')} 与历史章节 {row.get('chapter_id','')} 的"
+                f"选择/代价/状态变化模式相似度 {float(row.get('score',0.0)):.1%}。"
+            ),
+            "suggestion": "改变具体决策、阻力来源、代价或后续状态，不要只改表面措辞。",
+        })
+    return {"issues": issues}
+
+
+def voice_review_payload(alerts: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    issues = []
+    for row in list(alerts)[:5]:
+        issues.append({
+            "category": "人物口吻漂移",
+            "severity": "medium" if float(row.get("score", 0.0)) < 0.70 else "high",
+            "excerpt": "",
+            "reason": str(row.get("reason", "")),
+            "suggestion": str(row.get("suggestion", "")),
+        })
+    return {"issues": issues}
