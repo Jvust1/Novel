@@ -1,3 +1,6 @@
 # Optional prompt/program and editorial orchestration
 dspy
 crewai
+instructor
+langgraph
+pydantic-ai
