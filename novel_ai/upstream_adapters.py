@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from collections.abc import Iterable, Mapping
@@ -372,4 +373,67 @@ class PydanticAIReviewHook:
         output = getattr(result, "output", result)
         data = _object_mapping(output)
         issues = data.get("issues", data.get("issues_json", []))
+        return {"issues": _normalize_issue_rows(issues)}
+
+
+class GuardrailsReviewHook:
+    """Adapt a configured Guardrails Guard into Novel's review issue contract."""
+
+    name = "guardrails-review"
+
+    def __init__(self, guard: Any, *, category: str = "Guardrails") -> None:
+        if not callable(getattr(guard, "validate", None)):
+            raise TypeError("guard 必须提供 validate()")
+        self._guard = guard
+        self._category = category
+
+    def review_payload(self, *, draft: str, plan: Any, bible: Any, characters: list[Any]) -> dict[str, Any]:
+        outcome = self._guard.validate(draft)
+        passed = getattr(outcome, "validation_passed", None)
+        validated = getattr(outcome, "validated_output", None)
+        if passed is not False and validated is not None:
+            return {"issues": []}
+        error = getattr(outcome, "error", None) or getattr(outcome, "error_message", None)
+        reason = str(error or "Guardrails validation failed").strip()
+        return {
+            "issues": [
+                {
+                    "category": self._category,
+                    "severity": "medium",
+                    "excerpt": "",
+                    "reason": reason,
+                    "suggestion": "根据 Guardrails 校验结果人工复核并修订。",
+                }
+            ]
+        }
+
+
+class AgentFrameworkReviewHook:
+    """Adapt a configured Microsoft Agent Framework agent to Novel's review hook."""
+
+    name = "agent-framework-review"
+
+    def __init__(self, agent: Any) -> None:
+        if not callable(getattr(agent, "run", None)):
+            raise TypeError("agent 必须提供 async run()")
+        self._agent = agent
+
+    def review_payload(self, *, draft: str, plan: Any, bible: Any, characters: list[Any]) -> dict[str, Any]:
+        inputs = _external_review_inputs(draft=draft, plan=plan, bible=bible, characters=characters)
+        prompt = (
+            "请作为小说二次审校器检查以下输入，只返回 JSON 对象，顶层字段为 issues。\n"
+            + json.dumps(inputs, ensure_ascii=False, sort_keys=True)
+        )
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            result = asyncio.run(self._agent.run(prompt))
+        else:
+            raise RuntimeError("同步 NovelEngine 中不能直接运行 Agent Framework async agent；请在线程或异步边界外调用")
+        raw = getattr(result, "text", None) or getattr(result, "content", None) or str(result)
+        parsed = _json_value(raw)
+        if isinstance(parsed, Mapping):
+            issues = parsed.get("issues", [])
+        else:
+            issues = []
         return {"issues": _normalize_issue_rows(issues)}
