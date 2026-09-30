@@ -13,6 +13,8 @@ from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
 from novel_ai.reference_similarity import analyze_reference_similarity, similarity_review_payload
+from novel_ai.release_eval import build_release_quality_snapshot
+from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -53,6 +55,8 @@ with st.sidebar:
     model = st.text_input("Model")
     api_key = st.text_input("API Key（只在当前会话使用）", type="password")
     st.caption("密钥不会由本应用写入项目文件。")
+    with st.expander("可选 Recall 后端", expanded=False):
+        st.json(recall_backend_capabilities())
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
@@ -466,6 +470,13 @@ with write_tab:
         if result.similarity_report:
             with st.expander("参考相似度保护门", expanded=False):
                 st.json(result.similarity_report)
+        with st.expander("发布前综合质量快照", expanded=False):
+            previous_for_eval = [row for row in store.all_chapter_texts(project_name) if row[0] != store.slugify(chapter_id)]
+            st.json(build_release_quality_snapshot(
+                result.final_text,
+                reference_hashes=st.session_state.reference_hashes,
+                previous_chapters=previous_for_eval,
+            ).to_dict())
 
         st.divider()
         st.subheader("章节后处理 · 记忆抽取")
