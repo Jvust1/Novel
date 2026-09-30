@@ -22,6 +22,7 @@ from .prompts import (
     semantic_style_messages,
 )
 from .provider import OpenAICompatibleProvider
+from .quality_gate import run_quality_gate
 from .style_engine import detect_ai_flavor
 
 
@@ -72,6 +73,7 @@ class ChapterResult:
     ai_flavor: dict[str, Any]
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
+    quality_gate: dict[str, Any] | None = None
 
     @property
     def final_text(self) -> str:
@@ -171,6 +173,19 @@ class NovelEngine:
             temperature=0.72,
         ).strip()
 
+    def finalize_quality(
+        self,
+        chapter_text: str,
+        *,
+        chapter_id: str = "chapter",
+        min_chapter_units: int = 800,
+    ) -> dict[str, Any]:
+        """Deterministic acceptance backstop derived from OpenWrite completion gates."""
+        return run_quality_gate(
+            {chapter_id: chapter_text},
+            min_chapter_units=min_chapter_units,
+        )
+
     def extract_memory(
         self,
         bible: StoryBible,
@@ -221,6 +236,12 @@ class NovelEngine:
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = self.repair(draft, review_result, style)
             review_after_repair = self.review(bible, plan, characters, revised)
+        final_text = revised or draft
+        gate = self.finalize_quality(
+            final_text,
+            chapter_id=plan.chapter_title or "chapter",
+            min_chapter_units=max(800, int(target_chars * 0.45)),
+        )
         return ChapterResult(
             plan=plan,
             draft=draft,
@@ -228,4 +249,5 @@ class NovelEngine:
             ai_flavor=local_signals,
             revised=revised,
             review_after_repair=review_after_repair,
+            quality_gate=gate,
         )
