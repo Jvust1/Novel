@@ -1,0 +1,801 @@
+/* =============================================================
+   Article Compose View — X Article writing experience
+   Activated via [data-view="article"] on <html>
+
+   Design: serif body text (matching X's article reading experience),
+   wider content column, article-style paragraph spacing, clean chrome.
+   ============================================================= */
+
+/* --- Reset canvas effects when in article mode --- */
+[data-view="article"] .tiptap {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  min-height: auto !important;
+}
+
+[data-view="article"] .editor-container {
+  background: transparent !important;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* --- Article editor typography --- */
+[data-view="article"] .ProseMirror {
+  max-width: 100% !important;
+  padding: 0 !important;
+  font-family: Georgia, "Times New Roman", Times, serif !important;
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+  color: var(--editor-color, #242424) !important;
+}
+
+[data-view="article"] .ProseMirror p {
+  margin-bottom: 1.2em !important;
+}
+
+[data-view="article"] .ProseMirror h1 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+  color: var(--x-text-primary, var(--ink-dark)) !important;
+}
+
+[data-view="article"] .ProseMirror h2 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+  color: var(--x-text-primary, var(--ink-dark)) !important;
+}
+
+[data-view="article"] .ProseMirror h3 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  margin-top: 1.2em !important;
+  margin-bottom: 0.5em !important;
+  color: var(--x-text-primary, var(--ink-dark)) !important;
+}
+
+[data-view="article"] .ProseMirror h1:first-child {
+  margin-top: 0 !important;
+}
+
+[data-view="article"] .ProseMirror blockquote {
+  font-style: normal !important;
+  border-left: 3px solid var(--blockquote-border) !important;
+  padding-left: 1em !important;
+  margin-left: 0 !important;
+  color: var(--blockquote-color) !important;
+}
+
+[data-view="article"] .ProseMirror img {
+  max-width: 100% !important;
+  border-radius: 8px !important;
+  margin: 1em 0 !important;
+}
+
+/* Article placeholder */
+[data-view="article"] .ProseMirror p.is-editor-empty:first-child::before {
+  content: "Start writing your article..." !important;
+  color: var(--x-text-secondary, #adb5bd) !important;
+  font-family: Georgia, "Times New Roman", Times, serif !important;
+  font-size: 18px !important;
+}
+
+/* --- Article compose wrapper (card outline like tweet compose) --- */
+.article-compose-wrapper {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  border: 1px solid var(--x-border, #eff3f4);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Inner content area — padded inset from card edge (image stays flush) */
+.article-compose-content {
+  padding: 24px 24px 16px;
+}
+
+.article-compose-body {
+  min-height: 200px;
+}
+
+/* =============================================================
+   Cover Image — placeholder, prompt, loading, display states
+   ============================================================= */
+
+.article-cover {
+  width: 100%;
+  aspect-ratio: 5 / 2;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Empty state — dark placeholder */
+.article-cover--empty {
+  background: var(--x-bg-hover, rgba(0, 0, 0, 0.03));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+[data-mode="dark"] .article-cover--empty {
+  background: #1a1a1a;
+}
+
+.article-cover--empty:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-mode="dark"] .article-cover--empty:hover {
+  background: #222;
+}
+
+.article-cover-icon {
+  color: var(--x-text-secondary, #536471);
+  opacity: 0.6;
+}
+
+.article-cover-hint {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  color: var(--x-text-secondary, #536471);
+  opacity: 0.7;
+}
+
+/* Prompt state */
+.article-cover--prompt {
+  background: var(--x-bg-hover, rgba(0, 0, 0, 0.03));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+}
+
+[data-mode="dark"] .article-cover--prompt {
+  background: #1a1a1a;
+}
+
+.article-cover-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.article-cover-prompt-input {
+  flex: 1;
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary, #0f1419);
+  background: var(--x-bg, #ffffff);
+  border: 1px solid var(--x-border-card, #cfd9de);
+  border-radius: 9999px;
+  padding: 8px 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.article-cover-prompt-input:focus {
+  border-color: var(--x-blue, #1d9bf0);
+}
+
+.article-cover-prompt-input::placeholder {
+  color: var(--x-text-secondary, #536471);
+}
+
+.article-cover-prompt-btn {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--x-blue, #1d9bf0);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.article-cover-prompt-btn:hover:not(:disabled) {
+  background: #1a8cd8;
+}
+
+.article-cover-prompt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.article-cover-prompt-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--x-text-secondary, #536471);
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.article-cover-prompt-cancel:hover {
+  background: var(--x-bg-hover, rgba(0, 0, 0, 0.03));
+  color: var(--x-text-primary, #0f1419);
+}
+
+.article-cover-error {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 13px;
+  color: var(--x-red, #f4212e);
+  text-align: center;
+}
+
+/* Loading state */
+.article-cover--loading {
+  background: var(--x-bg-hover, rgba(0, 0, 0, 0.03));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+[data-mode="dark"] .article-cover--loading {
+  background: #1a1a1a;
+}
+
+.article-cover-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--x-border, #eff3f4);
+  border-top-color: var(--x-blue, #1d9bf0);
+  border-radius: 50%;
+  animation: article-cover-spin 0.8s linear infinite;
+}
+
+@keyframes article-cover-spin {
+  to { transform: rotate(360deg); }
+}
+
+.article-cover-loading-text {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  color: var(--x-text-secondary, #536471);
+}
+
+/* Display state — image with hover overlay */
+.article-cover--display {
+  cursor: default;
+}
+
+.article-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.article-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.article-cover--display:hover .article-cover-overlay {
+  opacity: 1;
+}
+
+.article-cover-overlay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f1419;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.article-cover-overlay-btn:hover {
+  background: #ffffff;
+}
+
+.article-cover-overlay-btn--danger {
+  background: rgba(244, 33, 46, 0.9);
+  color: #ffffff;
+}
+
+.article-cover-overlay-btn--danger:hover {
+  background: #f4212e;
+}
+
+/* Center cluster for buttons (sits between arrows) */
+.article-cover-overlay-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Carousel arrow buttons — left/right edges, vertically centered */
+.article-cover-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, opacity 0.15s;
+  z-index: 2;
+  padding: 0;
+}
+
+.article-cover-arrow:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.article-cover-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.article-cover-arrow--left {
+  left: 12px;
+}
+
+.article-cover-arrow--right {
+  right: 12px;
+}
+
+/* Counter pill — bottom center of image */
+.article-cover-counter {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+}
+
+/* =============================================================
+   Title Input
+   ============================================================= */
+
+.article-title-input {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--x-text-primary, #0f1419);
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.article-title-input::placeholder {
+  color: var(--x-text-secondary, #536471);
+  opacity: 0.6;
+}
+
+/* The editable title is a <textarea> so long titles wrap instead of clipping.
+   It auto-grows its height in JS (see useAutoGrowTitle); these rules kill the
+   manual resize grip + scrollbar and let words wrap. Scoped to textarea so the
+   pending-rename <div> branches above are unaffected. */
+textarea.article-title-input {
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Pending title rename — the proposed title is rendered as a div using the
+   same `.pending-insert` class body decorations use. This modifier only
+   restores the divider-spacing the input has, since a div doesn't inherit
+   input padding. Accept/Reject lives in the right-rail Review panel.
+   adr: adr/pending-overlay-model.md */
+.article-title-input--pending {
+  cursor: default;
+  user-select: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* =============================================================
+   Byline — avatar + name + handle
+   ============================================================= */
+
+.article-byline {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.article-byline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.article-byline-row:hover {
+  background: var(--x-bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.article-byline-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.article-byline-avatar--empty {
+  background: var(--x-border, #eff3f4);
+}
+
+.article-byline-name {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--x-text-primary, #0f1419);
+  line-height: 20px;
+}
+
+.article-byline-handle {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--x-text-secondary, #536471);
+  line-height: 20px;
+}
+
+/* Byline popover — single handle field, mirrors tweet-handle-popover */
+.article-byline-popover {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  z-index: 100;
+  background: var(--x-bg, #ffffff);
+  border: 1px solid var(--x-border-card, #cfd9de);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.article-byline-input {
+  font-family: var(--x-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary, #0f1419);
+  background: transparent;
+  border: 1px solid var(--x-border-card, #cfd9de);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 160px;
+  outline: none;
+}
+
+.article-byline-input:focus {
+  border-color: var(--x-blue, #1d9bf0);
+}
+
+.article-byline-input::placeholder {
+  color: var(--x-text-secondary, #536471);
+}
+
+/* =============================================================
+   Footer — Copy as HTML button
+   ============================================================= */
+
+.article-compose-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.article-compose-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: var(--x-border, #eff3f4);
+}
+
+.article-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--x-blue, #1d9bf0);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.article-copy-btn:hover {
+  background: #1a8cd8;
+}
+
+.article-copy-btn:active {
+  transform: scale(0.97);
+}
+
+.article-copy-btn--copied {
+  background: #00ba7c;
+  cursor: default;
+}
+
+.article-copy-btn--copied:hover {
+  background: #00ba7c;
+}
+
+.article-copy-btn svg {
+  flex-shrink: 0;
+}
+
+/* --- Post to X button (native publish — primary action) --- */
+
+.article-post-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--x-fg, #0f1419);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.article-post-btn:hover {
+  background: #272c30;
+}
+
+.article-post-btn:active {
+  transform: scale(0.97);
+}
+
+.article-post-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.article-post-btn--success {
+  background: #00ba7c;
+}
+
+.article-post-btn--success:hover {
+  background: #00ba7c;
+}
+
+.article-post-btn--error {
+  background: #f4212e;
+}
+
+.article-post-btn--error:hover {
+  background: #f4212e;
+}
+
+.article-post-error {
+  padding: 8px 16px;
+  margin: 0 16px 12px;
+  border-radius: 8px;
+  background: rgba(244, 33, 46, 0.1);
+  color: #f4212e;
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* --- Mark as Sent button --- */
+
+.article-mark-sent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-border, #cfd9de);
+  background: transparent;
+  color: var(--ink-faint, #536471);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.article-mark-sent-btn:hover {
+  background: var(--bg-hover, rgba(15, 20, 25, 0.05));
+  color: var(--x-blue, #1d9bf0);
+  border-color: var(--x-blue, #1d9bf0);
+}
+
+
+.article-mark-sent-btn--done {
+  border-color: #00ba7c;
+  color: #00ba7c;
+}
+
+.article-mark-sent-btn--done:hover {
+  background: rgba(0, 186, 124, 0.1);
+  color: #00ba7c;
+  border-color: #00ba7c;
+}
+
+/* Auto-plug opt-out pill. Default (on) reads as an active blue pill; off is
+ * muted to signal the post is excluded from engagement autoplugs. */
+.article-autoplug-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--x-border, #cfd9de);
+  background: transparent;
+  color: var(--ink-faint, #536471);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.article-autoplug-toggle:hover {
+  background: var(--bg-hover, rgba(15, 20, 25, 0.05));
+}
+
+.article-autoplug-toggle--on {
+  color: var(--x-blue, #1d9bf0);
+  border-color: var(--x-blue, #1d9bf0);
+}
+
+/* Mark-as-posted URL popover — same X-themed aesthetic as
+ * .tweet-handle-popover and .tweet-mark-sent-url. Anchored above the
+ * button via wrap container. */
+.article-mark-sent-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.article-mark-sent-url {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 100;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: var(--x-bg);
+  border: 1px solid var(--x-border, #cfd9de);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.article-mark-sent-url input {
+  font-family: var(--x-font);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--x-text-primary);
+  background: transparent;
+  border: 1px solid var(--x-border, #cfd9de);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 260px;
+  outline: none;
+}
+
+.article-mark-sent-url input:focus {
+  border-color: var(--x-blue, #1d9bf0);
+}
+
+.article-mark-sent-url input::placeholder {
+  color: var(--x-text-secondary);
+}
+
+.article-mark-sent-url button {
+  background: var(--x-blue, #1d9bf0);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.article-mark-sent-url button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- Sent status indicator --- */
+
+.article-sent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: #00ba7c;
+  margin-right: auto;
+  text-decoration: none;
+}
+
+a.article-sent-status:hover {
+  text-decoration: underline;
+}
+
+.article-sent-status svg {
+  flex-shrink: 0;
+}
+
