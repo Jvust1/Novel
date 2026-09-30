@@ -1,3 +1,13 @@
+## 2026-09-30 — recall and evaluation backend fusion
+
+- Pinned GraphRAG, LightRAG, Graphiti, DeepEval, Ragas, sentence-transformers, FAISS and HanLP.
+- Semantic backend selection now supports FlagEmbedding → sentence-transformers → text2vec → char n-gram fallback.
+- Added LocalSemanticRecall: FAISS accelerates local vector recall when installed; otherwise the same interface falls back to in-memory cosine search.
+- Added capability matrix for FAISS / Qdrant / GraphRAG / LightRAG / Graphiti. Heavy graph/RAG systems remain behind the existing A/B gate.
+- Added ReleaseQualitySnapshot combining prose quality, reference-similarity protection and cross-chapter near-duplicate checks.
+- DeepEval and Ragas are explicit optional evaluator backends and are not invoked without provider/model configuration.
+- HanLP is surfaced without automatic model downloads.
+
 ## 2026-09-30 — long-form graph and self-repetition fusion
 
 - Added pinned datasketch, NetworkX and qdrant-client submodules.

@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 51,
+    "total": 52,
     "p0": 14,
-    "p1": 22,
+    "p1": 23,
     "no_license": 2,
     "agpl": 2
   },
@@ -66,7 +66,7 @@
       "repo": "hankcs/HanLP",
       "category": "chinese_nlp",
       "license": "Apache-2.0",
-      "mode": "direct-optional",
+      "mode": "git-submodule+direct-optional",
       "priority": "P1",
       "use": "中文分词、词性、NER 等深层文本特征"
     },
@@ -102,7 +102,7 @@
       "repo": "huggingface/sentence-transformers",
       "category": "embeddings",
       "license": "Apache-2.0",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P1",
       "use": "通用 embedding 备选"
     },
@@ -147,7 +147,7 @@
       "repo": "microsoft/graphrag",
       "category": "memory_retrieval",
       "license": "MIT",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P1",
       "use": "全局/局部图检索；仅在 A/B 证明收益后启用"
     },
@@ -156,7 +156,7 @@
       "repo": "HKUDS/LightRAG",
       "category": "memory_retrieval",
       "license": "MIT",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P1",
       "use": "轻量图+向量 Recall"
     },
@@ -183,7 +183,7 @@
       "repo": "getzep/graphiti",
       "category": "memory_retrieval",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+experiment-candidate",
       "priority": "P1",
       "use": "带时间维度的知识图谱；适合人物/事件历史"
     },
@@ -264,7 +264,7 @@
       "repo": "confident-ai/deepeval",
       "category": "evaluation",
       "license": "Apache-2.0",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P1",
       "use": "LLM 回归/自定义 rubric 测试"
     },
@@ -273,7 +273,7 @@
       "repo": "vibrantlabsai/ragas",
       "category": "evaluation",
       "license": "Apache-2.0",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P2",
       "use": "Recall/RAG 质量指标"
     },
@@ -474,6 +474,15 @@
       "mode": "git-submodule+adapter",
       "priority": "P1",
       "use": "可选语义 Recall 存储，需 A/B 证明收益后启用"
+    },
+    {
+      "key": "faiss",
+      "repo": "facebookresearch/faiss",
+      "category": "memory_retrieval",
+      "license": "MIT",
+      "mode": "git-submodule+adapter",
+      "priority": "P1",
+      "use": "本地高性能向量 Recall；LocalSemanticRecall 可选加速"
     }
   ]
 }

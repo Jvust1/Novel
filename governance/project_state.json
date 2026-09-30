@@ -56,7 +56,13 @@
     "DeepKE pinned as opt-in Story DNA entity/relation/event extraction candidate",
     "cross-chapter near-duplicate screening with datasketch MinHash and fuzzy fallback",
     "portable Story Graph snapshot for characters/events/foreshadowing with optional NetworkX validation",
-    "experimental QdrantRecallStore adapter retained behind A/B gate"
+    "experimental QdrantRecallStore adapter retained behind A/B gate",
+    "SentenceTransformerEncoder integrated into semantic backend selector",
+    "LocalSemanticRecall with FAISS acceleration and cosine fallback",
+    "recall capability matrix for FAISS/Qdrant/GraphRAG/LightRAG/Graphiti",
+    "ReleaseQualitySnapshot combines prose, reference similarity and cross-chapter duplication",
+    "DeepEval/Ragas exposed as opt-in evaluator capabilities",
+    "HanLP exposed as optional Chinese NLP backend without implicit downloads"
   ],
   "frozen": false,
   "blocking_issues": [],
