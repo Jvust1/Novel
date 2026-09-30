@@ -8,7 +8,7 @@ from typing import Any
 from .recall import RecallDocument, RecallHit
 
 _INTERNAL_PREFIX = "_novel_"
-_JSON_BLOCK = re.compile(r"```(?:json)?\\s*(.*?)\\s*```", re.S | re.I)
+_JSON_BLOCK = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.S | re.I)
 _ALLOWED_SEVERITIES = {"low", "medium", "high"}
 
 
@@ -90,10 +90,17 @@ def _external_review_inputs(
     bible: Any,
     characters: list[Any],
 ) -> dict[str, str]:
-    def dump(value: Any) -> str:
+    def ready(value: Any) -> Any:
         if hasattr(value, "model_dump"):
-            value = value.model_dump()
-        return json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+            return ready(value.model_dump())
+        if isinstance(value, Mapping):
+            return {str(key): ready(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [ready(item) for item in value]
+        return value
+
+    def dump(value: Any) -> str:
+        return json.dumps(ready(value), ensure_ascii=False, sort_keys=True, default=str)
 
     return {
         "draft": draft,
