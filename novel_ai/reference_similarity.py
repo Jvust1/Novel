@@ -64,8 +64,32 @@ def _max_score(text: str, refs: Sequence[str]) -> tuple[float, int | None]:
     return scores[idx], idx
 
 
+_EVENT_CANONICAL_REPLACEMENTS: tuple[tuple[str, str], ...] = (
+    ("接到", "收到"),
+    ("来电", "电话"),
+    ("遭人跟踪", "被跟踪"),
+    ("遭跟踪", "被跟踪"),
+    ("决定", "选择"),
+    ("丢失", "失去"),
+    ("丢掉", "失去"),
+    ("获得", "得到"),
+)
+
+
+def _normalize_event_label(text: str) -> str:
+    value = str(text or "").strip()
+    for source, target in _EVENT_CANONICAL_REPLACEMENTS:
+        value = value.replace(source, target)
+    return value
+
+
 def _event_tokens(text: str) -> set[str]:
-    clean = re.sub(r"[^\w\u4e00-\u9fff]+", "", text or "", flags=re.UNICODE)
+    clean = re.sub(
+        r"[^\w\u4e00-\u9fff]+",
+        "",
+        _normalize_event_label(text),
+        flags=re.UNICODE,
+    )
     return _bigram_set(clean)
 
 
@@ -96,7 +120,15 @@ def event_sequence_similarity(a: Sequence[str], b: Sequence[str]) -> float:
         )
         # Fuzzy aligned-event comparison catches near-synonymous Chinese event
         # labels while Jaccard keeps a deterministic dependency-free floor.
-        parts.append(max(jaccard, fuzzy_similarity(left[i], right[i])))
+        parts.append(
+            max(
+                jaccard,
+                fuzzy_similarity(
+                    _normalize_event_label(left[i]),
+                    _normalize_event_label(right[i]),
+                ),
+            )
+        )
     return round((sum(parts) / n) * (n / max(len(left), len(right))), 6)
 
 
