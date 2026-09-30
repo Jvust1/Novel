@@ -64,7 +64,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("umap", "lmcinnes/umap", "longform_analytics", "BSD-3-Clause", "git-submodule+optional", "Story DNA 2D projection", "umap-learn", "umap"),
     IntegrationSpec("faiss", "facebookresearch/faiss", "memory_retrieval", "MIT", "git-submodule+adapter", "fast local vector Recall index", "faiss-cpu", "faiss"),
     IntegrationSpec("qdrant_client", "qdrant/qdrant-client", "memory_retrieval", "Apache-2.0", "git-submodule+adapter", "optional semantic Recall store behind A/B gate", "qdrant-client", "qdrant_client"),
-    IntegrationSpec("graphrag", "microsoft/graphrag", "memory_retrieval", "MIT", "git-submodule+experiment-candidate", "graph-based long-range recall", "graphrag", "graphrag"),
+    IntegrationSpec("graphrag", "microsoft/graphrag", "memory_retrieval", "MIT", "corpus-export+external-runtime", "GraphRAG text-corpus export from Novel story graph and chapter summaries", "graphrag", "graphrag"),
     IntegrationSpec("lightrag", "HKUDS/LightRAG", "memory_retrieval", "MIT", "git-submodule+experiment-candidate", "lightweight graph + vector retrieval", "lightrag-hku", "lightrag"),
     IntegrationSpec("hipporag", "OSU-NLP-Group/HippoRAG", "memory_retrieval", "MIT", "experiment-candidate", "associative graph retrieval for long-range memory"),
     IntegrationSpec("mem0", "mem0ai/mem0", "memory_retrieval", "Apache-2.0", "adapter+experiment-candidate", "optional RecallBackend adapter using add-only/infer-false writes and explicit A/B gating", "mem0ai", "mem0"),
