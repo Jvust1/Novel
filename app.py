@@ -8,6 +8,7 @@ from novel_ai.context import ContextAssembler
 from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
 from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
+from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
 from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
@@ -64,6 +65,8 @@ with st.sidebar:
         st.json(experimental_backend_matrix())
     with st.expander("Story DNA / 中文结构抽取后端", expanded=False):
         st.json(story_structure_capabilities())
+    with st.expander("长篇分析后端", expanded=False):
+        st.json(analytics_backend_capabilities())
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
@@ -535,6 +538,8 @@ with write_tab:
                 store.write_json(project_name, "memory/story_graph.json", graph)
                 if result.story_dna:
                     store.save_story_dna(project_name, chapter_id, result.story_dna)
+                    analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
+                    store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
                 st.session_state.last_extraction = extraction.model_dump()
                 st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA 长期状态已更新。")
             except Exception as exc:
@@ -550,6 +555,29 @@ with write_tab:
             st.json(dna_history[-12:])
         else:
             st.info("还没有已持久化的 Story DNA。章节定稿并执行记忆回写后开始累积。")
+
+    with st.expander("全书 Story DNA / 套路分析", expanded=False):
+        dna_history = store.load_story_dna_history(project_name)
+        analytics_history = store.load_chapter_analytics_history(project_name)
+        if dna_history:
+            st.markdown("#### 全书套路统计")
+            st.json(trope_frequency(dna_history))
+            st.markdown("#### Story DNA 聚类")
+            st.json(cluster_story_dna(dna_history))
+            coords = project_story_dna_2d(dna_history)
+            if coords:
+                st.markdown("#### Story DNA 2D 投影")
+                try:
+                    import pandas as pd
+                    st.scatter_chart(pd.DataFrame(coords), x="x", y="y", color=None)
+                except Exception:
+                    st.json(coords)
+        if analytics_history:
+            drift = [item.to_dict() for item in detect_longform_drift(analytics_history)]
+            st.markdown("#### 章节节奏 / 文风漂移")
+            st.json(drift if drift else {"status":"暂无显著漂移"})
+        if not dna_history and not analytics_history:
+            st.info("还没有足够的长期数据。章节定稿并回写后会自动累积。")
 
     with st.expander("长期记忆状态（story_state）", expanded=False):
         state = store.load_story_state(project_name)

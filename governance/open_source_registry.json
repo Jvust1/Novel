@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 54,
-    "p0": 14,
-    "p1": 25,
+    "total": 58,
+    "p0": 15,
+    "p1": 28,
     "no_license": 2,
     "agpl": 2
   },
@@ -501,6 +501,42 @@
       "mode": "git-submodule+experiment-candidate",
       "priority": "P1",
       "use": "Story Graph / 知识增强检索候选；先使用中立 JSON 记录接口"
+    },
+    {
+      "key": "scikit_learn",
+      "repo": "scikit-learn/scikit-learn",
+      "category": "longform_analytics",
+      "license": "BSD-3-Clause",
+      "mode": "git-submodule+adapter",
+      "priority": "P0",
+      "use": "Story DNA 聚类、长期套路统计"
+    },
+    {
+      "key": "river",
+      "repo": "online-ml/river",
+      "category": "longform_analytics",
+      "license": "BSD-3-Clause",
+      "mode": "git-submodule+adapter",
+      "priority": "P1",
+      "use": "在线章节节奏/文风漂移检测"
+    },
+    {
+      "key": "plotly",
+      "repo": "plotly/plotly.py",
+      "category": "visualization",
+      "license": "MIT",
+      "mode": "git-submodule+optional",
+      "priority": "P1",
+      "use": "长期分析可视化"
+    },
+    {
+      "key": "umap",
+      "repo": "lmcinnes/umap",
+      "category": "longform_analytics",
+      "license": "BSD-3-Clause",
+      "mode": "git-submodule+optional",
+      "priority": "P1",
+      "use": "Story DNA 低维投影"
     }
   ]
 }

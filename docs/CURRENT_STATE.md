@@ -1,3 +1,13 @@
+## 2026-09-30 — long-form Story DNA analytics dashboard
+
+- Added pinned scikit-learn, River, Plotly and UMAP submodules.
+- Accepted chapters now persist numeric chapter analytics alongside Story DNA.
+- Added whole-book trope frequency statistics: tension curves, structural patterns and repeated end hooks.
+- Added Story DNA clustering: scikit-learn TF-IDF + KMeans when available, deterministic event-similarity connected-components fallback otherwise.
+- Added optional UMAP 2D projection for visually locating repeated plot-pattern neighborhoods.
+- Added chapter-level rhythm/style drift monitoring. River ADWIN is used when available; otherwise a rolling 2.5σ fallback is used.
+- Streamlit exposes the whole-book Story DNA analytics and drift panel directly from persisted project state.
+
 ## 2026-09-30 — persistent Story DNA and cross-chapter pattern guard
 
 - Story DNA is now durable project state under `memory/story_dna/<chapter>.json` and can be reloaded across sessions.

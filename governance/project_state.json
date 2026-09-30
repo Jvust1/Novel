@@ -74,7 +74,12 @@
     "Story DNA persisted per accepted chapter under memory/story_dna/",
     "historical Story DNA loaded before chapter generation",
     "cross-chapter event-sequence + structural-pattern similarity gate",
-    "high Story DNA similarity injects anti-repetition constraints before drafting and review/repair"
+    "high Story DNA similarity injects anti-repetition constraints before drafting and review/repair",
+    "persistent per-chapter analytics under memory/chapter_analytics/",
+    "Story DNA long-form trope frequency dashboard",
+    "Story DNA clustering with scikit-learn KMeans and deterministic fallback",
+    "optional UMAP Story DNA projection",
+    "online/rolling chapter rhythm and style drift detection via River or deterministic fallback"
   ],
   "frozen": false,
   "blocking_issues": [],
