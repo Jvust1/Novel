@@ -397,6 +397,7 @@ def build_longform_health(
         "timeline_contradictions": timeline,
         "foreshadow_lifecycle": foreshadow,
         "tension_density": tension,
+        "entity_alias_drift": entity_alias_drift,
         "guard_context": "\n".join(guard_lines),
     }
 
