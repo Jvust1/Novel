@@ -96,6 +96,14 @@ def test_variants_only_differ_in_memory_layer(tmp_path):
     assert "开放伏笔" in b_user
 
 
+def test_run_case_records_completion_gate(tmp_path):
+    engine, _ = make_engine()
+    case = load_benchmark("benchmarks")[0]
+    row = run_case(engine, case, "A_baseline", tmp_path / "gate")
+    assert row["completion_gate"]["status"] == "FAIL"
+    assert row["completion_gate"]["method"]["principle"] == "actual bytes on disk outrank model self-report"
+
+
 def test_seed_store_materializes_pre_history(tmp_path):
     case = load_benchmark("benchmarks")[0]
     store = seed_store_from_case(case, tmp_path, "bench")
@@ -163,6 +171,7 @@ def test_run_rereviews_after_repair():
     assert result.revised is not None
     assert result.review_after_repair is not None
     assert result.final_text == result.revised
+    assert result.completion_gate_report is not None
     kinds = []
     for call in provider.calls:
         system = call["messages"][0]["content"]
@@ -190,6 +199,7 @@ def test_run_skips_repair_and_rereview_on_pass():
     assert result.revised is None
     assert result.review_after_repair is None
     assert result.final_text == result.draft
+    assert result.completion_gate_report is not None
 
 
 def test_render_scoring_pack_includes_goal_texts_and_rubric(tmp_path):

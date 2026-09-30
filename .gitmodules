@@ -192,3 +192,7 @@
 	path = vendor/umap
 	url = https://github.com/lmcinnes/umap.git
 	branch = master
+
+[submodule "third_party/openwrite/openwriter-full"]
+	path = third_party/openwrite/openwriter-full
+	url = https://github.com/travsteward/openwriter.git

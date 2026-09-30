@@ -15,6 +15,57 @@
       "source_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
       "purpose": "Project-state and deliverables snapshot after open-source ecosystem integration",
       "status": "archived_verified"
+    },
+    {
+      "artifact_id": "novel-openwrite-mass-import-20260930",
+      "type": "github_source_integration",
+      "branch": "feat/openwrite-mass-import-20260929",
+      "status": "DRAFT_PR_MERGEABLE_CI_INFRA_NOT_STARTED",
+      "source_files_total": 766,
+      "upstreams": [
+        {
+          "repo": "Open-Write/Open-Write",
+          "commit": "14a65ac9e4f88712ec9caa62dfab4abf54f9e3e8",
+          "license": "Apache-2.0",
+          "files": 94
+        },
+        {
+          "repo": "LiPu-jpg/Openwrite",
+          "commit": "024e09d751457a02fcda628f1d94bad5aff03425",
+          "license": "Apache-2.0",
+          "files": 207
+        },
+        {
+          "repo": "travsteward/openwriter",
+          "commit": "142002677685298d45569ac132af11e7ed8e70e2",
+          "license": "MIT",
+          "files": 465,
+          "complete_submodule": "third_party/openwrite/openwriter-full"
+        },
+        {
+          "repo": "ilrein/openwrite",
+          "commit": "b029dcf996b21750fac033b9267e610abca24694",
+          "license": "AGPL-3.0",
+          "mode": "reference-only"
+        }
+      ],
+      "integration": [
+        "novel_ai/completion_gate.py",
+        "NovelEngine/RoutedNovelEngine completion_gate_report",
+        "benchmark completion_gate record"
+      ],
+      "main_modified": false,
+      "pr_number": 26,
+      "last_reconciled_merge_commit": "ccd04181af10e49d69be51efd2ea228f969f8ab2",
+      "pr_mergeable": true,
+      "behind_main": 0,
+      "ci": {
+        "run_id": 36683805241,
+        "job_id": 109784953898,
+        "status": "INFRA_NOT_STARTED",
+        "steps": 0,
+        "logs_available": false
+      }
     }
   ],
   "notes": [
@@ -22,5 +73,6 @@
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
     "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
     "Latest Drive snapshot verified in 04_Snapshots on 2026-09-28; existing 2026-09-25 Windows delivery ZIP was not duplicated."
-  ]
+  ],
+  "updated_at": "2026-09-30"
 }

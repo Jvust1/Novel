@@ -1,0 +1,276 @@
+/**
+ * Plugin Manager: dynamic enable/disable, config persistence, route management.
+ * Replaces the one-shot loadPlugins() with a full lifecycle manager.
+ */
+
+import type { Express, Router, Request, Response, NextFunction } from 'express';
+import { Router as createRouter } from 'express';
+import { discoverPlugins, loadPluginModule, type DiscoveredPlugin } from './plugin-discovery.js';
+import { registerPluginTools, removePluginTools } from './mcp.js';
+import { readConfig, saveConfig, getDataDir } from './helpers.js';
+import type { OpenWriterPlugin, PluginConfigField, PluginContextMenuItem, PluginSidebarMenuItem } from './plugin-types.js';
+import { broadcastPluginsChanged } from './ws.js';
+import { isAllowedPublishApiUrl } from './connections.js';
+
+// MCP-2: plugin config holds raw secrets (publish ow_live_ key, X OAuth1
+// tokens, GitHub PAT, Gemini key). These must never cross the HTTP API. We
+// redact any config value whose KEY names a secret before it leaves the
+// server. Returned in place of the value is a sentinel that the settings UI
+// renders as "set"; updateConfig() treats an echoed sentinel as "unchanged"
+// so a naive save round-trip can never clobber the real secret with the mask.
+const SECRET_KEY_RE = /(key|secret|token|pat|password|auth|credential|bearer)/i;
+const REDACTED_SECRET = '__OW_SECRET_REDACTED__';
+
+/** Mask secret-valued config fields for safe transport over the API. */
+function redactConfig(config: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(config)) {
+    out[k] = SECRET_KEY_RE.test(k) && v ? REDACTED_SECRET : v;
+  }
+  return out;
+}
+
+interface ManagedPlugin {
+  discovered: DiscoveredPlugin;
+  plugin?: OpenWriterPlugin;
+  configSchema: Record<string, PluginConfigField>;
+  enabled: boolean;
+  config: Record<string, string>;
+  /** Middleware wrapper — skips routing when disabled */
+  middleware?: (req: Request, res: Response, next: NextFunction) => void;
+  /** Router holding plugin routes */
+  router?: Router;
+  /** Names of MCP tools registered by this plugin */
+  toolNames: string[];
+}
+
+export class PluginManager {
+  private app: Express;
+  private plugins = new Map<string, ManagedPlugin>();
+
+  constructor(app: Express) {
+    this.app = app;
+  }
+
+  /** Scan plugins/ directory and build the available plugins map. */
+  async discover(): Promise<void> {
+    const discovered = discoverPlugins();
+    const savedConfig = readConfig();
+    const savedPlugins = savedConfig.plugins || {};
+
+    for (const d of discovered) {
+      // Load module to get configSchema
+      const loaded = await loadPluginModule(d.name, d.source, d.pluginDir);
+
+      const saved = savedPlugins[d.name];
+
+      this.plugins.set(d.name, {
+        discovered: d,
+        plugin: loaded?.plugin,
+        configSchema: loaded?.configSchema || {},
+        enabled: false,
+        config: saved?.config || {},
+        toolNames: [],
+      });
+    }
+  }
+
+  /** Enable a plugin: import, register routes + tools, save state. */
+  async enable(name: string): Promise<{ success: boolean; error?: string }> {
+    const managed = this.plugins.get(name);
+    if (!managed) return { success: false, error: `Plugin "${name}" not found` };
+    if (managed.enabled) return { success: true };
+
+    // Ensure plugin module is loaded
+    if (!managed.plugin) {
+      const loaded = await loadPluginModule(name, managed.discovered.source, managed.discovered.pluginDir);
+      if (!loaded) return { success: false, error: `Failed to import "${name}"` };
+      managed.plugin = loaded.plugin;
+      managed.configSchema = loaded.configSchema;
+    }
+
+    if (!managed.plugin) return { success: false, error: `Plugin "${name}" failed to load` };
+    const plugin = managed.plugin;
+
+    // Resolve config: saved config → env vars → empty
+    const resolvedConfig = this.resolveConfig(managed);
+
+    // Register routes via togglable middleware
+    if (plugin.registerRoutes) {
+      const router = createRouter();
+      await plugin.registerRoutes({ app: router, config: resolvedConfig, dataDir: getDataDir() });
+      managed.router = router;
+
+      // Wrap in middleware that skips when disabled
+      managed.middleware = (req: Request, res: Response, next: NextFunction) => {
+        if (!managed.enabled) return next();
+        managed.router!(req, res, next);
+      };
+
+      this.app.use(managed.middleware);
+    }
+
+    // Register MCP tools
+    if (plugin.mcpTools) {
+      const tools = plugin.mcpTools(resolvedConfig);
+      managed.toolNames = tools.map((t) => t.name);
+      registerPluginTools(tools);
+    }
+
+    managed.enabled = true;
+    managed.config = resolvedConfig;
+    this.savePluginState();
+    broadcastPluginsChanged();
+
+    console.log(`[PluginManager] Enabled: ${plugin.name} v${plugin.version}`);
+    return { success: true };
+  }
+
+  /** Disable a plugin: skip routes, remove tools, save state. */
+  async disable(name: string): Promise<{ success: boolean; error?: string }> {
+    const managed = this.plugins.get(name);
+    if (!managed) return { success: false, error: `Plugin "${name}" not found` };
+    if (!managed.enabled) return { success: true };
+
+    // Remove MCP tools
+    if (managed.toolNames.length > 0) {
+      removePluginTools(managed.toolNames);
+      managed.toolNames = [];
+    }
+
+    managed.enabled = false;
+    this.savePluginState();
+    broadcastPluginsChanged();
+
+    console.log(`[PluginManager] Disabled: ${name}`);
+    return { success: true };
+  }
+
+  /** Update plugin config values and save. */
+  updateConfig(name: string, values: Record<string, string>): { success: boolean; error?: string } {
+    const managed = this.plugins.get(name);
+    if (!managed) return { success: false, error: `Plugin "${name}" not found` };
+
+    // Drop echoed redaction sentinels — the API never hands out real secrets
+    // (see redactConfig), so a value equal to the sentinel means "unchanged".
+    // Keeping the spread merge then preserves the stored secret. MCP-2.
+    const incoming: Record<string, string> = {};
+    for (const [k, v] of Object.entries(values)) {
+      if (v === REDACTED_SECRET) continue;
+      incoming[k] = v;
+    }
+
+    // MCP-6: a hijacked publish `api-url` redirects the Bearer key off-host.
+    // Reject writes that point it anywhere but an allowed destination. The
+    // load-bearing pin lives in connections.ts; this rejects bad writes early.
+    if (typeof incoming['api-url'] === 'string' && incoming['api-url'] && !isAllowedPublishApiUrl(incoming['api-url'])) {
+      return { success: false, error: 'Invalid api-url: must point to an OpenWriter publish host' };
+    }
+
+    managed.config = { ...managed.config, ...incoming };
+    this.savePluginState();
+    return { success: true };
+  }
+
+  /** Get all discovered plugins with status and config info. */
+  getAvailablePlugins(): Array<{
+    name: string;
+    version: string;
+    description: string;
+    enabled: boolean;
+    configSchema: Record<string, PluginConfigField>;
+    config: Record<string, string>;
+    source: 'bundled' | 'user';
+    displayName?: string;
+    category?: string;
+  }> {
+    return Array.from(this.plugins.values()).map((m) => ({
+      name: m.discovered.name,
+      version: m.discovered.version,
+      description: m.discovered.description,
+      enabled: m.enabled,
+      configSchema: m.configSchema,
+      config: redactConfig(m.config),  // MCP-2: never leak raw secrets over the API
+      source: m.discovered.source,
+      displayName: m.discovered.displayName,
+      category: m.discovered.category,
+    }));
+  }
+
+  /** Get enabled plugins' context menu items and sidebar menu items. */
+  getEnabledPluginDescriptors(): Array<{
+    name: string;
+    displayName?: string;
+    contextMenuItems: PluginContextMenuItem[];
+    sidebarMenuItems: PluginSidebarMenuItem[];
+  }> {
+    const results: Array<{
+      name: string;
+      displayName?: string;
+      contextMenuItems: PluginContextMenuItem[];
+      sidebarMenuItems: PluginSidebarMenuItem[];
+    }> = [];
+    for (const managed of this.plugins.values()) {
+      if (!managed.enabled || !managed.plugin) continue;
+      results.push({
+        name: managed.plugin.name,
+        displayName: managed.discovered.displayName,
+        contextMenuItems: managed.plugin.contextMenuItems?.() || [],
+        sidebarMenuItems: managed.plugin.sidebarMenuItems?.() || [],
+      });
+    }
+    return results;
+  }
+
+  /** Resolve config values: saved config → env vars → empty. */
+  private resolveConfig(managed: ManagedPlugin): Record<string, string> {
+    const resolved: Record<string, string> = { ...managed.config };
+
+    for (const [key, field] of Object.entries(managed.configSchema)) {
+      if (resolved[key]) continue;
+      const envVal = field.env ? process.env[field.env] : undefined;
+      if (envVal) resolved[key] = envVal;
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Persist enabled/config state to ~/.openwriter/config.json.
+   *
+   * IMPORTANT: plugins can store arbitrary nested data on their own slot
+   * (e.g. the github plugin stores `blogSites: [...]`). This writer
+   * preserves any such keys by merging into the existing on-disk slot
+   * rather than rebuilding the slot from scratch. Without this preserve
+   * step, every plugin enable/disable/config edit would silently drop
+   * blogSites and any other plugin-owned data.
+   *
+   * adr: adr/plugin-slot-nested-data.md
+   */
+  private savePluginState(): void {
+    const current = readConfig();
+    const existing = (current.plugins || {}) as unknown as Record<string, Record<string, unknown>>;
+    const pluginsState: Record<string, Record<string, unknown>> = { ...existing };
+
+    for (const [name, managed] of this.plugins) {
+      const prior = (existing[name] || {}) as Record<string, unknown>;
+      // A plugin that never loaded (plugin===undefined: bundled dist missing in
+      // an unbuilt worktree, transient import failure, etc.) sits in the map with
+      // the default enabled===false. Persisting that false would clobber the
+      // user's real on-disk intent and STICK — the plugin would stay off on every
+      // future boot even after the load problem is fixed, because startup only
+      // re-enables plugins marked true. PluginManager owns `enabled` only for
+      // plugins it actually loaded; for unloaded ones, preserve the on-disk value.
+      // (A user-disabled plugin keeps plugin set — disable() never clears it — so
+      // a deliberate false still persists correctly.)
+      const enabled = managed.plugin ? managed.enabled : (prior.enabled ?? managed.enabled);
+      pluginsState[name] = {
+        ...prior,                 // preserve blogSites + any other plugin-owned data
+        enabled,                  // overwrite managed fields (only when actually loaded)
+        config: managed.config,
+      };
+    }
+
+    saveConfig({ plugins: pluginsState } as any);
+  }
+}

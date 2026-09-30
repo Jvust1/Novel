@@ -1,0 +1,816 @@
+.sidebar {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.sidebar.open {
+  width: 260px;
+  min-width: 260px;
+}
+
+/* When width is set inline (drag-to-resize), skip transition so it tracks the pointer */
+.sidebar.open[style*="width"] {
+  transition: none;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.sidebar-topbar {
+  height: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 12px;
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  color: var(--ink-dark);
+  gap: 6px;
+}
+
+.sidebar-logo svg {
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: 14px;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-light);
+  border-radius: 6px;
+  padding: 0;
+  transition: all 0.15s ease;
+  width: 26px;
+  height: 26px;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-hover);
+  color: var(--ink-dark);
+}
+
+/* Search bar — matches format-toolbar height (36px) so border-bottom lines are flush */
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-titlebar);
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.sidebar-search-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  color: var(--ink-light);
+}
+
+.sidebar-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--ink-dark);
+  outline: none;
+}
+
+.sidebar-search-input::placeholder {
+  color: var(--ink-light);
+  opacity: 0.6;
+}
+
+.sidebar-search-clear {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.sidebar-search-clear:hover {
+  background: var(--bg-hover);
+  color: var(--ink-dark);
+}
+
+/* Search results */
+.search-results {
+  padding: 4px 8px;
+}
+
+.search-result-item {
+  cursor: pointer;
+}
+
+.search-result-snippet {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result-tag {
+  font-size: 10px;
+  color: var(--ink-light);
+  margin-top: 1px;
+}
+
+.search-result-snippet mark,
+.search-result-tag mark,
+.sidebar-item-title mark {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.search-empty {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-light);
+  font-style: italic;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section structure */
+
+/* Buttons */
+.sidebar-new-btn {
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+}
+
+.sidebar-new-btn:hover {
+  background: var(--bg-hover);
+  border-color: #cbd5e1;
+  color: var(--ink-dark);
+}
+
+/* Document items */
+.sidebar-item {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.sidebar-item:hover {
+  background: var(--bg-hover);
+}
+
+.sidebar-item.active {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+/* Collapsed ancestor of the active doc — the open doc's row is hidden, so its
+   chain (workspace / container / variant master) carries the accent instead */
+
+/* One-shot reveal pulse — draws the eye to a doc just opened via a directed
+ * navigation (deep link / backlink / wikilink). Non-scrolling, ~1.2s, then the
+ * class is removed so it can re-fire. Generic (not tied to .sidebar-item) so it
+ * works in files mode (.files-row) and the flat visualizations too. */
+.reveal-pulse {
+  animation: sidebar-reveal-pulse 1.2s ease-out;
+}
+
+@keyframes sidebar-reveal-pulse {
+  0%   { background: color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: inset 0 0 0 2px var(--accent); }
+  60%  { background: color-mix(in srgb, var(--accent) 22%, transparent); box-shadow: inset 0 0 0 2px transparent; }
+  100% { background: color-mix(in srgb, var(--accent) 6%, transparent); box-shadow: inset 0 0 0 2px transparent; }
+}
+
+.sidebar-item-title {
+  color: var(--ink-dark);
+  display: flex;
+  align-items: center;
+  padding-right: 20px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.sidebar-item-title-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-item-meta {
+  color: var(--ink-light);
+  font-size: 10px;
+  margin-top: 0;
+}
+
+/* Container nesting */
+.sidebar-container {
+  position: relative;
+  margin-left: 12px;
+  border-left: 2px solid var(--border);
+  transition: border-color 0.15s ease;
+  border: 0;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.sidebar-container.collapsed {
+  border-left-color: transparent;
+}
+
+/* Workspace drop position indicators */
+
+/* Drop position indicators */
+.sidebar-item.drop-before::before,
+.sidebar-container.drop-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sidebar-item.drop-after::after,
+.sidebar-container.drop-after::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sidebar-container.drop-inside {
+  outline: 2px dashed color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+}
+
+.sidebar-container-actions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+/* Rename input */
+.sidebar-rename-input {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  font-family: var(--font-body);
+}
+
+/* Delete button */
+.sidebar-delete-btn {
+  position: absolute;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  top: 1px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+}
+
+.sidebar-item:hover .sidebar-delete-btn {
+  opacity: 1;
+}
+
+.sidebar-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Confirm delete inline */
+.sidebar-confirm-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.sidebar-confirm-delete button {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-body);
+}
+
+.sidebar-confirm-delete button:first-of-type {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.sidebar-confirm-delete button:first-of-type:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.sidebar-inline-confirm {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.sidebar-inline-confirm button {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-size: 10px;
+  font-family: var(--font-body);
+}
+
+.sidebar-inline-confirm button:first-of-type {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* Drag and drop */
+.sidebar-item[data-drag-id] {
+  cursor: grab;
+}
+
+.sidebar-item.dragging {
+  cursor: grabbing;
+}
+
+.sidebar-item.dragging,
+.sidebar-container.dragging {
+  opacity: 0.4;
+}
+
+/* Empty state */
+.sidebar-empty {
+  font-size: 12px;
+  color: var(--ink-light);
+  padding: 8px 10px;
+  font-style: italic;
+}
+
+/* New workspace button */
+
+/* Tags */
+
+.sidebar-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  font-size: 10px;
+  border-radius: 3px;
+  background: var(--bg-hover);
+  color: var(--ink-light);
+  white-space: nowrap;
+}
+
+.sidebar-tag-remove {
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+  margin-left: 1px;
+}
+
+.sidebar-tag:hover .sidebar-tag-remove {
+  opacity: 1;
+}
+
+.sidebar-tag-remove:hover {
+  color: #dc2626;
+}
+
+.sidebar-tag-add {
+  padding: 1px 4px;
+  font-size: 10px;
+  border-radius: 3px;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--ink-light);
+  cursor: pointer;
+}
+
+.sidebar-tag-add:hover {
+  border-color: #cbd5e1;
+  color: var(--ink-dark);
+}
+
+/* Writing placeholder */
+.sidebar-writing-placeholder {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.sidebar-writing-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: sidebar-spin 0.6s linear infinite;
+  margin-right: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+@keyframes sidebar-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Approved checkmark */
+
+/* Sent newsletter checkmark */
+
+/* Pending changes indicator dot */
+.sidebar-pending-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  margin-left: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Auto-accept dot — discreet indicator that auto-accept is active on this entry.
+ * Same shape as sidebar-pending-dot but amber, so it reads as a state marker
+ * rather than a label. Used on workspaces, containers, and docs alike. */
+.sidebar-auto-accept-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+  margin-left: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  box-shadow: 0 0 0 1.5px rgba(217, 119, 6, 0.2);
+}
+
+/* Variant tree */
+
+/* Disclosure owns the row; opening owns only the title text. */
+.variant-toggle,
+.variant-document-title {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.variant-document-title {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.variant-document-title:hover { text-decoration: underline; }
+.variant-toggle:focus-visible,
+.variant-document-title:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Topbar actions group */
+.sidebar-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Density dropdown */
+
+/* Profile switcher dropdown */
+.sidebar-profile-wrapper {
+  position: relative;
+}
+
+.sidebar-profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  z-index: 100;
+  min-width: 160px;
+}
+
+.sidebar-profile-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--ink-light);
+  border-radius: 5px;
+  transition: all 0.1s ease;
+}
+
+.sidebar-profile-option:hover {
+  background: var(--bg-hover);
+  color: var(--ink-dark);
+}
+
+.sidebar-profile-option.active {
+  color: var(--ink-dark);
+  font-weight: 600;
+}
+
+.sidebar-profile-check {
+  width: 14px;
+  text-align: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.sidebar-profile-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.sidebar-profile-add {
+  color: var(--ink-light);
+  opacity: 0.8;
+}
+
+.sidebar-profile-add:hover {
+  opacity: 1;
+}
+
+.sidebar-profile-add-input {
+  padding: 4px;
+}
+
+.sidebar-profile-add-input input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-base);
+  color: var(--ink-dark);
+  font-size: 12px;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.sidebar-profile-add-input input:focus {
+  border-color: var(--accent);
+}
+
+/* Profile row — holds option + delete button */
+.sidebar-profile-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-profile-row .sidebar-profile-option {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-profile-delete-btn {
+  position: absolute;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.sidebar-profile-row:hover .sidebar-profile-delete-btn {
+  opacity: 1;
+}
+
+.sidebar-profile-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Inline delete confirmation */
+.sidebar-profile-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #dc2626;
+  width: 100%;
+}
+
+.sidebar-profile-confirm .sidebar-inline-confirm {
+  margin-left: auto;
+}
+
+/* Trash section */
+.sidebar-profile-trash-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-light);
+  padding: 4px 10px 2px;
+  opacity: 0.7;
+}
+
+.sidebar-profile-trashed {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--ink-light);
+  opacity: 0.7;
+  justify-content: space-between;
+}
+
+.sidebar-profile-trash-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.sidebar-profile-restore-btn {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-size: 10px;
+  font-family: var(--font-body);
+  color: var(--ink-light);
+  padding: 1px 6px;
+  flex-shrink: 0;
+  transition: all 0.1s ease;
+}
+
+.sidebar-profile-restore-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink-dark);
+}
+
+/* Profile expand/collapse arrow */
+
+/* Connection toggles within expanded profile */
+
+/* Search archived results */
+
+.search-archived-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-hover);
+  color: var(--ink-light);
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.search-result-archived {
+  opacity: 0.7;
+}
+
+.search-result-archived:hover {
+  opacity: 1;
+}
+
+/* Density: compact — hide meta (stats) */
+[data-sidebar-density="compact"] .sidebar-item-meta {
+  display: none;
+}
+
+/* Density: minimal — hide meta, context, and tags */
+[data-sidebar-density="minimal"] .sidebar-item-meta {
+  display: none;
+}
+.sidebar-item:focus-within .sidebar-delete-btn { opacity: 1; }
+.sidebar-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

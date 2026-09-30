@@ -10,7 +10,8 @@
     "validate timeline contradiction and foreshadow lifecycle heuristics against manually checked novels",
     "calibrate whole-book tension/climax density by genre instead of one universal threshold",
     "A/B shared RecallBackend implementations: deterministic local semantic vs optional Qdrant",
-    "connect hierarchical outline, market benchmark and release pack into one author workflow without making UI complexity the goal"
+    "connect hierarchical outline, market benchmark and release pack into one author workflow without making UI complexity the goal",
+    "validate OpenWrite-derived completion gate against real multi-chapter output without replacing existing prose-quality analysis"
   ],
   "implemented": [
     "Streamlit local web workspace",
@@ -98,12 +99,17 @@
     "four-layer originality gate CLI/module",
     "hierarchical series/volume/arc/chapter/scene outline module",
     "Fanqie-oriented market benchmark module",
-    "market release pack module"
+    "market release pack module",
+    "curated OpenWrite source mirror: Open-Write/Open-Write (Apache-2.0), LiPu-jpg/Openwrite (Apache-2.0), travsteward/openwriter (MIT), with pinned provenance and license notices",
+    "OpenWriter complete repository pinned as third_party/openwrite/openwriter-full git submodule",
+    "OpenWrite-derived deterministic completion gate kept separate from the existing prose-quality gate",
+    "benchmark records deterministic completion-gate status alongside human scoring"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [],
   "next_steps": [
+    "run full CI on the reconciled OpenWrite branch and benchmark completion-gate false positives/negatives",
     "run full pytest/CI on the fusion branch and fix any integration regressions",
     "add frozen longform benchmark cases with known voice, timeline, foreshadow and tension failures",
     "calibrate Voice DNA thresholds per character sample size and intentional character-state shifts",
@@ -120,5 +126,45 @@
     "drive_snapshot_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
     "drive_snapshot_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
     "pending_sync_count": 0
+  },
+  "openwrite_integration": {
+    "status": "ACTIVE_WORK_BRANCH_RECONCILED_WITH_LATEST_MAIN",
+    "branch": "feat/openwrite-mass-import-20260929",
+    "upstreams": {
+      "Open-Write/Open-Write": "14a65ac9e4f88712ec9caa62dfab4abf54f9e3e8",
+      "LiPu-jpg/Openwrite": "024e09d751457a02fcda628f1d94bad5aff03425",
+      "travsteward/openwriter": "142002677685298d45569ac132af11e7ed8e70e2",
+      "ilrein/openwrite": "reference-only AGPL-3.0 @ b029dcf996b21750fac033b9267e610abca24694"
+    },
+    "vendored_file_counts": {
+      "open_write": 94,
+      "lipu_openwrite": 207,
+      "openwriter": 465
+    },
+    "source_files_total": 766,
+    "main_modified": false,
+    "pr": {
+      "number": 26,
+      "url": "https://github.com/Jvust/Novel/pull/26",
+      "draft": true,
+      "mergeable": true,
+      "behind_main": 0
+    },
+    "ci": {
+      "run_id": 36683805241,
+      "status": "INFRA_NOT_STARTED",
+      "job_id": 109784953898,
+      "runner": "ubuntu-latest",
+      "steps": 0,
+      "logs_available": false,
+      "note": "GitHub hosted runner was not allocated; this is not a pytest/compile failure."
+    },
+    "complete_submodule": {
+      "path": "third_party/openwrite/openwriter-full",
+      "repo": "travsteward/openwriter",
+      "commit": "142002677685298d45569ac132af11e7ed8e70e2",
+      "license": "MIT"
+    },
+    "last_reconciled_merge_commit": "ccd04181af10e49d69be51efd2ea228f969f8ab2"
   }
 }

@@ -1,0 +1,139 @@
+.tl-scroll {
+  padding: 0 8px 0 0;
+}
+
+.tl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 6px 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tl-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tl-group {
+  position: relative;
+  padding-left: 24px;
+}
+
+/* Vertical timeline line */
+.tl-group::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--border);
+  top: 22px;
+}
+
+.tl-group:last-child::before {
+  display: none;
+}
+
+.tl-date {
+  font-weight: 600;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  position: relative;
+  padding: 8px 10px 2px 0;
+  font-size: 10px;
+}
+
+.tl-item {
+  display: flex;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  border-radius: 0 6px 6px 0;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px 0 0;
+}
+
+.tl-item:hover {
+  background: var(--bg-hover);
+}
+
+.tl-item.active {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+/* Timeline dot */
+.tl-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-primary);
+  margin-left: -15px;
+  margin-right: 4px;
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+}
+
+.tl-item.active .tl-dot {
+  border-color: var(--accent, #5b7a9d);
+  background: var(--accent, #5b7a9d);
+}
+
+.tl-content {
+  flex: 1;
+  min-width: 0;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tl-item-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-dark);
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  padding-right: 0;
+}
+
+.tl-item-title > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tl-item-meta {
+  color: var(--ink-light);
+  margin-top: 0;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Delete button — use same absolute positioning as tree sidebar */
+.tl-item .sidebar-delete-btn {
+  opacity: 0;
+}
+
+.tl-item:hover .sidebar-delete-btn {
+  opacity: 0.5;
+}
+
+.tl-item .sidebar-delete-btn:hover {
+  opacity: 1;
+}
+
+.tl-item:hover .tl-item-meta { visibility: hidden; }

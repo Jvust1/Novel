@@ -1,0 +1,175 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Ban, Check, ChevronDown, ChevronUp, CircleAlert, Clock3, Copy, ExternalLink, ListFilter, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import type { ConvViewProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import type { StudioApiInjected } from './api.ts'
+import { useWorkbench, workbenchStore } from './WorkbenchStore.ts'
+import css from './views.module.css'
+
+const STATUSES = ['running', 'awaiting_confirmation', 'pending', 'interrupted', 'failed', 'cancelled', 'completed'] as const
+const PHASES = ['queued', 'reading', 'preparing', 'model', 'validating', 'committing', 'complete'] as const
+type TaskStatus = (typeof STATUSES)[number]
+type TaskPhase = (typeof PHASES)[number]
+type TaskAction = 'cancel' | 'retry' | 'confirm'
+export interface NavigationRequest {
+  view: 'benchmark' | 'research'
+  id: string
+}
+
+interface Progress { completed: number; total: number; ratio: number | null; unitKind: string }
+interface ResultRef { type: string; id: string }
+interface ReviewResult { qualityScore: number | null; coverage: number | null; gateStatus: string; deliveryStatus: string; issues: number | null; summary: string }
+interface TaskEvent { id: string; type: string; at: string; note: string }
+interface TaskRecord {
+  taskId: string; type: string; status: TaskStatus; phase: TaskPhase | null; phaseIndex: number | null
+  progress: Progress | null; chapterId: string; inputSummary: string; errorCode: string; errorMessage: string
+  failedStage: string; recoverable: boolean; retryable: boolean; attempt: number; createdAt: string
+  startedAt: string; updatedAt: string; completedAt: string; resultRef: ResultRef | null
+  result: ReviewResult | null; events: TaskEvent[]
+}
+interface TasksPayload { schemaVersion: string; phaseOrder: TaskPhase[]; tasks: TaskRecord[]; counts: Partial<Record<TaskStatus, number>> }
+type LoadState = 'loading' | 'error' | 'ready'
+
+function record(value: unknown): Record<string, unknown> { return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {} }
+function text(value: unknown): string { return typeof value === 'string' ? value : '' }
+function number(value: unknown): number | null { return typeof value === 'number' && Number.isFinite(value) ? value : null }
+function shortTime(value: string): string {
+  const match = /^(?:\d{4}-)?(\d{2}-\d{2})[T ](\d{2}:\d{2})/.exec(value)
+  return match !== null ? `${match[1]} ${match[2]}` : value === '' ? '—' : value.slice(0, 16)
+}
+function parseProgress(value: unknown): Progress | null {
+  const item = record(value); const completed = number(item['completed_units']); const total = number(item['total_units'])
+  if (completed === null || total === null || total <= 0 || completed < 0) return null
+  const ratio = number(item['ratio'])
+  return { completed, total, ratio: ratio !== null && ratio >= 0 && ratio <= 1 ? ratio : null, unitKind: text(item['unit_kind']) }
+}
+function parseResultRef(value: unknown): ResultRef | null {
+  const item = record(value); const type = text(item['type']); const id = text(item['id'])
+  return type !== '' && id !== '' ? { type, id } : null
+}
+function parseReviewResult(value: unknown): ReviewResult | null {
+  const item = record(value); const review = record(item['review_v2'])
+  const qualityScore = number(review['quality_score']) ?? number(item['score']); const summary = text(item['summary'])
+  if (qualityScore === null && summary === '' && typeof item['passed'] !== 'boolean') return null
+  return { qualityScore, coverage: number(review['coverage']), gateStatus: text(review['gate_status']), deliveryStatus: text(review['delivery_status']) || (item['passed'] === true ? 'pass' : 'revise'), issues: number(item['issues']), summary }
+}
+function parseEvents(value: unknown): TaskEvent[] {
+  if (!Array.isArray(value)) return []
+  return value.map((raw, index) => { const item = record(raw); const data = record(item['data']); return { id: text(item['event_id']) || `${index}`, type: text(item['event']) || text(item['type']) || 'event', at: text(item['created_at']) || text(item['at']), note: text(item['note']) || text(data['note']) || text(item['message']) } }).filter(event => event.at !== '' || event.note !== '')
+}
+function parseTask(value: unknown, events: TaskEvent[] = []): TaskRecord {
+  const item = record(value); const error = record(item['error']); const status = text(item['status']); const phase = text(item['phase'])
+  return {
+    taskId: text(item['task_id']), type: text(item['type']), status: (STATUSES as readonly string[]).includes(status) ? status as TaskStatus : 'pending',
+    phase: (PHASES as readonly string[]).includes(phase) ? phase as TaskPhase : null, phaseIndex: number(item['phase_index']), progress: parseProgress(item['progress']), chapterId: text(item['chapter_id']), inputSummary: text(item['input_summary']), errorCode: text(error['code']), errorMessage: text(error['message']), failedStage: text(error['failed_stage']), recoverable: error['recoverable'] === true, retryable: item['retryable'] === true || error['recoverable'] === true, attempt: number(item['attempt']) ?? 1, createdAt: text(item['created_at']), startedAt: text(item['started_at']), updatedAt: text(item['updated_at']), completedAt: text(item['completed_at']), resultRef: parseResultRef(item['result_ref']), result: status === 'completed' && text(item['type']) === 'chapter_review' ? parseReviewResult(item['result']) : null, events,
+  }
+}
+function parseTasks(value: unknown): TasksPayload {
+  const root = record(value); const inner = record(root['data']); const rawCounts = record(inner['counts']); const counts: Partial<Record<TaskStatus, number>> = {}
+  for (const status of STATUSES) counts[status] = number(rawCounts[status]) ?? 0
+  const phaseOrder = (Array.isArray(inner['phase_order']) ? inner['phase_order'] : PHASES).filter((phase): phase is TaskPhase => (PHASES as readonly string[]).includes(String(phase)))
+  return { schemaVersion: text(inner['schema_version']), phaseOrder, tasks: Array.isArray(inner['tasks']) ? inner['tasks'].map(item => parseTask(item)) : [], counts }
+}
+function typeLabel(type: string, t: TasksViewProps['t']): string {
+  const labels: Record<string, Parameters<TasksViewProps['t']>[0]> = { chapter_write: 'tasks.type.chapter_write', chapter_review: 'tasks.type.chapter_review', continuous_write: 'tasks.type.continuous_write', revision_selection: 'tasks.type.revision', revision_from_review: 'tasks.type.revision', source_operation: 'tasks.type.source_operation', reference_operation: 'tasks.type.reference_operation', manuscript_import: 'tasks.type.manuscript_import', project_restore: 'tasks.type.project_restore', research: 'tasks.type.research', model_benchmark: 'tasks.type.model_benchmark' }
+  const key = labels[type]; return key === undefined ? type || '—' : t(key)
+}
+function statusLabel(status: TaskStatus, t: TasksViewProps['t']): string { return t(`tasks.status.${status}`) }
+function phaseLabel(phase: TaskPhase | null, t: TasksViewProps['t']): string { return phase === null ? t('tasks.phase.unknown') : t(`tasks.phase.${phase}`) }
+function resultLabel(ref: ResultRef, t: TasksViewProps['t']): string { if (ref.type === 'benchmark_run') return t('tasks.jump.benchmark'); if (ref.type === 'research_report') return t('tasks.jump.research'); if (ref.type === 'review') return t('tasks.jump.review'); if (ref.type === 'chapter') return t('tasks.jump.chapter'); return t('tasks.jump.unavailable') }
+
+export type TasksViewProps = ConvViewProps & InjectFace<StudioApiInjected> & PropsLocale<'studio-panel'> & { onNavigate?: (target: NavigationRequest) => void }
+
+export function TasksView({ fetchStudioApi, postStudioApi, t, onNavigate }: TasksViewProps) {
+  const workbench = useWorkbench(); const [state, setState] = useState<LoadState>('loading'); const [payload, setPayload] = useState<TasksPayload | null>(null); const [error, setError] = useState(''); const [selectedId, setSelectedId] = useState(''); const [detail, setDetail] = useState<TaskRecord | null>(null); const [detailState, setDetailState] = useState<LoadState>('ready'); const [filter, setFilter] = useState<TaskStatus | 'all'>('all'); const [typeFilter, setTypeFilter] = useState('all'); const [chapterFilter, setChapterFilter] = useState(''); const [keyword, setKeyword] = useState(''); const [sortNewest, setSortNewest] = useState(true); const [acting, setActing] = useState<string | null>(null); const [notice, setNotice] = useState<{ text: string; bad: boolean } | null>(null)
+  const listRequest = useRef(0)
+  const detailRequest = useRef(0)
+  const selectedRef = useRef('')
+  const actingRef = useRef(false)
+
+  const closeDetail = useCallback(() => {
+    detailRequest.current += 1
+    selectedRef.current = ''
+    setSelectedId('')
+    setDetail(null)
+  }, [])
+
+  const openDetail = useCallback(async (task: TaskRecord, silent = false) => {
+    const request = ++detailRequest.current
+    selectedRef.current = task.taskId
+    setSelectedId(task.taskId)
+    if (!silent) { setDetailState('loading'); setDetail(null) }
+    try {
+      const root = record(await fetchStudioApi(`/tasks/${encodeURIComponent(task.taskId)}`))
+      if (request !== detailRequest.current || selectedRef.current !== task.taskId) return
+      const inner = record(root['data'])
+      setDetail(parseTask(inner['task'] ?? task, parseEvents(inner['events'])))
+      setDetailState('ready')
+    } catch {
+      if (request !== detailRequest.current || selectedRef.current !== task.taskId) return
+      setDetail(task)
+      setDetailState('error')
+    }
+  }, [fetchStudioApi])
+
+  const load = useCallback(async (silent = false) => {
+    const request = ++listRequest.current
+    if (!silent) setState('loading')
+    try {
+      const next = parseTasks(await fetchStudioApi('/tasks?limit=100'))
+      if (request !== listRequest.current) return
+      setPayload(next)
+      setState('ready')
+      setError('')
+      const selected = next.tasks.find(task => task.taskId === selectedRef.current)
+      if (selected) await openDetail(selected, true)
+      else if (selectedRef.current !== '') closeDetail()
+    } catch (cause: unknown) {
+      if (request !== listRequest.current) return
+      setError(cause instanceof Error ? cause.message : String(cause))
+      setState('error')
+    }
+  }, [closeDetail, fetchStudioApi, openDetail])
+
+  useEffect(() => {
+    void load()
+    return () => { listRequest.current += 1; detailRequest.current += 1 }
+  }, [load])
+  const tasksEpoch = useRef(workbench.epochs.tasks)
+  useEffect(() => {
+    if (tasksEpoch.current === workbench.epochs.tasks) return
+    tasksEpoch.current = workbench.epochs.tasks
+    if (!actingRef.current) void load(true)
+  }, [load, workbench.epochs.tasks])
+
+  const runAction = useCallback(async (task: TaskRecord, action: TaskAction) => {
+    if (actingRef.current) return
+    if (action === 'cancel' && !window.confirm(t('tasks.cancel.confirm'))) return
+    actingRef.current = true
+    setActing(`${task.taskId}:${action}`)
+    setNotice(null)
+    try {
+      await postStudioApi(`/tasks/${encodeURIComponent(task.taskId)}/${action}`, {})
+      setNotice({ text: t(`tasks.${action}.done`), bad: false })
+      await load(true)
+    } catch (cause: unknown) {
+      setNotice({ text: `${t(`tasks.${action}.failed`)}: ${cause instanceof Error ? cause.message : String(cause)}`, bad: true })
+    } finally { actingRef.current = false; setActing(null) }
+  }, [load, postStudioApi, t])
+  const types = useMemo(() => [...new Set((payload?.tasks ?? []).map(task => task.type).filter(Boolean))].sort(), [payload])
+  const visible = useMemo(() => { const query = keyword.trim().toLowerCase(); return [...(payload?.tasks ?? [])].filter(task => { if (filter !== 'all' && task.status !== filter) return false; if (typeFilter !== 'all' && task.type !== typeFilter) return false; if (chapterFilter.trim() !== '' && !task.chapterId.toLowerCase().includes(chapterFilter.trim().toLowerCase())) return false; return query === '' || [task.taskId, task.type, task.chapterId, task.inputSummary, task.errorCode].some(value => value.toLowerCase().includes(query)) }).sort((a, b) => { const left = Date.parse(a.updatedAt || a.createdAt) || 0; const right = Date.parse(b.updatedAt || b.createdAt) || 0; return sortNewest ? right - left : left - right }) }, [chapterFilter, filter, keyword, payload, sortNewest, typeFilter])
+  const copyId = async (id: string) => { try { await navigator.clipboard?.writeText(id); setNotice({ text: t('tasks.detail.copied'), bad: false }) } catch { setNotice({ text: id, bad: false }) } }
+  const navigateResult = (ref: ResultRef) => { if (ref.type === 'benchmark_run' || ref.type === 'research_report') { onNavigate?.({ view: ref.type === 'benchmark_run' ? 'benchmark' : 'research', id: ref.id }); return } if (ref.type === 'chapter' || ref.type === 'review') { const chapter = workbench.chapters.find(item => item.id === ref.id); if (chapter !== undefined) { workbenchStore.setActiveChapter(chapter.path); setNotice({ text: ref.type === 'review' ? t('tasks.jump.reviewHint') : t('tasks.jump.chapterHint'), bad: false }) } else setNotice({ text: t('tasks.jump.chapterMissing'), bad: true }) } }
+  const counts = payload?.counts ?? {}; const summary = ([['all', t('tasks.summary.total'), payload?.tasks.length ?? 0], ['running', statusLabel('running', t), counts.running ?? 0], ['awaiting_confirmation', statusLabel('awaiting_confirmation', t), counts.awaiting_confirmation ?? 0], ['failed', statusLabel('failed', t), counts.failed ?? 0], ['completed', statusLabel('completed', t), counts.completed ?? 0]] as const)
+  return <div className={css.root}>
+    <div className={css.toolbar}><div className={css.taskSummaryBar} aria-label={t('tasks.list')}>{summary.map(([key, label, count]) => <button key={key} type="button" className={css.taskSummaryItem} data-active={filter === key} aria-pressed={filter === key} onClick={() => setFilter(key as TaskStatus | 'all')}><strong>{count}</strong><span>{label}</span></button>)}</div><button type="button" className={css.button} title={t('refresh')} onClick={() => { void load() }} disabled={state === 'loading' || acting !== null}><RefreshCw size={14} /></button></div>
+    {notice !== null && <div className={notice.bad ? css.taskError : css.notice} role={notice.bad ? 'alert' : 'status'}>{notice.text}</div>}
+    <div className={css.taskControls}><label className={css.taskSearch}><Search size={14} /><input aria-label={t('tasks.filter.keyword')} value={keyword} placeholder={t('tasks.filter.keyword')} onChange={event => setKeyword(event.target.value)} /></label><label><ListFilter size={14} />{t('tasks.filter.type')}<select value={typeFilter} onChange={event => setTypeFilter(event.target.value)}><option value="all">{t('tasks.filter.typeAll')}</option>{types.map(type => <option key={type} value={type}>{typeLabel(type, t)}</option>)}</select></label><label><input aria-label={t('tasks.filter.chapter')} value={chapterFilter} placeholder={t('tasks.filter.chapter')} onChange={event => setChapterFilter(event.target.value)} /></label><button type="button" className={css.button} onClick={() => setSortNewest(current => !current)} title={t('tasks.sort.toggle')}>{sortNewest ? t('tasks.sort.newest') : t('tasks.sort.oldest')}</button>{(keyword !== '' || chapterFilter !== '' || typeFilter !== 'all' || filter !== 'all') && <button type="button" className={css.iconButton} title={t('tasks.detail.close')} onClick={() => { setKeyword(''); setChapterFilter(''); setTypeFilter('all'); setFilter('all') }}><X size={14} /></button>}</div>
+    <div className={css.body}>{state === 'loading' && payload === null && <div className={css.notice}>{t('loading')}</div>}{state === 'error' && <div className={css.notice}><span className={css.errorText}>{error}</span><button type="button" className={css.button} onClick={() => { void load() }}>{t('retry')}</button></div>}{state === 'ready' && visible.length === 0 && <div className={css.notice}>{t('tasks.empty')}</div>}<div className={css.taskList} aria-label={t('tasks.list')}>{visible.map(task => <article key={task.taskId} className={css.taskCard} data-selected={task.taskId === selectedId}><div className={css.taskCardMain}><div className={css.taskCardHeader}><span className={css.kindBadge}>{typeLabel(task.type, t)}</span><span className={css.taskStatus} data-status={task.status}>{statusLabel(task.status, t)}</span>{task.chapterId !== '' && <span className={css.taskChapter}>{task.chapterId}</span>}<time className={css.taskTime}>{shortTime(task.updatedAt || task.createdAt)}</time></div><div className={css.taskCardTitle}>{task.inputSummary || task.taskId}</div><div className={css.taskProgressLine}><span>{phaseLabel(task.phase, t)}{task.phaseIndex !== null ? ` · ${task.phaseIndex + 1}/${payload?.phaseOrder.length ?? PHASES.length}` : ''}</span>{task.progress !== null ? <span>{Math.round(task.progress.completed)}/{Math.round(task.progress.total)}{task.progress.unitKind !== '' ? ` · ${task.progress.unitKind}` : ''}</span> : (task.status === 'running' ? <span>{t('tasks.progress.unknown')}</span> : null)}</div>{task.progress !== null && task.progress.ratio !== null && <div className={css.taskProgressTrack} aria-label={`${Math.round(task.progress.ratio * 100)}%`}><span style={{ width: `${Math.round(task.progress.ratio * 100)}%` }} /></div>}{task.status === 'failed' && <div className={css.taskFailure}><CircleAlert size={14} />{task.errorCode || t('tasks.failure.system')}{task.failedStage !== '' ? ` · ${task.failedStage}` : ''}</div>}</div><div className={css.taskCardActions}><button type="button" className={css.iconButton} title={task.taskId === selectedId ? t('tasks.detail.close') : t('tasks.detail.open')} aria-expanded={task.taskId === selectedId} onClick={() => { if (task.taskId === selectedId) closeDetail(); else void openDetail(task) }}>{task.taskId === selectedId ? <ChevronUp size={15} /> : <ChevronDown size={15} />}</button>{task.status === 'awaiting_confirmation' && <button type="button" className={css.actionButton} disabled={acting !== null} title={t('tasks.confirm.title')} onClick={() => void runAction(task, 'confirm')}><Check size={14} />{acting === `${task.taskId}:confirm` ? '…' : t('tasks.confirm')}</button>}{(task.status === 'pending' || task.status === 'running' || task.status === 'awaiting_confirmation') && <button type="button" className={css.actionButton} disabled={acting !== null} title={t('tasks.cancel.title')} onClick={() => void runAction(task, 'cancel')}><Ban size={14} />{acting === `${task.taskId}:cancel` ? '…' : t('tasks.cancel')}</button>}{task.status === 'failed' && <button type="button" className={css.actionButton} disabled={acting !== null || !task.retryable} title={task.retryable ? t('tasks.retry.title') : t('tasks.retry.notRecoverable')} onClick={() => void runAction(task, 'retry')}><RotateCcw size={14} />{acting === `${task.taskId}:retry` ? '…' : t('tasks.retry')}</button>}</div>{task.taskId === selectedId && <TaskDetail task={detail ?? task} state={detailState} t={t} copyId={copyId} navigateResult={navigateResult} />}</article>)}</div></div>
+  </div>
+}
+
+function TaskDetail({ task, state, t, copyId, navigateResult }: { task: TaskRecord; state: LoadState; t: TasksViewProps['t']; copyId: (id: string) => Promise<void>; navigateResult: (ref: ResultRef) => void }) {
+  const phaseIndex = task.phaseIndex ?? (task.phase === null ? -1 : PHASES.indexOf(task.phase))
+  return <div className={css.taskDetail}>{state === 'loading' && <div className={css.detailNotice}>{t('tasks.detail.eventsLoading')}</div>}{state === 'error' && <div className={css.detailNotice}>{t('tasks.detail.eventsFailed')}</div>}<div className={css.taskTimeline} aria-label={t('tasks.field.phase')}>{PHASES.map((phase, index) => <div key={phase} className={css.taskTimelineStep} data-state={task.status === 'completed' || index < phaseIndex ? 'done' : index === phaseIndex ? 'current' : 'pending'}><span>{index < phaseIndex || task.status === 'completed' ? <Check size={12} /> : index === phaseIndex ? <Clock3 size={12} /> : <span>{index + 1}</span>}</span><small>{phaseLabel(phase, t)}</small></div>)}</div><dl className={css.taskFields}><div><dt>{t('tasks.field.id')}</dt><dd>{task.taskId}<button type="button" className={css.iconButton} title={t('tasks.detail.copyId')} onClick={() => void copyId(task.taskId)}><Copy size={13} /></button></dd></div><div><dt>{t('tasks.field.type')}</dt><dd>{typeLabel(task.type, t)}</dd></div><div><dt>{t('tasks.field.status')}</dt><dd>{statusLabel(task.status, t)}</dd></div><div><dt>{t('tasks.field.phase')}</dt><dd>{phaseLabel(task.phase, t)}</dd></div><div><dt>{t('tasks.field.chapter')}</dt><dd>{task.chapterId || '—'}</dd></div><div><dt>{t('tasks.field.progress')}</dt><dd>{task.progress === null ? t('tasks.progress.unknown') : `${Math.round(task.progress.completed)}/${Math.round(task.progress.total)}${task.progress.unitKind !== '' ? ` · ${task.progress.unitKind}` : ''}`}</dd></div><div><dt>{t('tasks.field.attempt')}</dt><dd>{task.attempt}</dd></div><div><dt>{t('tasks.field.created')}</dt><dd>{shortTime(task.createdAt)}</dd></div><div><dt>{t('tasks.field.started')}</dt><dd>{shortTime(task.startedAt)}</dd></div><div><dt>{t('tasks.field.updated')}</dt><dd>{shortTime(task.updatedAt)}</dd></div><div><dt>{t('tasks.field.completed')}</dt><dd>{shortTime(task.completedAt)}</dd></div><div><dt>{t('tasks.field.resultRef')}</dt><dd>{task.resultRef?.id ?? '—'}</dd></div><div><dt>{t('tasks.field.failedStage')}</dt><dd>{task.failedStage || '—'}</dd></div><div><dt>{t('tasks.field.errorCode')}</dt><dd>{task.errorCode || '—'}</dd></div><div><dt>{t('tasks.field.recoverable')}</dt><dd>{task.recoverable ? t('tasks.field.yes') : t('tasks.field.no')}</dd></div></dl>{task.inputSummary !== '' && <div className={css.taskDetailSummary}><strong>{t('tasks.field.summary')}</strong><p>{task.inputSummary}</p></div>}{task.errorMessage !== '' && <div className={css.taskDetailError}><CircleAlert size={14} /><span>{task.errorMessage}</span></div>}{task.resultRef !== null && <button type="button" className={css.resultLink} onClick={() => navigateResult(task.resultRef!)}><ExternalLink size={14} />{resultLabel(task.resultRef, t)}<small>{task.resultRef.id}</small></button>}<div className={css.taskEvents}><strong>{t('tasks.detail.events')}</strong>{task.events.length === 0 ? <span>{t('tasks.detail.eventsEmpty')}</span> : task.events.slice(-12).map(event => <div key={event.id} className={css.taskEvent}><time>{shortTime(event.at)}</time><span>{event.type}</span><small>{event.note}</small></div>)}</div>{task.result !== null && <div className={css.taskResult}><strong>{t('tasks.result.score')} {task.result.qualityScore ?? '—'}</strong><span>{t('review.coverage')} {task.result.coverage === null ? '—' : `${Math.round(task.result.coverage * 100)}%`}</span><span>{t('review.delivery')} {task.result.deliveryStatus || '—'}</span><span>{t('tasks.result.issues')} {task.result.issues ?? '—'}</span>{task.result.summary !== '' && <p>{task.result.summary}</p>}</div>}</div>
+}

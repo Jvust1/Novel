@@ -1,0 +1,16 @@
+{
+  "source_repository": "LiPu-jpg/Openwrite",
+  "source_commit": "024e09d751457a02fcda628f1d94bad5aff03425",
+  "source_tree": "5f3e5c67544d437fa7ca1132e032d6b055de3e90",
+  "license": "Apache-2.0",
+  "imported_at": "2026-09-29",
+  "scope": [
+    "root governance/docs",
+    "docs/**",
+    "packages/openwrite-bridge/**",
+    "presets/**",
+    "packages/studio-panel/src/** + core package metadata"
+  ],
+  "purpose": "Novel preset/skill system, style system, long-writing workflow, bridge architecture, Studio Panel workbench UI and validation patterns.",
+  "files": 207
+}

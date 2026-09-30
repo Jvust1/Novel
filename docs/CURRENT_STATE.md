@@ -1,3 +1,15 @@
+# Current State
+
+## 2026-09-30（OpenWrite 大规模纳入 + 最新 main 对齐）
+
+- OpenWrite 系已纳入工作分支：Open-Write/Open-Write 94 份、LiPu-jpg/Openwrite 207 份、travsteward/openwriter 465 份，合计 **766 份固定上游源码**，许可证与 commit provenance 保留。
+- OpenWriter 另以 `third_party/openwrite/openwriter-full` 子模块固定到 `142002677685298d45569ac132af11e7ed8e70e2`，用于保留完整上游；AGPL 的 `ilrein/openwrite` 仍仅作架构参考，不混入 Novel 核心源码。
+- 主线已有 prose quality gate 保留不动；OpenWrite 派生的磁盘/字节/哈希式完成校验改为独立 `novel_ai/completion_gate.py`，避免覆盖现有质量分析。
+- `NovelEngine` / `RoutedNovelEngine` 产出将携带 `completion_gate_report`；冻结 benchmark 同步记录 completion gate，模型自报完成不能替代确定性检查。
+- 本轮按最新 `main` 的长篇工程融合成果重建合并树，保留 Voice DNA、Story DNA、RecallBackend、Qdrant、长篇健康、原创性、层级大纲与市场发布能力。
+- 工作分支：`feat/openwrite-mass-import-20260929`；PR #26 保持 Draft；`main` 未被本轮直接写入。
+- PR #26 已与最新 main 对齐：mergeable=true、behind=0。最新 CI run `36683805241` 的 test job `109784953898` 为 `steps=[]` 且日志 blob 不存在；workflow 使用正常的 `ubuntu-latest`，因此记录为 `INFRA_NOT_STARTED`，不是代码测试失败。
+
 # 2026-09-30 — 长篇小说工程融合分支
 
 本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。

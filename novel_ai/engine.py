@@ -24,6 +24,7 @@ from .prompts import (
 )
 from .provider import OpenAICompatibleProvider
 from .quality_gate import analyze_prose_quality, quality_review_payload
+from .completion_gate import run_quality_gate
 from .longform_consistency import (
     aggregate_voice_baseline,
     behavior_repetition,
@@ -91,6 +92,7 @@ class ChapterResult:
     story_dna_similarity_report: dict[str, Any] | None = None
     voice_dna_report: dict[str, Any] | None = None
     behavior_repetition_report: dict[str, Any] | None = None
+    completion_gate_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
@@ -308,6 +310,11 @@ class NovelEngine:
             review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
             review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
             review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
+        final_text = revised or draft
+        completion_gate = run_quality_gate(
+            {plan.chapter_title or "chapter": final_text},
+            min_chapter_units=max(800, int(target_chars * 0.45)),
+        )
         return ChapterResult(
             plan=plan,
             draft=draft,
@@ -320,6 +327,7 @@ class NovelEngine:
             story_dna_similarity_report=dna_similarity.to_dict(),
             voice_dna_report=voice_report,
             behavior_repetition_report=behavior_report,
+            completion_gate_report=completion_gate,
             revised=revised,
             review_after_repair=review_after_repair,
         )

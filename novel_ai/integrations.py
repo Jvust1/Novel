@@ -88,6 +88,10 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("openai_evals", "openai/evals", "evaluation", "MIT", "research-port", "evaluation registry and reproducible benchmark patterns"),
     IntegrationSpec("sillytavern", "SillyTavern/SillyTavern", "context_product", "AGPL-3.0", "architecture-reference-only", "lorebook/world-info and context UX ideas"),
     IntegrationSpec("koboldcpp", "LostRuins/koboldcpp", "model_runtime", "AGPL-3.0", "external-runtime", "GGUF local runtime; keep outside Novel source tree"),
+    IntegrationSpec("open_write", "Open-Write/Open-Write", "longform_workflow", "Apache-2.0", "vendored-adapted", "novel bible, critic/revision and deterministic completion gates"),
+    IntegrationSpec("lipu_openwrite", "LiPu-jpg/Openwrite", "writing_workbench", "Apache-2.0", "vendored-reference", "preset/skill/bridge and writing-workbench patterns"),
+    IntegrationSpec("openwriter", "travsteward/openwriter", "writing_editor", "MIT", "vendored+git-submodule", "editor, tracked changes, comments, versions and manuscript composition"),
+    IntegrationSpec("ilrein_openwrite", "ilrein/openwrite", "writing_platform", "AGPL-3.0", "architecture-reference-only", "story-map/product architecture; source not embedded"),
 )
 
 

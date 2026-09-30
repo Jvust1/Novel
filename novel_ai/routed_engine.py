@@ -5,6 +5,7 @@ from typing import Any
 from .engine import ChapterResult, NovelEngine
 from .models import Character, StoryBible, StyleFingerprint
 from .quality_gate import analyze_prose_quality, quality_review_payload
+from .completion_gate import run_quality_gate
 from .longform_consistency import (
     aggregate_voice_baseline,
     behavior_repetition,
@@ -93,6 +94,12 @@ class RoutedNovelEngine:
             analyze_reference_similarity(draft, reference_hashes=reference_hashes)
         )
 
+        final_text = revised or draft
+        completion_gate = run_quality_gate(
+            {plan.chapter_title or "chapter": final_text},
+            min_chapter_units=max(800, int(target_chars * 0.45)),
+        )
+
         return ChapterResult(
             plan=plan,
             draft=draft,
@@ -104,5 +111,6 @@ class RoutedNovelEngine:
             story_dna_similarity_report=dna_similarity.to_dict(),
             voice_dna_report=voice_report,
             behavior_repetition_report=behavior_report,
+            completion_gate_report=completion_gate,
             revised=revised,
         )

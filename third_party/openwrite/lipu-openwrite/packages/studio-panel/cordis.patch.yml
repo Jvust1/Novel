@@ -1,0 +1,5 @@
+# dsh patch layer mounting the native novel workbenches.
+# Apply with: dsh web --patch ./packages/studio-panel/cordis.patch.yml
+- insert:
+    - id: studio-panel
+      name: '@dsh-novel/studio-panel'
