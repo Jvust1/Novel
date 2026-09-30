@@ -1,5 +1,5 @@
 from novel_ai.models import ChapterPlan
-from novel_ai.structured_output import InstructorStructuredExtractor, OutlinesStructuredExtractor
+from novel_ai.structured_output import GuidanceStructuredExtractor, InstructorStructuredExtractor, OutlinesStructuredExtractor
 
 
 class FakeCompletions:
@@ -46,3 +46,34 @@ def test_outlines_structured_extractor_accepts_json_string():
         temperature=0.3,
     )
     assert result.chapter_title == "第八章"
+
+
+
+def test_guidance_structured_extractor_uses_pydantic_schema_and_captured_json():
+    calls = []
+
+    class Model:
+        def __init__(self):
+            self.values = {}
+
+        def __iadd__(self, value):
+            if isinstance(value, dict) and value.get("_fake_guidance_json"):
+                self.values[value["name"]] = '{"chapter_title":"第九章","chapter_promise":"约束推进"}'
+            return self
+
+        def __getitem__(self, key):
+            return self.values[key]
+
+    def fake_json_factory(**kwargs):
+        calls.append(kwargs)
+        return {"_fake_guidance_json": True, **kwargs}
+
+    extractor = GuidanceStructuredExtractor(Model(), json_factory=fake_json_factory)
+    result = extractor.extract(
+        response_model=ChapterPlan,
+        messages=[{"role": "user", "content": "生成严格结构化章节计划"}],
+        temperature=0.15,
+    )
+    assert result.chapter_title == "第九章"
+    assert calls[0]["schema"] is ChapterPlan
+    assert calls[0]["temperature"] == 0.15
