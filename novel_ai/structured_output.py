@@ -72,3 +72,37 @@ def create_instructor_extractor(
         options["api_key"] = api_key
     client = instructor.from_provider(provider, **options)
     return InstructorStructuredExtractor(client)
+
+
+class OutlinesStructuredExtractor:
+    """Use an Outlines-compatible callable for constrained Pydantic generation."""
+
+    name = "outlines"
+
+    def __init__(self, model: Any) -> None:
+        if not callable(model):
+            raise TypeError("Outlines model 必须可调用")
+        self._model = model
+
+    def extract(
+        self,
+        *,
+        response_model: type[ModelT],
+        messages: list[dict[str, str]],
+        temperature: float,
+    ) -> ModelT:
+        prompt = "\n\n".join(
+            f"[{item.get('role', 'user')}] {item.get('content', '')}"
+            for item in messages
+        )
+        try:
+            value = self._model(prompt, response_model, temperature=temperature)
+        except TypeError:
+            value = self._model(prompt, response_model)
+        if isinstance(value, response_model):
+            return value
+        if isinstance(value, str):
+            return response_model.model_validate_json(value)
+        if hasattr(value, "model_dump"):
+            return response_model.model_validate(value.model_dump())
+        return response_model.model_validate(value)
