@@ -4,7 +4,13 @@ from types import SimpleNamespace
 from novel_ai.engine import apply_external_review_hooks
 from novel_ai.models import ChapterPlan, ChapterReview, StoryBible
 from novel_ai.recall import RecallDocument
-from novel_ai.upstream_adapters import CrewAIReviewHook, DSPyReviewHook, Mem0RecallBackend
+from novel_ai.upstream_adapters import (
+    CrewAIReviewHook,
+    DSPyReviewHook,
+    LangGraphReviewHook,
+    Mem0RecallBackend,
+    PydanticAIReviewHook,
+)
 
 
 class FakeMemory:
@@ -104,3 +110,30 @@ def test_external_review_hook_is_merged_into_core_review():
     assert review is not None
     assert review.verdict == "revise"
     assert any(issue.category == "节奏" for issue in review.issues)
+
+
+def test_langgraph_hook_normalizes_graph_state():
+    class Graph:
+        def invoke(self, inputs, config=None):
+            assert inputs["draft"] == "正文"
+            return {"issues": [_issue("时间线跳跃")]}
+
+    payload = LangGraphReviewHook(Graph()).review_payload(
+        draft="正文", plan=ChapterPlan(), bible=StoryBible(), characters=[]
+    )
+    assert payload["issues"][0]["reason"] == "时间线跳跃"
+
+
+def test_pydantic_ai_hook_normalizes_agent_output():
+    class Result:
+        output = {"issues": [_issue("角色目标漂移")]}
+
+    class Agent:
+        def run_sync(self, prompt):
+            assert "正文" in prompt
+            return Result()
+
+    payload = PydanticAIReviewHook(Agent()).review_payload(
+        draft="正文", plan=ChapterPlan(), bible=StoryBible(), characters=[]
+    )
+    assert payload["issues"][0]["reason"] == "角色目标漂移"
