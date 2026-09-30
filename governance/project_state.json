@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "1000star-final-fusion-v0.4",
-  "version": "0.4.0-dev",
+  "stage": "structured-workflow-fusion-v0.5",
+  "version": "0.5.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "validate schema-first structured extraction plus LangGraph/PydanticAI editorial hooks on real long-form samples",
     "finish release-candidate validation of optional Mem0/DSPy/CrewAI adapters without changing Novel core defaults",
     "harden character Voice DNA and behavior-repetition guard with real multi-chapter samples",
     "validate timeline contradiction and foreshadow lifecycle heuristics against manually checked novels",
@@ -104,7 +105,11 @@
     "DSPy Predict review hook behind the explicit external-review contract",
     "CrewAI Crew/Flow review hook behind the explicit external-review contract",
     "NovelEngine opt-in external review-hook merge path for draft and repaired-text second pass",
-    "1000+ star final-fusion provenance record for Mem0, DSPy, CrewAI, Qdrant and SillyTavern license boundaries"
+    "1000+ star final-fusion provenance record for Mem0, DSPy, CrewAI, Qdrant and SillyTavern license boundaries",
+    "Instructor structured-output adapter for ChapterPlan, ChapterReview and MemoryExtraction",
+    "NovelEngine schema-first extraction path with transparent fallback to the existing provider JSON parser",
+    "LangGraph review hook for durable stateful editorial workflows",
+    "PydanticAI review hook for typed editorial agents"
   ],
   "frozen": false,
   "blocking_issues": [],

@@ -327,3 +327,49 @@ class CrewAIReviewHook:
             elif isinstance(parsed, Mapping):
                 issues = parsed.get("issues", parsed.get("issues_json", []))
         return {"issues": _normalize_issue_rows(issues or [])}
+
+
+class LangGraphReviewHook:
+    """Adapt a compiled LangGraph graph to Novel's external review hook."""
+
+    name = "langgraph-review"
+
+    def __init__(self, graph: Any, *, config: dict[str, Any] | None = None) -> None:
+        if not callable(getattr(graph, "invoke", None)):
+            raise TypeError("graph 必须提供 invoke()")
+        self._graph = graph
+        self._config = config
+
+    def review_payload(self, *, draft: str, plan: Any, bible: Any, characters: list[Any]) -> dict[str, Any]:
+        inputs = _external_review_inputs(draft=draft, plan=plan, bible=bible, characters=characters)
+        if self._config is None:
+            result = self._graph.invoke(inputs)
+        else:
+            result = self._graph.invoke(inputs, self._config)
+        data = _object_mapping(result)
+        issues = data.get("issues", data.get("issues_json", []))
+        return {"issues": _normalize_issue_rows(issues)}
+
+
+class PydanticAIReviewHook:
+    """Adapt a configured PydanticAI Agent to Novel's external review hook."""
+
+    name = "pydantic-ai-review"
+
+    def __init__(self, agent: Any) -> None:
+        if not callable(getattr(agent, "run_sync", None)):
+            raise TypeError("agent 必须提供 run_sync()")
+        self._agent = agent
+
+    def review_payload(self, *, draft: str, plan: Any, bible: Any, characters: list[Any]) -> dict[str, Any]:
+        inputs = _external_review_inputs(draft=draft, plan=plan, bible=bible, characters=characters)
+        prompt = (
+            "请作为小说二次审校器检查以下结构化输入。"
+            "只返回你已配置的结构化审校输出，不要改写正文。\n"
+            + json.dumps(inputs, ensure_ascii=False, sort_keys=True)
+        )
+        result = self._agent.run_sync(prompt)
+        output = getattr(result, "output", result)
+        data = _object_mapping(output)
+        issues = data.get("issues", data.get("issues_json", []))
+        return {"issues": _normalize_issue_rows(issues)}

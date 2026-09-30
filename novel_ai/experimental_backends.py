@@ -33,6 +33,9 @@ EXPERIMENTAL_BACKENDS: tuple[ExperimentalBackend, ...] = (
     ExperimentalBackend("chroma", "chromadb", "vector_store", "local vector store experiment"),
     ExperimentalBackend("dspy", "dspy", "prompt_optimization", "benchmark-driven prompt/program optimization"),
     ExperimentalBackend("crewai", "crewai", "orchestration", "optional second-pass editorial Crew/Flow"),
+    ExperimentalBackend("instructor", "instructor", "structured_output", "validated Pydantic extraction"),
+    ExperimentalBackend("langgraph", "langgraph", "orchestration", "durable stateful editorial workflow"),
+    ExperimentalBackend("pydantic_ai", "pydantic_ai", "orchestration", "typed editorial agent"),
 )
 
 
