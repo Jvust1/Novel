@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from .provider import OpenAICompatibleProvider, ProviderConfig
+from .provider import LiteLLMConfig, LiteLLMProvider, OpenAICompatibleProvider, ProviderConfig
 
 
 class TaskKind(str, Enum):
@@ -19,7 +19,7 @@ class TaskKind(str, Enum):
 @dataclass(frozen=True)
 class ProviderTarget:
     name: str
-    provider: OpenAICompatibleProvider
+    provider: Any
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,7 @@ class RouterConfig:
     colab: ProviderConfig | None = None
     v4: ProviderConfig | None = None
     reviewer: ProviderConfig | None = None
+    litellm: LiteLLMConfig | None = None
 
     @classmethod
     def from_env(cls) -> "RouterConfig":
@@ -43,11 +44,24 @@ class RouterConfig:
                 timeout=float(os.getenv("NOVEL_PROVIDER_TIMEOUT", "180")),
             )
 
+        raw_models = os.getenv("NOVEL_LITELLM_MODELS", "").strip()
+        litellm = None
+        if raw_models:
+            models = tuple(item.strip() for item in raw_models.split(",") if item.strip())
+            if models:
+                litellm = LiteLLMConfig(
+                    models=models,
+                    api_key=os.getenv("NOVEL_LITELLM_API_KEY", ""),
+                    api_base=os.getenv("NOVEL_LITELLM_API_BASE", ""),
+                    timeout=float(os.getenv("NOVEL_PROVIDER_TIMEOUT", "180")),
+                )
+
         return cls(
             local=read("NOVEL_LOCAL"),
             colab=read("NOVEL_COLAB"),
             v4=read("NOVEL_V4"),
             reviewer=read("NOVEL_REVIEW"),
+            litellm=litellm,
         )
 
 
@@ -59,11 +73,11 @@ class ProviderRouter:
     """
 
     _ORDER: dict[TaskKind, tuple[str, ...]] = {
-        TaskKind.DRAFT: ("local", "v4", "colab"),
-        TaskKind.PLAN: ("local", "v4", "colab"),
-        TaskKind.REVIEW: ("reviewer", "local", "v4"),
-        TaskKind.MEMORY: ("local", "colab", "v4"),
-        TaskKind.BENCHMARK: ("colab", "local", "v4"),
+        TaskKind.DRAFT: ("local", "litellm", "v4", "colab"),
+        TaskKind.PLAN: ("local", "litellm", "v4", "colab"),
+        TaskKind.REVIEW: ("reviewer", "litellm", "local", "v4"),
+        TaskKind.MEMORY: ("local", "litellm", "colab", "v4"),
+        TaskKind.BENCHMARK: ("colab", "litellm", "local", "v4"),
     }
 
     def __init__(self, config: RouterConfig | None = None):
@@ -80,6 +94,11 @@ class ProviderRouter:
                     name=name,
                     provider=OpenAICompatibleProvider(provider_config),
                 )
+        if config.litellm is not None:
+            self._targets["litellm"] = ProviderTarget(
+                name="litellm",
+                provider=LiteLLMProvider(config.litellm),
+            )
 
     @property
     def available(self) -> tuple[str, ...]:
