@@ -51,7 +51,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("text2vec", "shibing624/text2vec", "embeddings", "Apache-2.0", "git-submodule+adapter", "Chinese semantic embeddings and similarity", "text2vec", "text2vec"),
     IntegrationSpec("flagembedding", "FlagOpen/FlagEmbedding", "embeddings", "MIT", "git-submodule+adapter", "embedding/reranking backend for reference similarity and recall", "FlagEmbedding", "FlagEmbedding"),
     IntegrationSpec("sentence_transformers", "huggingface/sentence-transformers", "embeddings", "Apache-2.0", "git-submodule+adapter", "general sentence embeddings", "sentence-transformers", "sentence_transformers"),
-    IntegrationSpec("rapidfuzz", "rapidfuzz/RapidFuzz", "originality", "MIT", "git-submodule+direct-optional", "fast fuzzy matching for names, phrases and near-duplicates", "rapidfuzz", "rapidfuzz"),
+    IntegrationSpec("rapidfuzz", "rapidfuzz/RapidFuzz", "longform_consistency", "MIT", "adapter+direct-optional", "entity alias/name drift plus fuzzy near-duplicate matching", "rapidfuzz", "rapidfuzz"),
     IntegrationSpec("docling", "docling-project/docling", "document_ingest", "MIT", "git-submodule+adapter", "high-quality PDF/DOCX/document conversion", "docling", "docling"),
     IntegrationSpec("markitdown", "microsoft/markitdown", "document_ingest", "MIT", "git-submodule+adapter", "document-to-markdown conversion", "markitdown", "markitdown"),
     IntegrationSpec("unstructured", "Unstructured-IO/unstructured", "document_ingest", "Apache-2.0", "adapter", "fallback document partitioning and metadata extraction", "unstructured", "unstructured"),
