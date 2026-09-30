@@ -1,3 +1,11 @@
+## 2026-09-30 — reference similarity + book-to-skill runtime fusion
+
+- Added `novel_ai/reference_similarity.py`: non-reversible shingle overlap is the default protection; RapidFuzz/embedding/event-sequence layers are optional runtime inputs.
+- NovelEngine and RoutedNovelEngine now accept Reference Pack hash signatures and merge similarity findings into the same review/repair gate as prose-quality findings.
+- Streamlit workspace displays the reference-similarity protection report alongside the prose-quality and heuristic style reports.
+- Added `novel_ai/book_skill_adapter.py`: Novel can invoke the pinned `vendor/book-to-skill` converter against local user documents with project-local output.
+- The adapter does not copy source books into GitHub; reference documents stay local.
+
 ## 2026-09-30 — deep prose-quality fusion
 
 - Added `novel_ai/quality_gate.py`: dependency-free core plus optional OpenCC / pkuseg / jieba / LexicalRichness / pycorrector / spaCy capability detection.

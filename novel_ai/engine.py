@@ -24,6 +24,7 @@ from .prompts import (
 )
 from .provider import OpenAICompatibleProvider
 from .quality_gate import analyze_prose_quality, quality_review_payload
+from .reference_similarity import analyze_reference_similarity, similarity_review_payload
 from .style_engine import detect_ai_flavor
 
 
@@ -73,6 +74,7 @@ class ChapterResult:
     review: ChapterReview | None
     ai_flavor: dict[str, Any]
     quality_report: dict[str, Any] | None = None
+    similarity_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
@@ -231,6 +233,7 @@ class NovelEngine:
         review: bool = True,
         auto_repair: bool = False,
         extra_context: str = "",
+        reference_hashes: set[str] | None = None,
     ) -> ChapterResult:
         plan = self.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
         draft = self.draft(
@@ -246,8 +249,12 @@ class NovelEngine:
         local_signals = detect_ai_flavor(draft)
         quality = analyze_prose_quality(draft)
         quality_payload = quality_review_payload(quality)
+        similarity_payload = similarity_review_payload(
+            analyze_reference_similarity(draft, reference_hashes=reference_hashes)
+        )
         review_result = self.review(bible, plan, characters, draft) if review else None
         review_result = merge_quality_issues(review_result, quality_payload)
+        review_result = merge_quality_issues(review_result, similarity_payload)
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
@@ -261,6 +268,7 @@ class NovelEngine:
             review=review_result,
             ai_flavor=local_signals,
             quality_report=quality_payload,
+            similarity_report=similarity_payload,
             revised=revised,
             review_after_repair=review_after_repair,
         )

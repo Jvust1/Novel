@@ -46,7 +46,10 @@
     "optional pkuseg/jieba tokenization for Chinese lexical diagnostics",
     "optional LexicalRichness metrics for vocabulary diversity",
     "optional pycorrector suggestions surfaced as review candidates without blind auto-fix",
-    "quality findings merged into ChapterReview and can trigger local repair for medium/high issues"
+    "quality findings merged into ChapterReview and can trigger local repair for medium/high issues",
+    "layered reference similarity guard using non-reversible shingle hashes by default",
+    "reference similarity findings integrated into NovelEngine and RoutedNovelEngine review flow",
+    "book-to-skill adapter executes pinned vendored converter against local user documents with project-local output"
   ],
   "frozen": false,
   "blocking_issues": [],

@@ -11,6 +11,7 @@ from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
+from novel_ai.reference_similarity import analyze_reference_similarity, similarity_review_payload
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -405,6 +406,7 @@ with write_tab:
                 review=mode != "快速草稿",
                 auto_repair=mode == "精修",
                 extra_context=context.prompt_sections(),
+                reference_hashes=st.session_state.reference_hashes,
             )
             st.session_state.last_result = result
             final_text = result.final_text
@@ -446,6 +448,9 @@ with write_tab:
         if result.quality_report:
             with st.expander("文本质量门", expanded=False):
                 st.json(result.quality_report)
+        if result.similarity_report:
+            with st.expander("参考相似度保护门", expanded=False):
+                st.json(result.similarity_report)
 
         st.divider()
         st.subheader("章节后处理 · 记忆抽取")
@@ -490,11 +495,15 @@ with review_tab:
     if st.button("本地质量门 + AI 味扫描"):
         if review_text.strip():
             q = analyze_prose_quality(review_text)
-            c1, c2 = st.columns(2)
+            sim = analyze_reference_similarity(review_text, reference_hashes=st.session_state.reference_hashes)
+            c1, c2, c3 = st.columns(3)
             with c1:
                 st.markdown("#### 文本质量门")
                 st.json(q.to_dict())
             with c2:
+                st.markdown("#### 参考相似度保护")
+                st.json(sim.to_dict())
+            with c3:
                 st.markdown("#### AI 味启发式信号")
                 st.json(detect_ai_flavor(review_text))
         else:
