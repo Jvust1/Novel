@@ -1,3 +1,149 @@
+# 2026-09-30 — 长篇小说工程融合分支
+
+本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。
+
+## 已进入核心长篇流程
+
+- **人物口吻 DNA**：按人物提取对白句长、问句/感叹/省略、短句比例、称谓密度、语气词等非原文特征，形成跨章基线；漂移进入 review。
+- **人物行为模式重复**：按 Story DNA 的目标→阻力→选择→代价→状态变化比较历史章；高相似模式在写正文前进入 `draft_context`。
+- **时间线矛盾检查**：从累计 `story_state.timeline` 检查时间回退与同一事件冲突时间候选。
+- **伏笔生命周期**：统计 planted/touched/resolved、悬置章数、长期未触碰和平均回收寿命。
+- **全书高潮/低谷密度**：从 Story DNA 的场景结构与 tension curve 估算章节强度，检测连续高压透支与连续低压失速。
+- 上述健康状态保存到 `memory/longform_health.json`；`ContextAssembler` 会把 `guard_context` 重新注入后续章节，因此不是只做仪表盘展示。
+
+## 直接搬运并融合的独立能力
+
+从已有分支搬入并保留测试/CLI：
+- `originality.py`：四层原创性 Gate（shingle / fuzzy / embedding / event sequence）。
+- `outline.py`：series→volume→arc→chapter→scene 层级大纲。
+- `market_eval.py`：番茄前三章/前 20 章市场评测数据结构与评分聚合。
+- `release_pack.py`：发布包结构。
+- `recall.py + qdrant_recall.py`：统一 Recall 协议与可选本地 Qdrant adapter。
+
+## Recall 融合
+
+原有 `LocalSemanticRecall` 与新 Qdrant 分支曾使用两套 RecallHit 结构。本轮统一到共享 `RecallDocument / RecallHit / RecallBackend`：
+- LocalSemanticRecall 同时支持旧 `add/search` 与新 `upsert/query`。
+- Qdrant 与本地 semantic recall 可以由同一上层接口 A/B。
+- Qdrant 仍默认关闭，不替代 Canon/Active/Recall；必须先通过冻结评测。
+
+## 尚未声称验证
+
+这些能力已经工程接入，但“提升长篇质量”的效果仍需冻结样例 + 人工评审/A-B 验证。特别是时间线启发式、口吻漂移阈值和高潮密度阈值都需要按题材校准。
+
+
+## 2026-09-30 — character voice / behavior / timeline / foreshadow / tension engineering
+
+- Added per-character Voice DNA from attributed dialogue: average line length, short/long-line ratio, question/exclamation/ellipsis habits, pronoun density and ending particles. Raw dialogue is not stored in Voice DNA.
+- Voice DNA is persisted per accepted chapter; long-term baselines detect character-voice drift. Medium/high drift is merged into Review/Repair.
+- Added character behavior-pattern repetition guard from Story DNA beats (objective → opposition → choice → cost → state change), scoped to the same POV character.
+- Timeline consistency checks detect comparable time reversals and the same event assigned conflicting structured time hints.
+- Foreshadowing now retains lifecycle history. Resolved clues cannot silently regress to planted/advanced; attempted regressions are recorded as lifecycle warnings.
+- Added foreshadow lifecycle statistics: status counts, resolved ratio, average resolution lifetime, overdue and stagnant unresolved clues.
+- Added whole-book climax/low-density analysis with recent-window density and consecutive high/low streak warnings.
+- Long-form health is persisted at `memory/longform_health.json` and its bounded guard context automatically enters the next chapter's ContextAssembler.
+- Streamlit exposes all five long-form engineering panels and highlights timeline contradictions / overdue foreshadowing / tension-density warnings.
+
+## 2026-09-30 — long-form Story DNA analytics dashboard
+
+- Added pinned scikit-learn, River, Plotly and UMAP submodules.
+- Accepted chapters now persist numeric chapter analytics alongside Story DNA.
+- Added whole-book trope frequency statistics: tension curves, structural patterns and repeated end hooks.
+- Added Story DNA clustering: scikit-learn TF-IDF + KMeans when available, deterministic event-similarity connected-components fallback otherwise.
+- Added optional UMAP 2D projection for visually locating repeated plot-pattern neighborhoods.
+- Added chapter-level rhythm/style drift monitoring. River ADWIN is used when available; otherwise a rolling 2.5σ fallback is used.
+- Streamlit exposes the whole-book Story DNA analytics and drift panel directly from persisted project state.
+
+## 2026-09-30 — persistent Story DNA and cross-chapter pattern guard
+
+- Story DNA is now durable project state under `memory/story_dna/<chapter>.json` and can be reloaded across sessions.
+- Before drafting a new chapter, Novel compares the approved plan's event sequence and structural pattern against historical Story DNA.
+- Similarity weighting: event-sequence 78% + structural/tension features 22%; medium/high matches produce explicit review issues.
+- When a match crosses the threshold, a causal-diversification constraint is injected before drafting: change character choices, resistance source, causal chain, cost, state change or information-release order; surface synonym swapping is explicitly discouraged.
+- The same Story DNA guard is active in both NovelEngine and RoutedNovelEngine.
+- Streamlit shows the Story DNA history and the current chapter's cross-chapter similarity report.
+- Accepted chapters persist their Story DNA during memory writeback, alongside story_state, summaries and Story Graph.
+
+## 2026-09-30 — Story DNA and Chinese structure fusion
+
+- Pinned chinese-novelist-skill, OpenSPG/KAG and PaddleNLP.
+- Added deterministic Story DNA derived from the approved chapter plan: objective/opposition/choice/cost/state-change/event sequence/hook structure.
+- Added workflow phase guards for planning and draft stages, absorbing the useful multi-phase workflow idea without replacing Novel's own engine.
+- Added explicit opt-in PaddleNLP UIE adapter for人物/地点/事件/目标/阻力/选择/代价/伏笔 extraction. It is never auto-initialized because model downloads are heavy.
+- Added neutral Story Graph → KAG record export. Novel keeps JSON as its canonical graph format and can feed KAG only when an experiment explicitly enables it.
+- Workspace now exposes Story DNA and structure-backend availability.
+
+## 2026-09-30 — orchestration and optimization experiment layer
+
+- Pinned Mem0, LlamaIndex, LangChain, Haystack, Chroma and DSPy as reviewed submodules.
+- Added `novel_ai/experimental_backends.py`: one capability matrix and explicit chooser for memory/orchestration/vector-store/prompt-optimization experiments.
+- Heavy frameworks remain opt-in. The selector only chooses from a caller-provided preference list and falls back to `novel-core` when none are available.
+- This prevents framework sprawl from leaking into the deterministic core and makes future A/B experiments reproducible.
+
+## 2026-09-30 — recall and evaluation backend fusion
+
+- Pinned GraphRAG, LightRAG, Graphiti, DeepEval, Ragas, sentence-transformers, FAISS and HanLP.
+- Semantic backend selection now supports FlagEmbedding → sentence-transformers → text2vec → char n-gram fallback.
+- Added LocalSemanticRecall: FAISS accelerates local vector recall when installed; otherwise the same interface falls back to in-memory cosine search.
+- Added capability matrix for FAISS / Qdrant / GraphRAG / LightRAG / Graphiti. Heavy graph/RAG systems remain behind the existing A/B gate.
+- Added ReleaseQualitySnapshot combining prose quality, reference-similarity protection and cross-chapter near-duplicate checks.
+- DeepEval and Ragas are explicit optional evaluator backends and are not invoked without provider/model configuration.
+- HanLP is surfaced without automatic model downloads.
+
+## 2026-09-30 — long-form graph and self-repetition fusion
+
+- Added pinned datasketch, NetworkX and qdrant-client submodules.
+- Every generated chapter can now be screened against prior local chapters; datasketch MinHash is used when installed, otherwise Novel falls back to its fuzzy similarity layer.
+- Post-chapter memory writeback now also emits a portable `memory/story_graph.json` containing characters, relationships, timeline events and foreshadowing nodes.
+- NetworkX is optional and only validates/deduplicates the graph; the persisted format stays plain JSON.
+- Added an opt-in QdrantRecallStore adapter. It does not replace Canon/Active/Recall unless a future frozen A/B test proves a gain.
+
+## 2026-09-30 — high-fidelity reference and semantic fusion
+
+- Pinned MarkItDown, Docling, text2vec, FlagEmbedding, RapidFuzz and DeepKE as reviewed upstream submodules.
+- Reference ingestion now prefers Docling, then MarkItDown, then the lightweight python-docx/pypdf fallback. HTML/RTF/EPUB become available when an advanced backend is installed.
+- Reference Pack records which extraction backend produced each source profile.
+- Semantic layer can explicitly select the strongest installed backend: FlagEmbedding → text2vec → dependency-free char n-gram.
+- RapidFuzz is already consumed by the reference-similarity protection layer.
+- DeepKE is registered as an opt-in Story DNA structure extractor candidate; it is not forced into the default lightweight runtime.
+
+## 2026-09-30 — reference similarity + book-to-skill runtime fusion
+
+- Added `novel_ai/reference_similarity.py`: non-reversible shingle overlap is the default protection; RapidFuzz/embedding/event-sequence layers are optional runtime inputs.
+- NovelEngine and RoutedNovelEngine now accept Reference Pack hash signatures and merge similarity findings into the same review/repair gate as prose-quality findings.
+- Streamlit workspace displays the reference-similarity protection report alongside the prose-quality and heuristic style reports.
+- Added `novel_ai/book_skill_adapter.py`: Novel can invoke the pinned `vendor/book-to-skill` converter against local user documents with project-local output.
+- The adapter does not copy source books into GitHub; reference documents stay local.
+
+## 2026-09-30 — deep prose-quality fusion
+
+- Added `novel_ai/quality_gate.py`: dependency-free core plus optional OpenCC / pkuseg / jieba / LexicalRichness / pycorrector / spaCy capability detection.
+- NovelEngine now runs deterministic quality analysis immediately after drafting. Medium/high deterministic findings are merged into `ChapterReview` and can trigger the existing local repair path; low findings remain advisory.
+- RoutedNovelEngine receives the same quality gate so multi-model writer/reviewer routing no longer bypasses local quality checks.
+- Added optional NLP dependencies to `requirements-extras/nlp.txt`; default install remains lightweight and functional without them.
+- pycorrector output is never blindly applied: names, dialogue, dialect and intentional colloquial language require review.
+- The gate optimizes naturalness, correctness, variation and originality signals; it is not a detector-evasion score.
+
+## 2026-09-30 — 1000+ star NLP integrations
+
+- Added four pinned 1000+ star upstream projects as Git submodules: spaCy (33k+), pycorrector (6.5k+), texthero (2.9k+), OpenCC (10k+), star counts checked on 2026-09-30.
+- Primary Novel goal: improve Chinese text quality, normalization, structural analysis, lexical/phrase variation diagnostics, and post-generation repair inputs.
+- These integrations support writing quality/originality evaluation; they are not detector-evasion mechanisms.
+
+## 2026-09-30 — style-quality toolset expanded
+
+- Added pinned submodules for `LSYS/LexicalRichness`, `textstat/textstat`, `amperser/proselint`, and `lancopku/pkuseg-python`.
+- Purpose: diagnose lexical repetition, sentence/readability patterns, prose issues, and Chinese tokenization quality so Novel can improve originality and naturalness through measurable writing-quality signals.
+- These tools are not used to target or bypass any specific AI detector; detector scores are not a release gate.
+- All four upstream licenses were checked before inclusion (MIT / BSD-3-Clause).
+
+## 2026-09-30 — book-to-skill integrated
+
+- Added `virgiliojr94/book-to-skill` as pinned submodule `vendor/book-to-skill` at upstream commit `c108d25b0cb58e1bdc361f3de02ed9f37075152f`.
+- MIT license confirmed upstream; the upstream tree retains its original `LICENSE.md` and copyright notice.
+- Novel use: convert user-provided reference books/documents into structured on-demand Agent Skills before/alongside Reference Pack and Story DNA extraction.
+- Raw reference novels remain outside GitHub; only tooling is integrated.
+
 # Current State
 
 ## 2026-09-28（成果同步）

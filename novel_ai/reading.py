@@ -1,35 +1,88 @@
 from __future__ import annotations
 
+import importlib.util
 import io
+from pathlib import Path
+import tempfile
 
-SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf")
+SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf", ".epub")
 
 
-def extract_reference_text(filename: str, data: bytes) -> str:
-    """Extract plain text from an uploaded reference file.
+def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
+    """Try Docling first, then MarkItDown.
 
-    TXT/MD are decoded as UTF-8; DOCX and PDF are parsed with optional
-    dependencies (python-docx / pypdf) that are imported lazily so the core
-    pipeline works without them.
+    Both adapters operate on a temporary local file and are optional. Failure
+    falls through to the deterministic lightweight readers.
     """
+    suffix = Path(filename or "reference.txt").suffix.lower() or ".txt"
+    with tempfile.TemporaryDirectory(prefix="novel-reference-") as td:
+        path = Path(td) / ("reference" + suffix)
+        path.write_bytes(data)
+
+        if importlib.util.find_spec("docling") is not None:
+            try:
+                from docling.document_converter import DocumentConverter
+                result = DocumentConverter().convert(path)
+                text = result.document.export_to_markdown()
+                if text and text.strip():
+                    return text.strip(), "docling"
+            except Exception:
+                pass
+
+        if importlib.util.find_spec("markitdown") is not None:
+            try:
+                from markitdown import MarkItDown
+                result = MarkItDown().convert(str(path))
+                text = getattr(result, "markdown", None) or getattr(result, "text_content", "")
+                if text and text.strip():
+                    return text.strip(), "markitdown"
+            except Exception:
+                pass
+    return None
+
+
+def extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[str, str]:
+    """Extract reference text and report the backend actually used."""
     name = (filename or "").lower()
     if name.endswith((".txt", ".md")):
-        return data.decode("utf-8", errors="ignore")
+        return data.decode("utf-8", errors="ignore"), "utf8"
+
+    # Complex formats prefer high-fidelity optional readers when installed.
+    if name.endswith((".pdf", ".docx", ".html", ".htm", ".rtf", ".epub")):
+        advanced = _advanced_extract(filename, data)
+        if advanced is not None:
+            return advanced
+
     if name.endswith(".docx"):
         try:
             from docx import Document
-        except ImportError as exc:  # pragma: no cover - depends on env
-            raise ValueError("读取 DOCX 需要 python-docx：pip install python-docx") from exc
+        except ImportError as exc:
+            raise ValueError("读取 DOCX 需要 python-docx，或安装 requirements-extras/reference.txt") from exc
         paragraphs = [p.text for p in Document(io.BytesIO(data)).paragraphs]
         text = "\n".join(paragraphs)
         while "\n\n\n" in text:
             text = text.replace("\n\n\n", "\n\n")
-        return text.strip()
+        return text.strip(), "python-docx"
+
     if name.endswith(".pdf"):
         try:
             from pypdf import PdfReader
-        except ImportError as exc:  # pragma: no cover - depends on env
-            raise ValueError("读取 PDF 需要 pypdf：pip install pypdf") from exc
+        except ImportError as exc:
+            raise ValueError("读取 PDF 需要 pypdf，或安装 requirements-extras/reference.txt") from exc
         pages = [page.extract_text() or "" for page in PdfReader(io.BytesIO(data)).pages]
-        return "\n\n".join(part.strip() for part in pages if part.strip())
-    raise ValueError(f"暂不支持的参考文本格式: {filename or '(未命名)'}；支持 TXT / MD / DOCX / PDF")
+        return "\n\n".join(part.strip() for part in pages if part.strip()), "pypdf"
+
+    if name.endswith((".html", ".htm", ".rtf", ".epub")):
+        raise ValueError(
+            f"读取 {Path(filename).suffix} 需要 Docling 或 MarkItDown："
+            "pip install -r requirements-extras/reference.txt"
+        )
+
+    raise ValueError(
+        f"暂不支持的参考文本格式: {filename or '(未命名)'}；"
+        "支持 TXT / MD / DOCX / PDF / HTML / RTF / EPUB"
+    )
+
+
+def extract_reference_text(filename: str, data: bytes) -> str:
+    return extract_reference_text_with_backend(filename, data)[0]

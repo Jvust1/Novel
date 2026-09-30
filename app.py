@@ -5,11 +5,29 @@ import json
 import streamlit as st
 
 from novel_ai.context import ContextAssembler
-from novel_ai.engine import ChapterResult, NovelEngine
+from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
-from novel_ai.models import Character, MemoryExtraction, StoryBible, StyleFingerprint
+from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
+from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
+from novel_ai.longform_consistency import (
+    aggregate_voice_baseline,
+    behavior_repetition,
+    behavior_review_payload,
+    build_longform_health,
+    character_voice_dna,
+    voice_drift,
+    voice_review_payload,
+)
+from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
+from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
+from novel_ai.reference_similarity import analyze_reference_similarity, similarity_review_payload
+from novel_ai.release_eval import build_release_quality_snapshot
+from novel_ai.recall_backends import recall_backend_capabilities
+from novel_ai.experimental_backends import experimental_backend_matrix
+from novel_ai.story_dna import story_structure_capabilities, story_dna_from_plan
+from novel_ai.story_dna_memory import compare_story_dna, story_dna_review_payload
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -40,6 +58,8 @@ if "last_overlap" not in st.session_state:
     st.session_state.last_overlap = 0.0
 if "last_extraction" not in st.session_state:
     st.session_state.last_extraction = None
+if "last_self_similarity" not in st.session_state:
+    st.session_state.last_self_similarity = []
 
 
 with st.sidebar:
@@ -48,6 +68,14 @@ with st.sidebar:
     model = st.text_input("Model")
     api_key = st.text_input("API Key（只在当前会话使用）", type="password")
     st.caption("密钥不会由本应用写入项目文件。")
+    with st.expander("可选 Recall 后端", expanded=False):
+        st.json(recall_backend_capabilities())
+    with st.expander("实验编排/记忆/优化后端", expanded=False):
+        st.json(experimental_backend_matrix())
+    with st.expander("Story DNA / 中文结构抽取后端", expanded=False):
+        st.json(story_structure_capabilities())
+    with st.expander("长篇分析后端", expanded=False):
+        st.json(analytics_backend_capabilities())
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
@@ -349,6 +377,18 @@ with write_tab:
             plan_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
             plan = ChapterPlan.model_validate(json.loads(plan_json))
             meta = st.session_state.pending_plan_meta
+            story_dna_obj = story_dna_from_plan(plan)
+            dna_history = [
+                row for row in store.load_story_dna_history(project_name)
+                if str(row.get("chapter_id")) != chapter_id
+            ]
+            dna_similarity = compare_story_dna(story_dna_obj.to_dict(), dna_history)
+            behavior_report = behavior_repetition(story_dna_obj.to_dict(), dna_history)
+            draft_context = meta.get("extra", "")
+            if dna_similarity.should_avoid:
+                draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
+            if behavior_report.get("should_avoid"):
+                draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
             draft = engine.draft(
                 bible,
                 plan,
@@ -357,21 +397,41 @@ with write_tab:
                 style_from_state(),
                 int(target_chars),
                 user_notes,
-                meta.get("extra", ""),
+                draft_context,
             )
+            quality = analyze_prose_quality(draft)
+            quality_payload = quality_review_payload(quality)
+            voice_current = character_voice_dna(draft, [c.name for c in characters])
+            voice_baseline = aggregate_voice_baseline([
+                row for row in store.load_voice_dna_history(project_name)
+                if str(row.get("chapter_id")) != chapter_id
+            ])
+            voice_alerts = voice_drift(voice_current, voice_baseline)
+            voice_report = {"current": voice_current, "baseline": voice_baseline, "alerts": voice_alerts}
             review_result = None
             revised = None
             review_after_repair = None
             if mode != "快速草稿":
                 review_result = engine.review(bible, plan, characters, draft)
+                review_result = merge_quality_issues(review_result, quality_payload)
+                review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
+                review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
+                review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
                 if mode == "精修" and review_result.verdict == "revise":
                     revised = engine.repair(draft, review_result, style_from_state())
+                    revised_quality = quality_review_payload(analyze_prose_quality(revised))
                     review_after_repair = engine.review(bible, plan, characters, revised)
+                    review_after_repair = merge_quality_issues(review_after_repair, revised_quality)
             st.session_state.last_result = ChapterResult(
                 plan=plan,
                 draft=draft,
                 review=review_result,
                 ai_flavor=detect_ai_flavor(draft),
+                quality_report=quality_payload,
+                story_dna=story_dna_obj.to_dict(),
+                story_dna_similarity_report=dna_similarity.to_dict(),
+                voice_dna_report=voice_report,
+                behavior_repetition_report=behavior_report,
                 revised=revised,
                 review_after_repair=review_after_repair,
             )
@@ -398,10 +458,20 @@ with write_tab:
                 review=mode != "快速草稿",
                 auto_repair=mode == "精修",
                 extra_context=context.prompt_sections(),
+                reference_hashes=st.session_state.reference_hashes,
+                historical_story_dna=[row for row in store.load_story_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
+                historical_voice_dna=[row for row in store.load_voice_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
             )
             st.session_state.last_result = result
             final_text = result.final_text
             st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
+            previous_chapters = [
+                row for row in store.all_chapter_texts(project_name)
+                if row[0] != store.slugify(chapter_id)
+            ]
+            st.session_state.last_self_similarity = [
+                item.__dict__ for item in near_duplicate_chapters(final_text, previous_chapters)
+            ]
             store.write_chapter(project_name, chapter_id, final_text)
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
@@ -422,6 +492,11 @@ with write_tab:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
         st.text_area("正文", value=result.final_text, height=720)
+        if st.session_state.last_self_similarity:
+            top = st.session_state.last_self_similarity[:3]
+            st.warning("跨章近似重复风险：" + "；".join(
+                f"{row['chapter_id']}={row['score']:.1%}" for row in top
+            ))
         if st.session_state.last_overlap > 0.01:
             st.warning(
                 f"参考文本 18 字符片段哈希重合率 {st.session_state.last_overlap:.2%}，建议检查是否出现不必要的近似复用。"
@@ -436,6 +511,44 @@ with write_tab:
                 st.json(result.review_after_repair.model_dump())
         with st.expander("本地 AI 味信号", expanded=False):
             st.json(result.ai_flavor)
+        if result.quality_report:
+            with st.expander("文本质量门", expanded=False):
+                st.json(result.quality_report)
+        if result.similarity_report:
+            with st.expander("参考相似度保护门", expanded=False):
+                st.json(result.similarity_report)
+        if result.story_dna:
+            with st.expander("Story DNA", expanded=False):
+                st.json(result.story_dna)
+        if result.voice_dna_report:
+            alerts = result.voice_dna_report.get("revised_alerts") or result.voice_dna_report.get("alerts") or []
+            if alerts:
+                st.warning("人物口吻 DNA 漂移：" + "；".join(
+                    f"{row['character']}={row['score']:.1%}" for row in alerts[:3]
+                ))
+            with st.expander("人物口吻 DNA", expanded=False):
+                st.json(result.voice_dna_report)
+        if result.behavior_repetition_report:
+            if result.behavior_repetition_report.get("should_avoid"):
+                st.warning(f"人物行为模式重复：最高 {result.behavior_repetition_report.get('max_score',0):.1%}")
+            with st.expander("人物行为模式重复", expanded=False):
+                st.json(result.behavior_repetition_report)
+        if result.story_dna_similarity_report:
+            score = result.story_dna_similarity_report.get("max_score", 0)
+            if result.story_dna_similarity_report.get("should_avoid"):
+                st.warning(f"历史 Story DNA 套路/事件链近似：最高 {score:.1%}，已把去重约束注入本章生成与审校。")
+            with st.expander("跨章节 Story DNA 重复检测", expanded=False):
+                st.json(result.story_dna_similarity_report)
+        if result.workflow_report:
+            with st.expander("写作流程阶段检查", expanded=False):
+                st.json(result.workflow_report)
+        with st.expander("发布前综合质量快照", expanded=False):
+            previous_for_eval = [row for row in store.all_chapter_texts(project_name) if row[0] != store.slugify(chapter_id)]
+            st.json(build_release_quality_snapshot(
+                result.final_text,
+                reference_hashes=st.session_state.reference_hashes,
+                previous_chapters=previous_for_eval,
+            ).to_dict())
 
         st.divider()
         st.subheader("章节后处理 · 记忆抽取")
@@ -458,14 +571,96 @@ with write_tab:
                 st.session_state.characters = [c.model_dump() for c in new_characters]
                 store.save_story_state(project_name, new_state)
                 store.save_extraction(project_name, extraction.model_dump())
+                graph = build_story_graph(st.session_state.characters, new_state)
+                store.write_json(project_name, "memory/story_graph.json", graph)
+                if result.story_dna:
+                    prior_voice = [
+                        row for row in store.load_voice_dna_history(project_name)
+                        if str(row.get("chapter_id")) != chapter_id
+                    ]
+                    prior_dna = [
+                        row for row in store.load_story_dna_history(project_name)
+                        if str(row.get("chapter_id")) != chapter_id
+                    ]
+                    chapter_order = [str(row.get("chapter_id","")) for row in store.all_chapter_summaries(project_name)]
+                    health = build_longform_health(
+                        current_text=final_text,
+                        character_names=[c["name"] for c in st.session_state.characters if c.get("name")],
+                        voice_history=prior_voice,
+                        current_story_dna=result.story_dna,
+                        story_dna_history=prior_dna,
+                        story_state=new_state,
+                        chapter_order=chapter_order,
+                    )
+                    store.save_voice_dna(project_name, chapter_id, health["voice_dna"])
+                    store.save_longform_health(project_name, health)
+                    store.save_story_dna(project_name, chapter_id, result.story_dna)
+                    analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
+                    store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
                 st.session_state.last_extraction = extraction.model_dump()
-                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要已更新。")
+                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA、人物口吻 DNA 与长篇一致性状态均已更新。")
             except Exception as exc:
                 st.exception(exc)
 
         if st.session_state.last_extraction:
             with st.expander("本次抽取结果", expanded=False):
                 st.json(st.session_state.last_extraction)
+
+    with st.expander("Story DNA 历史库", expanded=False):
+        dna_history = store.load_story_dna_history(project_name)
+        if dna_history:
+            st.json(dna_history[-12:])
+        else:
+            st.info("还没有已持久化的 Story DNA。章节定稿并执行记忆回写后开始累积。")
+
+    with st.expander("全书 Story DNA / 套路分析", expanded=False):
+        dna_history = store.load_story_dna_history(project_name)
+        analytics_history = store.load_chapter_analytics_history(project_name)
+        if dna_history:
+            st.markdown("#### 全书套路统计")
+            st.json(trope_frequency(dna_history))
+            st.markdown("#### Story DNA 聚类")
+            st.json(cluster_story_dna(dna_history))
+            coords = project_story_dna_2d(dna_history)
+            if coords:
+                st.markdown("#### Story DNA 2D 投影")
+                try:
+                    import pandas as pd
+                    st.scatter_chart(pd.DataFrame(coords), x="x", y="y", color=None)
+                except Exception:
+                    st.json(coords)
+        if analytics_history:
+            drift = [item.to_dict() for item in detect_longform_drift(analytics_history)]
+            st.markdown("#### 章节节奏 / 文风漂移")
+            st.json(drift if drift else {"status":"暂无显著漂移"})
+        if not dna_history and not analytics_history:
+            st.info("还没有足够的长期数据。章节定稿并回写后会自动累积。")
+
+    with st.expander("长篇一致性健康状态", expanded=False):
+        health = store.load_longform_health(project_name)
+        if health:
+            if health.get("timeline_contradictions"):
+                st.error(f"检测到 {len(health['timeline_contradictions'])} 个时间线矛盾候选。")
+            if health.get("foreshadow_lifecycle",{}).get("overdue"):
+                st.warning(f"过期伏笔候选：{len(health['foreshadow_lifecycle']['overdue'])}")
+            if health.get("tension_density",{}).get("warnings"):
+                for warning in health["tension_density"]["warnings"]:
+                    st.warning(warning)
+            st.markdown("#### 人物口吻 DNA / 漂移")
+            st.json({
+                "baseline": health.get("voice_baseline",{}),
+                "drift": health.get("voice_drift",[]),
+            })
+            st.markdown("#### 人物行为模式重复")
+            st.json(health.get("behavior_repetition",{}))
+            st.markdown("#### 时间线矛盾")
+            st.json(health.get("timeline_contradictions",[]))
+            st.markdown("#### 伏笔生命周期")
+            st.json(health.get("foreshadow_lifecycle",{}))
+            st.markdown("#### 高潮 / 低谷密度")
+            st.json(health.get("tension_density",{}))
+        else:
+            st.info("尚未生成长篇一致性健康状态；章节定稿并执行记忆回写后自动建立。")
 
     with st.expander("长期记忆状态（story_state）", expanded=False):
         state = store.load_story_state(project_name)
@@ -477,9 +672,20 @@ with write_tab:
 with review_tab:
     st.subheader("独立文本审校")
     review_text = st.text_area("粘贴需要检查的正文", height=500)
-    if st.button("只做本地 AI 味扫描"):
+    if st.button("本地质量门 + AI 味扫描"):
         if review_text.strip():
-            st.json(detect_ai_flavor(review_text))
+            q = analyze_prose_quality(review_text)
+            sim = analyze_reference_similarity(review_text, reference_hashes=st.session_state.reference_hashes)
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.markdown("#### 文本质量门")
+                st.json(q.to_dict())
+            with c2:
+                st.markdown("#### 参考相似度保护")
+                st.json(sim.to_dict())
+            with c3:
+                st.markdown("#### AI 味启发式信号")
+                st.json(detect_ai_flavor(review_text))
         else:
             st.warning("请先粘贴正文。")
 
