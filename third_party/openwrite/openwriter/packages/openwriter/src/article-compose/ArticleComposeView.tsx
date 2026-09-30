@@ -1,0 +1,641 @@
+/**
+ * Article Compose View — X/Twitter article compose experience.
+ *
+ * Layout (top to bottom): cover image → title → byline → body → footer.
+ * Mirrors X's actual article editor UI. No API endpoint — compose here,
+ * copy as HTML, paste into X's article editor.
+ */
+
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { useArticleCopy } from './useArticleCopy';
+import { useAutoGrowTitle } from '../hooks/useAutoGrowTitle';
+import PendingTitleField from '../components/PendingTitleField';
+import XConnectPrompt from '../tweet-compose/XConnectPrompt';
+import './ArticleComposeView.css';
+
+type PostState = 'idle' | 'posting' | 'success' | 'error';
+
+const LS_HANDLE_KEY = 'ow-x-handle';
+const LS_NAME_KEY = 'ow-x-name';
+const DEFAULT_TITLES = new Set(['Untitled', 'New Document', 'Article']);
+
+// ─── Cover Image ────────────────────────────────────────────────
+
+type CoverState = 'empty' | 'prompt' | 'loading' | 'display';
+
+function CoverImage({ src, coverImages }: { src?: string; coverImages?: string[] }) {
+  const [state, setState] = useState<CoverState>(src ? 'display' : 'empty');
+  const [imageSrc, setImageSrc] = useState(src || '');
+  const [images, setImages] = useState<string[]>(coverImages || (src ? [src] : []));
+  const [prompt, setPrompt] = useState('');
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync from props when parent changes them (must handle undefined → reset)
+  useEffect(() => {
+    if (src) {
+      setImageSrc(src);
+      setState('display');
+    } else if (coverImages && coverImages.length > 0) {
+      // No active cover but carousel has images — show the first one
+      setImageSrc(coverImages[0]);
+      setState('display');
+    } else {
+      setImageSrc('');
+      setState('empty');
+      setPrompt('');
+      setError('');
+    }
+  }, [src, coverImages]);
+
+  useEffect(() => {
+    if (coverImages && coverImages.length > 0) {
+      setImages(coverImages);
+    } else {
+      setImages(src ? [src] : []);
+    }
+  }, [coverImages]);
+
+  const currentIndex = imageSrc ? images.indexOf(imageSrc) : -1;
+  const totalImages = images.length;
+  const hasMultiple = totalImages > 1;
+
+  const navigateTo = useCallback((index: number) => {
+    const newSrc = images[index];
+    if (!newSrc) return;
+    setImageSrc(newSrc);
+    // Persist active cover to metadata (include coverImages to prevent shallow-merge loss)
+    fetch('/api/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleContext: { coverImage: newSrc, coverImages: images } }),
+    }).catch(() => {});
+  }, [images]);
+
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) navigateTo(currentIndex - 1);
+  }, [currentIndex, navigateTo]);
+
+  const goNext = useCallback(() => {
+    if (currentIndex < totalImages - 1) navigateTo(currentIndex + 1);
+  }, [currentIndex, totalImages, navigateTo]);
+
+  const generate = useCallback(async () => {
+    if (!prompt.trim()) return;
+    setState('loading');
+    setError('');
+    try {
+      const res = await fetch('/api/image-gen/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || `Generation failed (${res.status})`);
+        setState('prompt');
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.src) {
+        const newImages = [...images, data.src];
+        setImages(newImages);
+        setImageSrc(data.src);
+        setState('display');
+        setPrompt('');
+        // Save both coverImage and coverImages to metadata
+        fetch('/api/metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ articleContext: { coverImage: data.src, coverImages: newImages } }),
+        }).catch(() => {});
+      } else {
+        setError(data.error || 'Generation failed');
+        setState('prompt');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error');
+      setState('prompt');
+    }
+  }, [prompt, images]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') generate();
+    if (e.key === 'Escape') { setState('empty'); setPrompt(''); setError(''); }
+  };
+
+  const openPrompt = () => {
+    setState('prompt');
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const remove = () => {
+    const newImages = images.filter((img) => img !== imageSrc);
+    setImages(newImages);
+    if (newImages.length > 0) {
+      // Show next image, or previous if we removed the last one
+      const nextIndex = Math.min(currentIndex, newImages.length - 1);
+      const nextSrc = newImages[nextIndex];
+      setImageSrc(nextSrc);
+      fetch('/api/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleContext: { coverImage: nextSrc, coverImages: newImages } }),
+      }).catch(() => {});
+    } else {
+      setImageSrc('');
+      setState('empty');
+      fetch('/api/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleContext: { coverImage: null, coverImages: null } }),
+      }).catch(() => {});
+    }
+  };
+
+  const regenerate = () => {
+    setState('prompt');
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = imageSrc;
+    a.download = `cover-${currentIndex + 1}.png`;
+    a.click();
+  };
+
+  if (state === 'display' && imageSrc) {
+    return (
+      <div className="article-cover article-cover--display">
+        <img className="article-cover-img" src={imageSrc} alt="Cover" />
+        <div className="article-cover-overlay">
+          {hasMultiple && (
+            <button className="article-cover-arrow article-cover-arrow--left" onClick={goPrev} disabled={currentIndex <= 0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+          <div className="article-cover-overlay-center">
+            <button className="article-cover-overlay-btn" onClick={regenerate}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg>
+              Regenerate
+            </button>
+            <button className="article-cover-overlay-btn" onClick={download}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              Save
+            </button>
+            <button className="article-cover-overlay-btn article-cover-overlay-btn--danger" onClick={remove}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              Remove
+            </button>
+          </div>
+          {hasMultiple && (
+            <button className="article-cover-arrow article-cover-arrow--right" onClick={goNext} disabled={currentIndex >= totalImages - 1}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          )}
+          {hasMultiple && (
+            <div className="article-cover-counter">{currentIndex + 1} / {totalImages}</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="article-cover article-cover--loading">
+        <div className="article-cover-spinner" />
+        <span className="article-cover-loading-text">Generating cover image...</span>
+      </div>
+    );
+  }
+
+  if (state === 'prompt') {
+    return (
+      <div className="article-cover article-cover--prompt">
+        <div className="article-cover-prompt-row">
+          <input
+            ref={inputRef}
+            className="article-cover-prompt-input"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe your cover image..."
+            spellCheck={false}
+          />
+          <button
+            className="article-cover-prompt-btn"
+            onClick={generate}
+            disabled={!prompt.trim()}
+          >
+            Generate
+          </button>
+          <button
+            className="article-cover-prompt-cancel"
+            onClick={() => { setState(imageSrc ? 'display' : 'empty'); setPrompt(''); setError(''); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+        {error && <div className="article-cover-error">{error}</div>}
+      </div>
+    );
+  }
+
+  // Empty state — placeholder
+  return (
+    <div className="article-cover article-cover--empty" onClick={openPrompt}>
+      <svg className="article-cover-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+      <span className="article-cover-hint">We recommend an image with a 5:2 aspect ratio for best results.</span>
+    </div>
+  );
+}
+
+// ─── Article Byline ─────────────────────────────────────────────
+// Same single-field handle popover as tweet ComposeAvatar.
+// Shares ow-x-handle (+ optional ow-x-name) via localStorage.
+
+function ArticleByline() {
+  const [handle, setHandle] = useState(() => localStorage.getItem(LS_HANDLE_KEY) || '');
+  const [name, setName] = useState(() => localStorage.getItem(LS_NAME_KEY) || '');
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const save = () => {
+    const clean = draft.replace(/^@/, '').trim();
+    if (clean) {
+      localStorage.setItem(LS_HANDLE_KEY, clean);
+      setHandle(clean);
+    }
+    setEditing(false);
+  };
+
+  const open = () => {
+    setDraft(handle);
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  // Close on click outside
+  useEffect(() => {
+    if (!editing) return;
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) save();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [editing, draft]);
+
+  // Sync handle/name from other views (tweet compose) that share the same LS keys
+  useEffect(() => {
+    const handler = () => {
+      setHandle(localStorage.getItem(LS_HANDLE_KEY) || '');
+      setName(localStorage.getItem(LS_NAME_KEY) || '');
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  const avatarUrl = handle ? `https://unavatar.io/twitter/${handle}` : '';
+  const displayName = name || (handle ? handle : 'Set your @handle');
+
+  return (
+    <div className="article-byline" ref={wrapperRef}>
+      <div className="article-byline-row" onClick={open} title={handle ? `@${handle} — click to change` : 'Set your @handle'}>
+        {handle ? (
+          <img className="article-byline-avatar" src={avatarUrl} alt={`@${handle}`} />
+        ) : (
+          <div className="article-byline-avatar article-byline-avatar--empty" />
+        )}
+        <span className="article-byline-name">{displayName}</span>
+        {handle && <span className="article-byline-handle">@{handle}</span>}
+      </div>
+      {editing && (
+        <div className="article-byline-popover">
+          <input
+            ref={inputRef}
+            className="article-byline-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+            placeholder="your_handle"
+            spellCheck={false}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main View ──────────────────────────────────────────────────
+
+interface ArticleComposeViewProps {
+  children: ReactNode;
+  title?: string;
+  onTitleChange?: (title: string) => void;
+  coverImage?: string;
+  coverImages?: string[];
+  lastPost?: { postedAt: string; tweetUrl?: string };
+  /** When the agent has staged a title rename for this doc, render the
+   *  proposed title with pending-insert styling instead of the editable
+   *  input. Accept/reject lives in the right-rail Review panel.
+   *  adr: adr/pending-overlay-model.md */
+  pendingTitle?: { from: string; to: string } | null;
+  /** Active doc id; used to filter ow-pending-review-cursor events so we
+   *  only react to the title focus for THIS doc. */
+  docId?: string;
+  /** Per-doc autoplug opt-out. Absent = eligible (default on). */
+  autoplug?: boolean;
+}
+
+export default function ArticleComposeView({ children, title, onTitleChange, coverImage, coverImages, lastPost, pendingTitle, docId, autoplug }: ArticleComposeViewProps) {
+  const { copyAsHtml, copyState } = useArticleCopy();
+  const [sentState, setSentState] = useState<'idle' | 'done'>(lastPost ? 'done' : 'idle');
+
+  // Title is an auto-growing textarea (not an <input>) so long titles wrap to
+  // multiple lines instead of clipping. Default titles render as the empty
+  // placeholder.
+  const displayTitle = DEFAULT_TITLES.has(title || '') ? '' : title || '';
+  const titleField = useAutoGrowTitle(displayTitle, (next) => onTitleChange?.(next || 'Untitled'));
+
+  // Pending-title decoration + the Review panel's focused-slot gutter /
+  // Modified-Original toggle now live in the shared <PendingTitleField>
+  // (wraps the title <textarea> below). adr: adr/pending-overlay-model.md
+
+  // Mark-as-posted button + URL popover. Same UX as TweetComposeView:
+  // button click toggles posted state, popover captures the URL.
+  // Click-outside or Esc dismisses without saving.
+  const [markPostedUrlOpen, setMarkPostedUrlOpen] = useState(false);
+  const [markPostedUrlValue, setMarkPostedUrlValue] = useState('');
+  const markPostedInputRef = useRef<HTMLInputElement>(null);
+  const markPostedWrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSentState(lastPost ? 'done' : 'idle');
+  }, [lastPost]);
+
+  useEffect(() => {
+    if (!markPostedUrlOpen) return;
+    setTimeout(() => markPostedInputRef.current?.focus(), 0);
+    const handler = (e: MouseEvent) => {
+      if (markPostedWrapperRef.current && !markPostedWrapperRef.current.contains(e.target as Node)) {
+        setMarkPostedUrlOpen(false);
+        setMarkPostedUrlValue('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [markPostedUrlOpen]);
+
+  const submitMarkPosted = useCallback(() => {
+    const url = markPostedUrlValue.trim();
+    const isValid = !url || url.includes('x.com') || url.includes('twitter.com');
+    if (!isValid) return;
+    const postedAt = lastPost?.postedAt ?? new Date().toISOString();
+    const payload = url ? { postedAt, tweetUrl: url } : { postedAt };
+    fetch('/api/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleContext: { lastPost: payload } }),
+      keepalive: true,
+    }).catch(() => {});
+    setSentState('done');
+    setMarkPostedUrlOpen(false);
+    setMarkPostedUrlValue('');
+  }, [markPostedUrlValue, lastPost?.postedAt]);
+
+  const unmarkPosted = useCallback(() => {
+    fetch('/api/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleContext: { lastPost: null } }),
+      keepalive: true,
+    }).catch(() => {});
+    setSentState('idle');
+  }, []);
+
+  // Native "Post to X" — drafts + publishes the article to X. The server
+  // (connection-routes.ts) picks the path: managed platform connection first,
+  // falling through to the direct x-api plugin. It reads the active server doc
+  // + converts it, so the UI just POSTs /api/x/post-article with no body.
+  const [postState, setPostState] = useState<PostState>('idle');
+  const [postError, setPostError] = useState('');
+  const [showConnect, setShowConnect] = useState(false);
+  const [xConnected, setXConnected] = useState<boolean | null>(null);
+  const postTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => { if (postTimer.current) clearTimeout(postTimer.current); }, []);
+
+  // X connection state — /api/x/status is platform-aware (managed connection
+  // OR direct plugin creds). Gates the connect prompt, same as tweet compose.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/x/status')
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setXConnected(!!d.connected); })
+      .catch(() => { if (!cancelled) setXConnected(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const recordPosted = useCallback((url?: string) => {
+    const payload = url ? { postedAt: new Date().toISOString(), tweetUrl: url } : { postedAt: new Date().toISOString() };
+    fetch('/api/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleContext: { lastPost: payload } }),
+      keepalive: true,
+    }).catch(() => {});
+    setSentState('done');
+  }, []);
+
+  const handlePostToX = useCallback(async () => {
+    if (xConnected === false) { setShowConnect(true); return; }
+    setPostState('posting');
+    setPostError('');
+    try {
+      const res = await fetch('/api/x/post-article', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setPostState('success');
+        recordPosted(data.articleUrl);
+        if (postTimer.current) clearTimeout(postTimer.current);
+        postTimer.current = setTimeout(() => setPostState('idle'), 2500);
+      } else {
+        // Surface X's error verbatim — a draft stays private if publish fails.
+        setPostError(data.error || `Post failed (${res.status})`);
+        setPostState('error');
+        if (postTimer.current) clearTimeout(postTimer.current);
+        postTimer.current = setTimeout(() => setPostState('idle'), 5000);
+      }
+    } catch (err: any) {
+      setPostError(err?.message || 'Network error');
+      setPostState('error');
+      if (postTimer.current) clearTimeout(postTimer.current);
+      postTimer.current = setTimeout(() => setPostState('idle'), 5000);
+    }
+  }, [recordPosted, xConnected]);
+
+  // After the user connects X via the inline prompt, retry the post.
+  const handleConnected = useCallback(() => {
+    setShowConnect(false);
+    setXConnected(true);
+    handlePostToX();
+  }, [handlePostToX]);
+
+  const postBtnLabel = postState === 'posting' ? 'Posting…'
+    : postState === 'success' ? 'Posted!'
+    : postState === 'error' ? 'Failed'
+    : 'Post to X';
+
+  // Auto-plug opt-out. Default on (absent flag = eligible). Governs both the
+  // mark-sent and Post/Schedule flows — all consult metadata.autoplug.
+  const autoplugOn = autoplug !== false;
+  const toggleAutoplug = () => {
+    fetch('/api/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autoplug: !autoplugOn }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  const handleMarkSent = useCallback(() => {
+    if (sentState === 'done') {
+      unmarkPosted();
+      setMarkPostedUrlOpen(false);
+      setMarkPostedUrlValue('');
+      return;
+    }
+    setMarkPostedUrlValue(lastPost?.tweetUrl ?? '');
+    setMarkPostedUrlOpen(true);
+  }, [sentState, lastPost?.tweetUrl, unmarkPosted]);
+
+  return (
+    <div className="article-compose-wrapper">
+      <CoverImage src={coverImage} coverImages={coverImages} />
+
+      <div className="article-compose-content">
+        <PendingTitleField pendingTitle={pendingTitle} docId={docId} baseClass="article-title-input">
+          <textarea
+            className="article-title-input"
+            ref={titleField.ref}
+            value={displayTitle}
+            onChange={titleField.onChange}
+            onKeyDown={titleField.onKeyDown}
+            placeholder="Add a title"
+            rows={1}
+            spellCheck={false}
+          />
+        </PendingTitleField>
+
+        <ArticleByline />
+
+        <div className="article-compose-body">
+          {children}
+        </div>
+      </div>
+
+      <div className="article-compose-footer">
+        <div className="article-mark-sent-wrap" ref={markPostedWrapperRef}>
+          <button
+            className={`article-mark-sent-btn${sentState === 'done' ? ' article-mark-sent-btn--done' : ''}`}
+            onClick={handleMarkSent}
+            title={sentState === 'done' ? (lastPost?.tweetUrl ? `Posted — click to unmark (${lastPost.tweetUrl})` : 'Posted — click to unmark') : 'Mark as manually posted'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={sentState === 'done' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><polyline points="8 12 11 15 16 9" stroke={sentState === 'done' ? '#fff' : 'currentColor'} />
+            </svg>
+          </button>
+          {markPostedUrlOpen && (() => {
+            const url = markPostedUrlValue.trim();
+            const isValid = !url || url.includes('x.com') || url.includes('twitter.com');
+            return (
+              <div className="article-mark-sent-url">
+                <input
+                  ref={markPostedInputRef}
+                  type="text"
+                  placeholder="Paste posted tweet URL..."
+                  value={markPostedUrlValue}
+                  onChange={(e) => setMarkPostedUrlValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); submitMarkPosted(); }
+                    if (e.key === 'Escape') { setMarkPostedUrlOpen(false); setMarkPostedUrlValue(''); }
+                  }}
+                />
+                <button onClick={submitMarkPosted} disabled={!isValid} title={url ? 'Save URL' : 'Mark posted without URL'}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            );
+          })()}
+        </div>
+        <button
+          className={`article-autoplug-toggle${autoplugOn ? ' article-autoplug-toggle--on' : ''}`}
+          onClick={toggleAutoplug}
+          title={autoplugOn
+            ? 'Auto-plug ON — engagement autoplugs may reply to this post with your configured promo. Click to opt out.'
+            : 'Auto-plug OFF — this post is excluded from autoplugs. Click to opt in.'}
+        >
+          {autoplugOn ? 'Auto-plug on' : 'Auto-plug off'}
+        </button>
+        {sentState === 'done' && lastPost && (
+          lastPost.tweetUrl ? (
+            <a className="article-sent-status" href={lastPost.tweetUrl} target="_blank" rel="noopener noreferrer">
+              Posted {new Date(lastPost.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </a>
+          ) : (
+            <span className="article-sent-status">
+              Posted {new Date(lastPost.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )
+        )}
+        <button
+          className={`article-post-btn${postState === 'success' ? ' article-post-btn--success' : ''}${postState === 'error' ? ' article-post-btn--error' : ''}`}
+          onClick={handlePostToX}
+          disabled={postState === 'posting'}
+          title="Publish this article to X"
+        >
+          {postBtnLabel}
+        </button>
+        <button
+          className={`article-copy-btn${copyState === 'copied' ? ' article-copy-btn--copied' : ''}`}
+          onClick={copyAsHtml}
+        >
+          {copyState === 'copied' ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              Copied!
+            </>
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+              Copy as HTML
+            </>
+          )}
+        </button>
+      </div>
+
+      {postError && <div className="article-post-error">{postError}</div>}
+
+      {showConnect && (
+        <XConnectPrompt
+          onConnected={handleConnected}
+          onCancel={() => setShowConnect(false)}
+        />
+      )}
+    </div>
+  );
+}

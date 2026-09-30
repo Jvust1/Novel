@@ -1,0 +1,525 @@
+/**
+ * Blog Compose View — structured blog post editing experience.
+ *
+ * Layout: cover image → title → description → metadata bar → body.
+ * Adjustable canvas via style presets (font, width, spacing).
+ * Frontmatter fields stored in blogContext metadata — transformed
+ * to clean YAML on publish (no OpenWriter metadata in output).
+ */
+
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import SchedulePostModal from '../sidebar/SchedulePostModal';
+import PostToBlogModal from '../sidebar/PostToBlogModal';
+import { useAutoGrowTitle } from '../hooks/useAutoGrowTitle';
+import PendingTitleField from '../components/PendingTitleField';
+import './BlogComposeView.css';
+
+// ─── Types ──────────────────────────────────────────────────────
+
+type FontPreset = 'serif' | 'sans' | 'mono';
+type WidthPreset = 'narrow' | 'standard' | 'wide';
+type SpacingPreset = 'compact' | 'comfortable';
+
+interface BlogStyle {
+  font: FontPreset;
+  width: WidthPreset;
+  spacing: SpacingPreset;
+}
+
+export interface BlogContext {
+  active?: boolean;
+  description?: string;
+  date?: string;
+  tags?: string[];
+  author?: string;
+  slug?: string;
+  draft?: boolean;
+  coverImage?: string;
+  coverImages?: string[];
+  style?: Partial<BlogStyle>;
+  // Shape written by the github plugin's post_to_blog writeback
+  // (blog-tools.ts). The live URL is `publishedUrl` — not `url` — and the same
+  // key documents.ts reads to derive the file-tree's postedUrl.
+  lastPublish?: { publishedAt: string; publishedUrl?: string; commit?: string; file?: string };
+}
+
+const DEFAULT_TITLES = new Set(['Untitled', 'New Document', 'Blog']);
+// Stable empty-tags ref so `ctx.tags || EMPTY_TAGS` doesn't churn on every render.
+const EMPTY_TAGS: string[] = [];
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ─── Metadata persistence ───────────────────────────────────────
+
+function saveBlogMeta(partial: Partial<BlogContext>) {
+  fetch('/api/metadata', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ blogContext: partial }),
+  }).catch(() => {});
+}
+
+// ─── Cover Image ────────────────────────────────────────────────
+// Reuses the same pattern as ArticleComposeView's CoverImage
+
+type CoverState = 'empty' | 'prompt' | 'loading' | 'display';
+
+function CoverImage({ src, coverImages }: { src?: string; coverImages?: string[] }) {
+  const [state, setState] = useState<CoverState>(src ? 'display' : 'empty');
+  const [imageSrc, setImageSrc] = useState(src || '');
+  const [images, setImages] = useState<string[]>(coverImages || (src ? [src] : []));
+  const [prompt, setPrompt] = useState('');
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (src) { setImageSrc(src); setState('display'); }
+    else { setImageSrc(''); setState('empty'); setPrompt(''); setError(''); }
+  }, [src]);
+
+  useEffect(() => {
+    if (coverImages && coverImages.length > 0) setImages(coverImages);
+    else setImages(src ? [src] : []);
+  }, [coverImages]);
+
+  const currentIndex = imageSrc ? images.indexOf(imageSrc) : -1;
+  const totalImages = images.length;
+  const hasMultiple = totalImages > 1;
+
+  const navigateTo = useCallback((index: number) => {
+    const newSrc = images[index];
+    if (!newSrc) return;
+    setImageSrc(newSrc);
+    saveBlogMeta({ coverImage: newSrc, coverImages: images });
+  }, [images]);
+
+  const goPrev = useCallback(() => { if (currentIndex > 0) navigateTo(currentIndex - 1); }, [currentIndex, navigateTo]);
+  const goNext = useCallback(() => { if (currentIndex < totalImages - 1) navigateTo(currentIndex + 1); }, [currentIndex, totalImages, navigateTo]);
+
+  const generate = useCallback(async () => {
+    if (!prompt.trim()) return;
+    setState('loading');
+    setError('');
+    try {
+      const res = await fetch('/api/image-gen/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || `Generation failed (${res.status})`);
+        setState('prompt');
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.src) {
+        const newImages = [...images, data.src];
+        setImages(newImages);
+        setImageSrc(data.src);
+        setState('display');
+        setPrompt('');
+        saveBlogMeta({ coverImage: data.src, coverImages: newImages });
+      } else {
+        setError(data.error || 'Generation failed');
+        setState('prompt');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error');
+      setState('prompt');
+    }
+  }, [prompt, images]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') generate();
+    if (e.key === 'Escape') { setState('empty'); setPrompt(''); setError(''); }
+  };
+
+  const openPrompt = () => { setState('prompt'); setTimeout(() => inputRef.current?.focus(), 0); };
+
+  const remove = () => {
+    const newImages = images.filter((img) => img !== imageSrc);
+    setImages(newImages);
+    if (newImages.length > 0) {
+      const nextIndex = Math.min(currentIndex, newImages.length - 1);
+      const nextSrc = newImages[nextIndex];
+      setImageSrc(nextSrc);
+      saveBlogMeta({ coverImage: nextSrc, coverImages: newImages });
+    } else {
+      setImageSrc('');
+      setState('empty');
+      saveBlogMeta({ coverImage: undefined, coverImages: undefined });
+    }
+  };
+
+  const regenerate = () => { setState('prompt'); setTimeout(() => inputRef.current?.focus(), 0); };
+
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = imageSrc;
+    a.download = `cover-${currentIndex + 1}.png`;
+    a.click();
+  };
+
+  if (state === 'display' && imageSrc) {
+    return (
+      <div className="blog-cover blog-cover--display">
+        <img className="blog-cover-img" src={imageSrc} alt="Cover" />
+        <div className="blog-cover-overlay">
+          {hasMultiple && (
+            <button className="blog-cover-arrow blog-cover-arrow--left" onClick={goPrev} disabled={currentIndex <= 0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+          <div className="blog-cover-overlay-center">
+            <button className="blog-cover-btn" onClick={regenerate}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg>
+              Regenerate
+            </button>
+            <button className="blog-cover-btn" onClick={download}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              Save
+            </button>
+            <button className="blog-cover-btn blog-cover-btn--danger" onClick={remove}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              Remove
+            </button>
+          </div>
+          {hasMultiple && (
+            <button className="blog-cover-arrow blog-cover-arrow--right" onClick={goNext} disabled={currentIndex >= totalImages - 1}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          )}
+          {hasMultiple && <div className="blog-cover-counter">{currentIndex + 1} / {totalImages}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="blog-cover blog-cover--loading">
+        <div className="blog-cover-spinner" />
+        <span className="blog-cover-loading-text">Generating cover image...</span>
+      </div>
+    );
+  }
+
+  if (state === 'prompt') {
+    return (
+      <div className="blog-cover blog-cover--prompt">
+        <div className="blog-cover-prompt-row">
+          <input
+            ref={inputRef}
+            className="blog-cover-prompt-input"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe your cover image..."
+            spellCheck={false}
+          />
+          <button className="blog-cover-prompt-btn" onClick={generate} disabled={!prompt.trim()}>Generate</button>
+          <button className="blog-cover-prompt-cancel" onClick={() => { setState(imageSrc ? 'display' : 'empty'); setPrompt(''); setError(''); }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+        {error && <div className="blog-cover-error">{error}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="blog-cover blog-cover--empty" onClick={openPrompt}>
+      <svg className="blog-cover-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+      <span className="blog-cover-hint">Add a featured image</span>
+    </div>
+  );
+}
+
+// ─── Tag Input ──────────────────────────────────────────────────
+
+function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [input, setInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const addTag = (value: string) => {
+    const tag = value.trim().toLowerCase();
+    if (tag && !tags.includes(tag)) onChange([...tags, tag]);
+    setInput('');
+  };
+
+  const removeTag = (tag: string) => onChange(tags.filter(t => t !== tag));
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(input); }
+    if (e.key === 'Backspace' && !input && tags.length > 0) removeTag(tags[tags.length - 1]);
+  };
+
+  return (
+    <div className="blog-tags" onClick={() => inputRef.current?.focus()}>
+      {tags.map(tag => (
+        <span key={tag} className="blog-tag">
+          {tag}
+          <button className="blog-tag-remove" onClick={(e) => { e.stopPropagation(); removeTag(tag); }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        className="blog-tag-input"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={() => { if (input.trim()) addTag(input); }}
+        placeholder={tags.length === 0 ? 'Add tags...' : ''}
+        spellCheck={false}
+      />
+    </div>
+  );
+}
+
+// ─── Main View ──────────────────────────────────────────────────
+
+interface BlogComposeViewProps {
+  children: ReactNode;
+  title?: string;
+  onTitleChange?: (title: string) => void;
+  blogContext?: BlogContext;
+  filename?: string;
+  /** Agent's staged title rename for this doc, or null when none. Renders the
+   *  shared pending-title decoration in place of the editable title.
+   *  adr: adr/pending-overlay-model.md */
+  pendingTitle?: { from: string; to: string } | null;
+  /** Active doc id — filters ow-pending-review-cursor events to THIS doc. */
+  docId?: string;
+}
+
+export default function BlogComposeView({ children, title, onTitleChange, blogContext, filename, pendingTitle, docId }: BlogComposeViewProps) {
+  const ctx = blogContext || {};
+  const canSave = !!blogContext?.active;
+
+  // Title is an auto-growing textarea (not an <input>) so long titles wrap to
+  // multiple lines instead of clipping. Default titles render as placeholder.
+  const displayTitle = DEFAULT_TITLES.has(title || '') ? '' : title || '';
+  const titleField = useAutoGrowTitle(displayTitle, (next) => onTitleChange?.(next || 'Untitled'));
+
+  // Text inputs keep local typing buffers — saved onBlur, not on every keystroke.
+  const [description, setDescription] = useState(ctx.description || '');
+  const [date, setDate] = useState(ctx.date || todayISO());
+  const [author, setAuthor] = useState(ctx.author || '');
+  const [slug, setSlug] = useState(ctx.slug || '');
+  const [slugManual, setSlugManual] = useState(!!ctx.slug);
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [metaOpen, setMetaOpen] = useState(false);
+  const [hasBlogSites, setHasBlogSites] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+
+  // Fields that change via discrete actions (tag add/remove, draft toggle) are
+  // read directly from `ctx` and written via handlers — no local mirror, so a
+  // metadata broadcast never round-trips into another save.
+  // adr: adr/blog-compose-save-loop.md
+  const tags = ctx.tags || EMPTY_TAGS;
+  const draft = ctx.draft ?? false;
+
+  // Reset typing buffers when the active doc switches.
+  useEffect(() => {
+    setDescription(ctx.description || '');
+    setDate(ctx.date || todayISO());
+    setAuthor(ctx.author || '');
+    setSlug(ctx.slug || '');
+    setSlugManual(!!ctx.slug);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filename]);
+
+  // Check if any blog sites are registered via the github plugin.
+  // Drives whether the footer Publish button renders.
+  useEffect(() => {
+    fetch('/api/mcp-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: 'list_blog_sites', arguments: {} }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const result = data?.content?.[0]?.text ? JSON.parse(data.content[0].text) : data;
+        setHasBlogSites(Array.isArray(result?.sites) && result.sites.length > 0);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Auto-derive slug from title unless manually edited
+  useEffect(() => {
+    if (!slugManual && title && !DEFAULT_TITLES.has(title)) {
+      setSlug(slugify(title));
+    }
+  }, [title, slugManual]);
+
+  // Persist text-buffer fields on blur.
+  const saveFields = useCallback(() => {
+    if (canSave) saveBlogMeta({ description, date, author, slug });
+  }, [canSave, description, date, author, slug]);
+
+  const descCharCount = description.length;
+  const descOverLimit = descCharCount > 160;
+
+  // Editor surface inherits the global Appearance panel's typeface + spacing
+  // (data-typeface / data-spacing on documentElement) like every other editor.
+  // The blog has no per-doc font/width/spacing axis — those only ever restyled
+  // the editor, never the published Astro output, which made them misleading.
+  const wrapperClass = 'blog-compose-wrapper';
+
+  return (
+    <div className={wrapperClass}>
+      <CoverImage src={ctx.coverImage} coverImages={ctx.coverImages} />
+
+      <div className="blog-compose-content">
+        {ctx.lastPublish?.publishedAt && (
+          <a
+            className="blog-published-status"
+            href={ctx.lastPublish.publishedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={ctx.lastPublish.publishedUrl || 'Published'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Published {new Date(ctx.lastPublish.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </a>
+        )}
+        <PendingTitleField pendingTitle={pendingTitle} docId={docId} baseClass="blog-title-input">
+          <textarea
+            className="blog-title-input"
+            ref={titleField.ref}
+            value={displayTitle}
+            onChange={titleField.onChange}
+            onKeyDown={titleField.onKeyDown}
+            placeholder="Post title"
+            rows={1}
+            spellCheck={false}
+          />
+        </PendingTitleField>
+
+        <div className="blog-description-wrap">
+          <textarea
+            className={`blog-description-input${descOverLimit ? ' over-limit' : ''}`}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={saveFields}
+            placeholder="Write a short description for SEO and social previews..."
+            rows={2}
+            spellCheck={false}
+          />
+          <span className={`blog-description-count${descOverLimit ? ' over-limit' : ''}`}>
+            {descCharCount}/160
+          </span>
+        </div>
+
+        <div className="blog-meta-toggle" onClick={() => setMetaOpen(o => !o)}>
+          <svg className={`blog-meta-chevron${metaOpen ? ' open' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span>Metadata</span>
+          {draft && <span className="blog-draft-badge">Draft</span>}
+        </div>
+
+        {metaOpen && (
+          <div className="blog-meta-fields">
+            <div className="blog-meta-row">
+              <label className="blog-meta-label">Date</label>
+              <input type="date" className="blog-meta-input" value={date} onChange={(e) => setDate(e.target.value)} onBlur={saveFields} />
+            </div>
+            <div className="blog-meta-row">
+              <label className="blog-meta-label">Author</label>
+              <input type="text" className="blog-meta-input" value={author} onChange={(e) => setAuthor(e.target.value)} onBlur={saveFields} placeholder="Author name" spellCheck={false} />
+            </div>
+            <div className="blog-meta-row">
+              <label className="blog-meta-label">Slug</label>
+              <input
+                type="text"
+                className="blog-meta-input"
+                value={slug}
+                onChange={(e) => { setSlugManual(true); setSlug(e.target.value); }}
+                onBlur={saveFields}
+                placeholder="auto-generated-from-title"
+                spellCheck={false}
+              />
+            </div>
+            <div className="blog-meta-row">
+              <label className="blog-meta-label">Tags</label>
+              <TagInput tags={tags} onChange={(newTags) => { if (canSave) saveBlogMeta({ tags: newTags }); }} />
+            </div>
+            <div className="blog-meta-row">
+              <label className="blog-meta-label">Draft</label>
+              <button
+                className={`blog-draft-toggle${draft ? ' active' : ''}`}
+                onClick={() => { if (canSave) saveBlogMeta({ draft: !draft }); }}
+              >
+                <div className="blog-draft-toggle-knob" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="blog-compose-body">{children}</div>
+      </div>
+
+      <div className="blog-compose-footer">
+        {filename && (
+          <div className="blog-footer-actions">
+            {hasBlogSites && (
+              <button className="blog-footer-btn blog-footer-btn--primary" onClick={() => setShowPublishModal(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                </svg>
+                {/* Mirror the file-tree context menu: once published (lastPublish
+                    has a live URL), this becomes "Republish". */}
+                {ctx.lastPublish?.publishedUrl ? 'Republish' : 'Publish'}
+              </button>
+            )}
+            <button className="blog-footer-btn" onClick={() => setShowScheduleModal(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+              Schedule
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showScheduleModal && filename && (
+        <SchedulePostModal
+          filename={filename}
+          title={title || 'Untitled'}
+          onClose={() => setShowScheduleModal(false)}
+        />
+      )}
+
+      {showPublishModal && filename && (
+        <PostToBlogModal
+          filename={filename}
+          title={title || 'Untitled'}
+          isActive={true}
+          onSwitchDocument={() => { /* compose view is already on the active doc */ }}
+          onClose={() => setShowPublishModal(false)}
+        />
+      )}
+    </div>
+  );
+}
