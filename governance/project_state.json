@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "llamaindex-recall-v0.13",
-  "version": "0.13.0-dev",
+  "stage": "sbert-recall-fusion-v0.11",
+  "version": "0.11.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "A/B local Sentence Transformers recall against lexical/FAISS/Qdrant on frozen long-form memory cases",
     "A/B LlamaIndex VectorStoreIndex recall against local semantic, Qdrant and GraphRAG on frozen long-form cases",
     "A/B spaCy entity extraction + RapidFuzz alias-drift precision on frozen Chinese long-form chapters",
     "validate GraphRAG corpus export and long-range story retrieval on frozen multi-chapter samples",
@@ -137,7 +138,8 @@
     "spaCy PERSON entity extraction and character-consistency review hook with explicit alias handling",
     "GraphRAG text-corpus exporter for Novel story graph nodes, relationships and chapter summaries",
     "RapidFuzz entity alias/name drift adapter layered after canonical/spaCy extraction and fused into longform health",
-    "LlamaIndex VectorStoreIndex RecallBackend behind Novel's shared recall contract"
+    "LlamaIndex VectorStoreIndex RecallBackend behind Novel's shared recall contract",
+    "local-first Sentence Transformers RecallBackend factory preserving RecallDocument provenance"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -153,7 +155,7 @@
     "wire hierarchical outline + market review + release pack into the Streamlit author workflow",
     "keep originality and human-feel quality as publishability gates rather than detector-gaming targets"
   ],
-  "updated_at": "2026-09-30",
+  "updated_at": "2026-10-01",
   "last_sync": {
     "github_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
     "github_ci": "success",
