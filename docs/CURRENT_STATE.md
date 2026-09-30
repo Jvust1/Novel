@@ -1,3 +1,12 @@
+## 2026-09-30 — Story DNA and Chinese structure fusion
+
+- Pinned chinese-novelist-skill, OpenSPG/KAG and PaddleNLP.
+- Added deterministic Story DNA derived from the approved chapter plan: objective/opposition/choice/cost/state-change/event sequence/hook structure.
+- Added workflow phase guards for planning and draft stages, absorbing the useful multi-phase workflow idea without replacing Novel's own engine.
+- Added explicit opt-in PaddleNLP UIE adapter for人物/地点/事件/目标/阻力/选择/代价/伏笔 extraction. It is never auto-initialized because model downloads are heavy.
+- Added neutral Story Graph → KAG record export. Novel keeps JSON as its canonical graph format and can feed KAG only when an experiment explicitly enables it.
+- Workspace now exposes Story DNA and structure-backend availability.
+
 ## 2026-09-30 — orchestration and optimization experiment layer
 
 - Pinned Mem0, LlamaIndex, LangChain, Haystack, Chroma and DSPy as reviewed submodules.

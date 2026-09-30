@@ -26,6 +26,8 @@ from .provider import OpenAICompatibleProvider
 from .quality_gate import analyze_prose_quality, quality_review_payload
 from .reference_similarity import analyze_reference_similarity, similarity_review_payload
 from .style_engine import detect_ai_flavor
+from .story_dna import story_dna_from_plan
+from .workflow_guard import workflow_summary
 
 
 _JSON_BLOCK = re.compile(r"\{.*\}", re.S)
@@ -75,6 +77,8 @@ class ChapterResult:
     ai_flavor: dict[str, Any]
     quality_report: dict[str, Any] | None = None
     similarity_report: dict[str, Any] | None = None
+    story_dna: dict[str, Any] | None = None
+    workflow_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
@@ -247,6 +251,8 @@ class NovelEngine:
             extra_context,
         )
         local_signals = detect_ai_flavor(draft)
+        story_dna = story_dna_from_plan(plan).to_dict()
+        workflow_report = workflow_summary(plan, draft, target_chars=target_chars)
         quality = analyze_prose_quality(draft)
         quality_payload = quality_review_payload(quality)
         similarity_payload = similarity_review_payload(
@@ -269,6 +275,8 @@ class NovelEngine:
             ai_flavor=local_signals,
             quality_report=quality_payload,
             similarity_report=similarity_payload,
+            story_dna=story_dna,
+            workflow_report=workflow_report,
             revised=revised,
             review_after_repair=review_after_repair,
         )

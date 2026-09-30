@@ -16,6 +16,7 @@ from novel_ai.reference_similarity import analyze_reference_similarity, similari
 from novel_ai.release_eval import build_release_quality_snapshot
 from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
+from novel_ai.story_dna import story_structure_capabilities
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -60,6 +61,8 @@ with st.sidebar:
         st.json(recall_backend_capabilities())
     with st.expander("实验编排/记忆/优化后端", expanded=False):
         st.json(experimental_backend_matrix())
+    with st.expander("Story DNA / 中文结构抽取后端", expanded=False):
+        st.json(story_structure_capabilities())
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
@@ -473,6 +476,12 @@ with write_tab:
         if result.similarity_report:
             with st.expander("参考相似度保护门", expanded=False):
                 st.json(result.similarity_report)
+        if result.story_dna:
+            with st.expander("Story DNA", expanded=False):
+                st.json(result.story_dna)
+        if result.workflow_report:
+            with st.expander("写作流程阶段检查", expanded=False):
+                st.json(result.workflow_report)
         with st.expander("发布前综合质量快照", expanded=False):
             previous_for_eval = [row for row in store.all_chapter_texts(project_name) if row[0] != store.slugify(chapter_id)]
             st.json(build_release_quality_snapshot(

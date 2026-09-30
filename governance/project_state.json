@@ -64,7 +64,13 @@
     "DeepEval/Ragas exposed as opt-in evaluator capabilities",
     "HanLP exposed as optional Chinese NLP backend without implicit downloads",
     "unified experimental backend matrix for mem0/llama-index/langchain/haystack/chroma/dspy",
-    "explicit backend chooser keeps novel-core as fallback and never silently enables heavy frameworks"
+    "explicit backend chooser keeps novel-core as fallback and never silently enables heavy frameworks",
+    "deterministic Story DNA profile derived from approved ChapterPlan",
+    "workflow phase guard for planning and draft validation",
+    "explicit PaddleNLP UIE adapter for Chinese story structure extraction",
+    "portable Story Graph to KAG record export",
+    "story structure capability matrix for PaddleNLP/KAG/DeepKE",
+    "chinese-novelist-skill pinned and absorbed as workflow concepts rather than direct core dependency"
   ],
   "frozen": false,
   "blocking_issues": [],

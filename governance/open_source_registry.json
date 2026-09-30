@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 52,
+    "total": 54,
     "p0": 14,
-    "p1": 23,
+    "p1": 25,
     "no_license": 2,
     "agpl": 2
   },
@@ -48,7 +48,7 @@
       "repo": "PenglongHuang/chinese-novelist-skill",
       "category": "story_generation",
       "license": "MIT",
-      "mode": "research-port",
+      "mode": "git-submodule+research-port",
       "priority": "P1",
       "use": "中文小说问答、偏好记忆、断点续写与校验流程"
     },
@@ -483,6 +483,24 @@
       "mode": "git-submodule+adapter",
       "priority": "P1",
       "use": "本地高性能向量 Recall；LocalSemanticRecall 可选加速"
+    },
+    {
+      "key": "paddlenlp",
+      "repo": "PaddlePaddle/PaddleNLP",
+      "category": "chinese_nlp",
+      "license": "Apache-2.0",
+      "mode": "git-submodule+experiment-candidate",
+      "priority": "P1",
+      "use": "中文 UIE/分词/知识抽取候选，用于 Story DNA"
+    },
+    {
+      "key": "kag",
+      "repo": "OpenSPG/KAG",
+      "category": "story_structure",
+      "license": "Apache-2.0",
+      "mode": "git-submodule+experiment-candidate",
+      "priority": "P1",
+      "use": "Story Graph / 知识增强检索候选；先使用中立 JSON 记录接口"
     }
   ]
 }
