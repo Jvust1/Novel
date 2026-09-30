@@ -20,7 +20,7 @@
       "artifact_id": "novel-openwrite-mass-import-20260930",
       "type": "github_source_integration",
       "branch": "feat/openwrite-mass-import-20260929",
-      "status": "WORK_BRANCH_ACTIVE",
+      "status": "DRAFT_PR_OPEN_CI_INFRA_NOT_STARTED",
       "source_files_total": 766,
       "upstreams": [
         {
@@ -48,7 +48,9 @@
           "mode": "reference-only"
         }
       ],
-      "main_modified": false
+      "main_modified": false,
+      "pr_number": 26,
+      "ci_run_id": 36658882876
     }
   ],
   "notes": [

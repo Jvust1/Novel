@@ -78,6 +78,20 @@
       "openwriter": 465
     },
     "source_files_total": 766,
-    "main_modified": false
+    "main_modified": false,
+    "pr": {
+      "number": 26,
+      "url": "https://github.com/Jvust/Novel/pull/26",
+      "draft": true,
+      "mergeable": true
+    },
+    "ci": {
+      "run_id": 36658882876,
+      "status": "INFRA_NOT_STARTED",
+      "job_id": 109709020142,
+      "runner_id": 0,
+      "steps": 0,
+      "note": "GitHub Actions job failed before runner allocation; no test steps executed and no job log blob exists."
+    }
   }
 }

@@ -11,6 +11,7 @@
 - 新增 `novel_ai/quality_gate.py`：面向中文长篇的确定性完成/审稿质量门；章节与审稿通过 SHA-256 绑定，检查章节长度、审稿证据、跨章重复段落，并把跨章重复句作为 advisory。
 - 新增 `scripts/run_quality_gate.py` 与 `tests/test_quality_gate.py`。
 - 开源登记从 38 项扩展为 **42 项**。
+- Draft PR **#26** 已打开且 mergeable=true；`main` 未修改。CI run `36658882876` 在 runner 分配前失败（runner_id=0、steps=[]），因此标记为 **INFRA_NOT_STARTED**，不是代码测试失败。
 
 
 ## 2026-09-28（成果同步）
