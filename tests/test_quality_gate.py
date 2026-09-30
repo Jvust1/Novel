@@ -2,7 +2,7 @@ from novel_ai.quality_gate import analyze_prose_quality, normalize_chinese, qual
 
 
 def test_quality_gate_detects_repeated_sentences():
-    text = ("他推开门。屋里没人。\n" * 12) + "她在楼下等着。"
+    text = ("他推开了房门。屋里没有一个人。\n" * 12) + "她在楼下等着。"
     report = analyze_prose_quality(text)
     assert report.repeated_sentence_ratio > 0
     assert any(i.category == "重复句" for i in report.issues)
@@ -41,3 +41,8 @@ def test_bigram_diversity_counts_unique_hashable_pairs():
     assert _bigram_diversity("甲乙丙") == 1.0
     assert _bigram_diversity("甲乙甲乙") == 0.6667
     assert _bigram_diversity("甲，乙\n甲，乙。") == 0.6667
+
+
+def test_short_sentences_do_not_trigger_repetition_threshold():
+    report = analyze_prose_quality("他推开门。屋里没人。\n" * 12)
+    assert report.repeated_sentence_ratio == 0.0
