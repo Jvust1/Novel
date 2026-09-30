@@ -5,6 +5,7 @@ from typing import Any
 
 from .models import StoryBible
 from .storage import ProjectStore
+from .token_budget import TokenCounter
 
 
 @dataclass
@@ -45,12 +46,18 @@ class ContextAssembler:
         canon_char_budget: int = 1600,
         recall_char_budget: int = 1200,
         recall_summary_chars: int = 80,
+        token_counter: TokenCounter | None = None,
+        canon_token_budget: int | None = None,
+        recall_token_budget: int | None = None,
     ):
         self.store = store
         self.project = project
         self.canon_char_budget = canon_char_budget
         self.recall_char_budget = recall_char_budget
         self.recall_summary_chars = recall_summary_chars
+        self.token_counter = token_counter
+        self.canon_token_budget = canon_token_budget
+        self.recall_token_budget = recall_token_budget
 
     def assemble(
         self,
@@ -72,7 +79,7 @@ class ContextAssembler:
             canon_lines.append("未回收线索：\n" + "\n".join(f"- {t}" for t in threads))
         canon_text = "\n\n".join(canon_lines)
         context.canon_block = (
-            f"【Canon 长期记忆（硬约束，不得矛盾）】\n{_clip(canon_text, self.canon_char_budget)}"
+            f"【Canon 长期记忆（硬约束，不得矛盾）】\n{(self.token_counter.clip(canon_text, self.canon_token_budget) if self.token_counter is not None and self.canon_token_budget is not None else _clip(canon_text, self.canon_char_budget))}"
             if canon_text
             else ""
         )
@@ -109,6 +116,6 @@ class ContextAssembler:
                 for row in older
             ]
             recall_text = "更早章节（仅一行回顾，细节以已确立事实为准）：\n" + "\n".join(recall_lines)
-            context.recall_block = f"【Recall 历史回顾】\n{_clip(recall_text, self.recall_char_budget)}"
+            context.recall_block = f"【Recall 历史回顾】\n{(self.token_counter.clip(recall_text, self.recall_token_budget) if self.token_counter is not None and self.recall_token_budget is not None else _clip(recall_text, self.recall_char_budget))}"
 
         return context

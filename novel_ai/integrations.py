@@ -75,6 +75,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("chroma", "chroma-core/chroma", "vector_store", "Apache-2.0", "git-submodule+experiment-candidate", "local vector store", "chromadb", "chromadb"),
     IntegrationSpec("qdrant", "qdrant/qdrant", "vector_store", "Apache-2.0", "experiment-candidate", "production vector database", "qdrant-client", "qdrant_client"),
     IntegrationSpec("litellm", "BerriAI/litellm", "model_routing", "MIT-core", "adapter+direct-optional", "Novel provider adapter with primary+fallback model routing across 100+ LLM providers", "litellm", "litellm"),
+    IntegrationSpec("tiktoken", "openai/tiktoken", "context_budget", "MIT", "adapter+direct-optional", "token-aware Canon/Recall clipping with deterministic char fallback", "tiktoken", "tiktoken"),
     IntegrationSpec("ollama", "ollama/ollama", "model_runtime", "MIT", "external-runtime", "local model runtime", "ollama", "ollama"),
     IntegrationSpec("vllm", "vllm-project/vllm", "model_runtime", "Apache-2.0", "external-runtime", "high-throughput OpenAI-compatible model serving", "vllm", "vllm"),
     IntegrationSpec("sglang", "sgl-project/sglang", "model_runtime", "Apache-2.0", "external-runtime+openai-compatible", "high-throughput self-hosted inference exposed through Novel ProviderConfig", "", ""),
