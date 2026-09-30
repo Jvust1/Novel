@@ -53,7 +53,10 @@
     "high-fidelity reference reader chain: Docling -> MarkItDown -> python-docx/pypdf fallback",
     "Reference Pack records the actual extraction backend per source",
     "preferred semantic encoder selector: FlagEmbedding -> text2vec -> char-ngram fallback",
-    "DeepKE pinned as opt-in Story DNA entity/relation/event extraction candidate"
+    "DeepKE pinned as opt-in Story DNA entity/relation/event extraction candidate",
+    "cross-chapter near-duplicate screening with datasketch MinHash and fuzzy fallback",
+    "portable Story Graph snapshot for characters/events/foreshadowing with optional NetworkX validation",
+    "experimental QdrantRecallStore adapter retained behind A/B gate"
   ],
   "frozen": false,
   "blocking_issues": [],

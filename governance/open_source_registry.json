@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 48,
-    "p0": 13,
-    "p1": 20,
+    "total": 51,
+    "p0": 14,
+    "p1": 22,
     "no_license": 2,
     "agpl": 2
   },
@@ -447,6 +447,33 @@
       "mode": "git-submodule+experiment-candidate",
       "priority": "P1",
       "use": "人物实体、关系、事件结构抽取候选，用于 Story DNA；重依赖后端只在实验开关下启用"
+    },
+    {
+      "key": "datasketch",
+      "repo": "ekzhu/datasketch",
+      "category": "originality",
+      "license": "MIT",
+      "mode": "git-submodule+adapter",
+      "priority": "P0",
+      "use": "MinHash 跨章近似重复检测"
+    },
+    {
+      "key": "networkx",
+      "repo": "networkx/networkx",
+      "category": "story_structure",
+      "license": "BSD-3-Clause",
+      "mode": "git-submodule+adapter",
+      "priority": "P1",
+      "use": "人物/事件/伏笔 Story Graph"
+    },
+    {
+      "key": "qdrant_client",
+      "repo": "qdrant/qdrant-client",
+      "category": "memory_retrieval",
+      "license": "Apache-2.0",
+      "mode": "git-submodule+adapter",
+      "priority": "P1",
+      "use": "可选语义 Recall 存储，需 A/B 证明收益后启用"
     }
   ]
 }

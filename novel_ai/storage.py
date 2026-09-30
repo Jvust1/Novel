@@ -50,6 +50,13 @@ class ProjectStore:
         path.write_text(text.strip() + "\n", encoding="utf-8")
         return path
 
+    def all_chapter_texts(self, project: str) -> list[tuple[str, str]]:
+        chapter_dir = self.project_dir(project) / "chapters"
+        rows: list[tuple[str, str]] = []
+        for path in sorted(chapter_dir.glob("*.md")):
+            rows.append((path.stem, path.read_text(encoding="utf-8")))
+        return rows
+
     def recent_chapter_summaries(self, project: str, limit: int = 4) -> list[dict[str, Any]]:
         rows = self.all_chapter_summaries(project)
         return rows[-limit:]

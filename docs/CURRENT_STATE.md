@@ -1,3 +1,11 @@
+## 2026-09-30 — long-form graph and self-repetition fusion
+
+- Added pinned datasketch, NetworkX and qdrant-client submodules.
+- Every generated chapter can now be screened against prior local chapters; datasketch MinHash is used when installed, otherwise Novel falls back to its fuzzy similarity layer.
+- Post-chapter memory writeback now also emits a portable `memory/story_graph.json` containing characters, relationships, timeline events and foreshadowing nodes.
+- NetworkX is optional and only validates/deduplicates the graph; the persisted format stays plain JSON.
+- Added an opt-in QdrantRecallStore adapter. It does not replace Canon/Active/Recall unless a future frozen A/B test proves a gain.
+
 ## 2026-09-30 — high-fidelity reference and semantic fusion
 
 - Pinned MarkItDown, Docling, text2vec, FlagEmbedding, RapidFuzz and DeepKE as reviewed upstream submodules.

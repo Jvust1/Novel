@@ -7,6 +7,7 @@ import streamlit as st
 from novel_ai.context import ContextAssembler
 from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
+from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
 from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
@@ -42,6 +43,8 @@ if "last_overlap" not in st.session_state:
     st.session_state.last_overlap = 0.0
 if "last_extraction" not in st.session_state:
     st.session_state.last_extraction = None
+if "last_self_similarity" not in st.session_state:
+    st.session_state.last_self_similarity = []
 
 
 with st.sidebar:
@@ -411,6 +414,13 @@ with write_tab:
             st.session_state.last_result = result
             final_text = result.final_text
             st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
+            previous_chapters = [
+                row for row in store.all_chapter_texts(project_name)
+                if row[0] != store.slugify(chapter_id)
+            ]
+            st.session_state.last_self_similarity = [
+                item.__dict__ for item in near_duplicate_chapters(final_text, previous_chapters)
+            ]
             store.write_chapter(project_name, chapter_id, final_text)
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
@@ -431,6 +441,11 @@ with write_tab:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
         st.text_area("正文", value=result.final_text, height=720)
+        if st.session_state.last_self_similarity:
+            top = st.session_state.last_self_similarity[:3]
+            st.warning("跨章近似重复风险：" + "；".join(
+                f"{row['chapter_id']}={row['score']:.1%}" for row in top
+            ))
         if st.session_state.last_overlap > 0.01:
             st.warning(
                 f"参考文本 18 字符片段哈希重合率 {st.session_state.last_overlap:.2%}，建议检查是否出现不必要的近似复用。"
@@ -473,6 +488,8 @@ with write_tab:
                 st.session_state.characters = [c.model_dump() for c in new_characters]
                 store.save_story_state(project_name, new_state)
                 store.save_extraction(project_name, extraction.model_dump())
+                graph = build_story_graph(st.session_state.characters, new_state)
+                store.write_json(project_name, "memory/story_graph.json", graph)
                 st.session_state.last_extraction = extraction.model_dump()
                 st.success("记忆已抽取并回写：人物卡、story_state、章节摘要已更新。")
             except Exception as exc:
