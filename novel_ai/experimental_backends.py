@@ -41,6 +41,7 @@ EXPERIMENTAL_BACKENDS: tuple[ExperimentalBackend, ...] = (
     ExperimentalBackend("agent_framework", "agent_framework", "orchestration", "production multi-agent editorial workflow"),
     ExperimentalBackend("deepeval", "deepeval", "evaluation", "LLM regression metrics"),
     ExperimentalBackend("langfuse", "langfuse", "observability", "trace-linked regression scores"),
+    ExperimentalBackend("litellm", "litellm", "model_routing", "multi-provider primary/fallback routing"),
 )
 
 
