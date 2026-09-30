@@ -1,0 +1,350 @@
+.newsletter-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.newsletter-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  max-width: 90vw;
+  overflow: hidden;
+}
+
+.newsletter-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.newsletter-modal__header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-dark);
+}
+
+.newsletter-modal__close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--ink-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.newsletter-modal__close:hover {
+  background: var(--bg-hover);
+  color: var(--ink-dark);
+}
+
+.newsletter-modal__body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.newsletter-modal__confirm-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-dark);
+  line-height: 1.5;
+}
+
+
+.newsletter-modal__format-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.newsletter-modal__format-btn {
+  padding: 5px 14px;
+  border: none;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--ink-light);
+  transition: all 0.1s ease;
+}
+
+.newsletter-modal__format-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.newsletter-modal__format-btn.active {
+  background: var(--accent);
+  color: white;
+  font-weight: 500;
+}
+
+.newsletter-modal__format-btn:not(.active):hover {
+  background: var(--bg-hover);
+  color: var(--ink-dark);
+}
+
+/* Audience selector */
+.newsletter-modal__audience {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.newsletter-modal__select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink-dark);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.newsletter-modal__select:focus {
+  border-color: var(--accent);
+}
+
+/* Test send section */
+.newsletter-modal__test-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.newsletter-modal__test-row {
+  display: flex;
+  gap: 8px;
+}
+
+.newsletter-modal__test-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink-dark);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.newsletter-modal__test-input:focus {
+  border-color: var(--accent);
+}
+
+.newsletter-modal__btn--test {
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 7px 12px;
+}
+
+.newsletter-modal__test-success {
+  margin: 0;
+  font-size: 12px;
+  color: #16a34a;
+}
+
+.newsletter-modal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.newsletter-modal__btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink-dark);
+  transition: all 0.1s ease;
+}
+
+.newsletter-modal__btn:hover {
+  background: var(--bg-hover);
+}
+
+.newsletter-modal__btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.newsletter-modal__btn--primary:hover {
+  opacity: 0.9;
+}
+
+.newsletter-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.newsletter-modal__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--ink-dark);
+}
+
+.newsletter-modal__status--success {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.newsletter-modal__error {
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.newsletter-modal__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: newsletter-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes newsletter-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Setup modal wider */
+.newsletter-modal--setup {
+  width: 440px;
+}
+
+/* Form fields */
+.newsletter-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.newsletter-modal__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-dark);
+}
+
+.newsletter-modal__optional {
+  font-weight: 400;
+  color: var(--ink-light);
+}
+
+.newsletter-modal__required {
+  color: #dc2626;
+}
+
+.newsletter-modal__input {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink-dark);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.newsletter-modal__input:focus {
+  border-color: var(--accent);
+}
+
+.newsletter-modal__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.newsletter-modal__textarea {
+  resize: vertical;
+  min-height: 40px;
+}
+
+.newsletter-modal__hint {
+  font-size: 11px;
+  color: var(--ink-light);
+}
+
+/* Verify stage */
+.newsletter-modal__verify {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.newsletter-modal__verify-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-dark);
+}
+
+.newsletter-modal__verify-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.newsletter-modal__verify-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-light);
+}
+
+.newsletter-modal__verify-item--done {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.newsletter-modal__spinner--sm {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
+/* Context menu sub-items */
+.context-menu-sub {
+  padding-left: 12px;
+}
+
+.context-menu-sub-item {
+  font-size: 12px;
+  opacity: 0.9;
+}
