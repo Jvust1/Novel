@@ -71,7 +71,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("graphiti", "getzep/graphiti", "memory_retrieval", "Apache-2.0", "git-submodule+experiment-candidate", "temporal knowledge graph memory", "graphiti-core", "graphiti_core"),
     IntegrationSpec("llama_index", "run-llama/llama_index", "memory_retrieval", "MIT", "adapter+direct-optional", "VectorStoreIndex-backed RecallBackend behind Novel recall contract", "llama-index", "llama_index"),
     IntegrationSpec("langchain", "langchain-ai/langchain", "orchestration", "MIT", "git-submodule+experiment-candidate", "retriever/tool/provider integration patterns", "langchain", "langchain"),
-    IntegrationSpec("haystack", "deepset-ai/haystack", "orchestration", "Apache-2.0", "git-submodule+experiment-candidate", "pipeline and retrieval component patterns", "haystack-ai", "haystack"),
+    IntegrationSpec("haystack", "deepset-ai/haystack", "memory_retrieval", "Apache-2.0", "adapter+direct-optional", "BM25/document-store RecallBackend behind Novel recall contract", "haystack-ai", "haystack"),
     IntegrationSpec("chroma", "chroma-core/chroma", "vector_store", "Apache-2.0", "git-submodule+experiment-candidate", "local vector store", "chromadb", "chromadb"),
     IntegrationSpec("qdrant", "qdrant/qdrant", "vector_store", "Apache-2.0", "experiment-candidate", "production vector database", "qdrant-client", "qdrant_client"),
     IntegrationSpec("litellm", "BerriAI/litellm", "model_routing", "MIT-core", "adapter+direct-optional", "Novel provider adapter with primary+fallback model routing across 100+ LLM providers", "litellm", "litellm"),
