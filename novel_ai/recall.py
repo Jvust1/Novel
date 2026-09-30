@@ -23,6 +23,11 @@ class RecallHit:
     text: str
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def item_id(self) -> str:
+        """Compatibility alias used by the older LocalSemanticRecall API."""
+        return self.document_id
+
 
 class RecallBackend(Protocol):
     name: str
