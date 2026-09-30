@@ -87,3 +87,43 @@
 	path = vendor/qdrant-client
 	url = https://github.com/qdrant/qdrant-client.git
 	branch = master
+
+[submodule "vendor/graphrag"]
+	path = vendor/graphrag
+	url = https://github.com/microsoft/graphrag.git
+	branch = main
+
+[submodule "vendor/lightrag"]
+	path = vendor/lightrag
+	url = https://github.com/HKUDS/LightRAG.git
+	branch = main
+
+[submodule "vendor/graphiti"]
+	path = vendor/graphiti
+	url = https://github.com/getzep/graphiti.git
+	branch = main
+
+[submodule "vendor/deepeval"]
+	path = vendor/deepeval
+	url = https://github.com/confident-ai/deepeval.git
+	branch = main
+
+[submodule "vendor/ragas"]
+	path = vendor/ragas
+	url = https://github.com/vibrantlabsai/ragas.git
+	branch = main
+
+[submodule "vendor/sentence-transformers"]
+	path = vendor/sentence-transformers
+	url = https://github.com/huggingface/sentence-transformers.git
+	branch = main
+
+[submodule "vendor/faiss"]
+	path = vendor/faiss
+	url = https://github.com/facebookresearch/faiss.git
+	branch = main
+
+[submodule "vendor/hanlp"]
+	path = vendor/hanlp
+	url = https://github.com/hankcs/HanLP.git
+	branch = doc-zh
