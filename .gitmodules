@@ -1,0 +1,3 @@
+[submodule "third_party/openwrite/openwriter-full"]
+	path = third_party/openwrite/openwriter-full
+	url = https://github.com/travsteward/openwriter.git
