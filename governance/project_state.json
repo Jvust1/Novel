@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "llamaindex-recall-v0.13",
-  "version": "0.13.0-dev",
+  "stage": "haystack-recall-v0.14",
+  "version": "0.14.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "A/B Haystack BM25 recall against LlamaIndex, local semantic, Qdrant and GraphRAG on frozen long-form cases",
     "A/B LlamaIndex VectorStoreIndex recall against local semantic, Qdrant and GraphRAG on frozen long-form cases",
     "A/B spaCy entity extraction + RapidFuzz alias-drift precision on frozen Chinese long-form chapters",
     "validate GraphRAG corpus export and long-range story retrieval on frozen multi-chapter samples",
@@ -137,7 +138,8 @@
     "spaCy PERSON entity extraction and character-consistency review hook with explicit alias handling",
     "GraphRAG text-corpus exporter for Novel story graph nodes, relationships and chapter summaries",
     "RapidFuzz entity alias/name drift adapter layered after canonical/spaCy extraction and fused into longform health",
-    "LlamaIndex VectorStoreIndex RecallBackend behind Novel's shared recall contract"
+    "LlamaIndex VectorStoreIndex RecallBackend behind Novel's shared recall contract",
+    "Haystack BM25/document-store RecallBackend behind Novel's shared recall contract"
   ],
   "frozen": false,
   "blocking_issues": [],
