@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "token-aware-context-v0.10",
+  "stage": "rapidfuzz-entity-consistency-v0.10",
   "version": "0.10.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "validate entity alias drift with extracted character/place mentions on frozen long-form samples",
     "calibrate character budgets against real token budgets for configured model families",
     "evaluate ordered Guidance/Instructor/Outlines fallback chains on frozen long-form cases",
     "A/B Instructor vs Outlines vs Guidance structured extraction on frozen long-form cases",
@@ -129,7 +130,8 @@
     "repository canonical owner synchronized to Jvust1/Novel after transfer",
     "Guidance constrained JSON/Pydantic structured-output adapter behind Novel's StructuredExtractor contract",
     "ordered StructuredExtractor fallback chain for Guidance/Instructor/Outlines without changing NovelEngine",
-    "optional tiktoken token-aware Canon/Recall clipping with deterministic character fallback"
+    "optional tiktoken token-aware Canon/Recall clipping with deterministic character fallback",
+    "RapidFuzz entity alias/name drift adapter fused into optional longform health guard context"
   ],
   "frozen": false,
   "blocking_issues": [],
