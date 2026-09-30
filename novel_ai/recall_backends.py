@@ -139,6 +139,7 @@ def recall_backend_capabilities() -> dict[str, bool]:
     modules = {
         "faiss": "faiss",
         "qdrant": "qdrant_client",
+        "llama_index": "llama_index",
         "graphrag": "graphrag",
         "lightrag": "lightrag",
         "graphiti": "graphiti_core",

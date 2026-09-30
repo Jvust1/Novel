@@ -108,6 +108,12 @@ OPTIONAL_RECALL_ADAPTERS: tuple[RecallAdapterSpec, ...] = (
         notes="仅作为可选 RecallBackend；默认不启用，写入使用 infer=False 保持 Novel 结构化记忆权威。",
     ),
     RecallAdapterSpec(
+        name="llama-index",
+        package="llama-index",
+        mode="vector-index",
+        notes="可选 VectorStoreIndex RecallBackend；默认不启用，需和 local/Qdrant 做 A/B。",
+    ),
+    RecallAdapterSpec(
         name="qdrant",
         package="qdrant-client",
         mode="vector",

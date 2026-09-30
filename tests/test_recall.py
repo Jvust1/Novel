@@ -39,7 +39,7 @@ def test_recall_backend_rejects_invalid_documents_and_limits():
 
 def test_optional_adapters_are_declared_but_not_default_enabled():
     specs = list_recall_adapters()
-    assert {row["name"] for row in specs} == {"mem0", "qdrant", "lightrag", "graphiti"}
+    assert {row["name"] for row in specs} == {"mem0", "llama-index", "qdrant", "lightrag", "graphiti"}
     assert all(row["default_enabled"] is False for row in specs)
 
 

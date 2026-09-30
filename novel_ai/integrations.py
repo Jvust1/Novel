@@ -69,7 +69,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("hipporag", "OSU-NLP-Group/HippoRAG", "memory_retrieval", "MIT", "experiment-candidate", "associative graph retrieval for long-range memory"),
     IntegrationSpec("mem0", "mem0ai/mem0", "memory_retrieval", "Apache-2.0", "adapter+experiment-candidate", "optional RecallBackend adapter using add-only/infer-false writes and explicit A/B gating", "mem0ai", "mem0"),
     IntegrationSpec("graphiti", "getzep/graphiti", "memory_retrieval", "Apache-2.0", "git-submodule+experiment-candidate", "temporal knowledge graph memory", "graphiti-core", "graphiti_core"),
-    IntegrationSpec("llama_index", "run-llama/llama_index", "orchestration", "MIT", "git-submodule+experiment-candidate", "index/retrieval abstractions", "llama-index", "llama_index"),
+    IntegrationSpec("llama_index", "run-llama/llama_index", "memory_retrieval", "MIT", "adapter+direct-optional", "VectorStoreIndex-backed RecallBackend behind Novel recall contract", "llama-index", "llama_index"),
     IntegrationSpec("langchain", "langchain-ai/langchain", "orchestration", "MIT", "git-submodule+experiment-candidate", "retriever/tool/provider integration patterns", "langchain", "langchain"),
     IntegrationSpec("haystack", "deepset-ai/haystack", "orchestration", "Apache-2.0", "git-submodule+experiment-candidate", "pipeline and retrieval component patterns", "haystack-ai", "haystack"),
     IntegrationSpec("chroma", "chroma-core/chroma", "vector_store", "Apache-2.0", "git-submodule+experiment-candidate", "local vector store", "chromadb", "chromadb"),
