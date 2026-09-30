@@ -1,3 +1,37 @@
+# 2026-09-30 — 长篇小说工程融合分支
+
+本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。
+
+## 已进入核心长篇流程
+
+- **人物口吻 DNA**：按人物提取对白句长、问句/感叹/省略、短句比例、称谓密度、语气词等非原文特征，形成跨章基线；漂移进入 review。
+- **人物行为模式重复**：按 Story DNA 的目标→阻力→选择→代价→状态变化比较历史章；高相似模式在写正文前进入 `draft_context`。
+- **时间线矛盾检查**：从累计 `story_state.timeline` 检查时间回退与同一事件冲突时间候选。
+- **伏笔生命周期**：统计 planted/touched/resolved、悬置章数、长期未触碰和平均回收寿命。
+- **全书高潮/低谷密度**：从 Story DNA 的场景结构与 tension curve 估算章节强度，检测连续高压透支与连续低压失速。
+- 上述健康状态保存到 `memory/longform_health.json`；`ContextAssembler` 会把 `guard_context` 重新注入后续章节，因此不是只做仪表盘展示。
+
+## 直接搬运并融合的独立能力
+
+从已有分支搬入并保留测试/CLI：
+- `originality.py`：四层原创性 Gate（shingle / fuzzy / embedding / event sequence）。
+- `outline.py`：series→volume→arc→chapter→scene 层级大纲。
+- `market_eval.py`：番茄前三章/前 20 章市场评测数据结构与评分聚合。
+- `release_pack.py`：发布包结构。
+- `recall.py + qdrant_recall.py`：统一 Recall 协议与可选本地 Qdrant adapter。
+
+## Recall 融合
+
+原有 `LocalSemanticRecall` 与新 Qdrant 分支曾使用两套 RecallHit 结构。本轮统一到共享 `RecallDocument / RecallHit / RecallBackend`：
+- LocalSemanticRecall 同时支持旧 `add/search` 与新 `upsert/query`。
+- Qdrant 与本地 semantic recall 可以由同一上层接口 A/B。
+- Qdrant 仍默认关闭，不替代 Canon/Active/Recall；必须先通过冻结评测。
+
+## 尚未声称验证
+
+这些能力已经工程接入，但“提升长篇质量”的效果仍需冻结样例 + 人工评审/A-B 验证。特别是时间线启发式、口吻漂移阈值和高潮密度阈值都需要按题材校准。
+
+
 ## 2026-09-30 — character voice / behavior / timeline / foreshadow / tension engineering
 
 - Added per-character Voice DNA from attributed dialogue: average line length, short/long-line ratio, question/exclamation/ellipsis habits, pronoun density and ending particles. Raw dialogue is not stored in Voice DNA.
