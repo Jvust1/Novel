@@ -155,3 +155,49 @@ class GuidanceStructuredExtractor:
         if hasattr(value, "model_dump"):
             return response_model.model_validate(value.model_dump())
         return response_model.model_validate(value)
+
+
+
+class FallbackStructuredExtractor:
+    """Try multiple StructuredExtractor backends in order until one validates."""
+
+    name = "fallback-chain"
+
+    def __init__(self, extractors: list[Any] | tuple[Any, ...]) -> None:
+        self.extractors = tuple(extractors)
+        if not self.extractors:
+            raise ValueError("at least one structured extractor is required")
+        for extractor in self.extractors:
+            if not callable(getattr(extractor, "extract", None)):
+                raise TypeError("every structured extractor must provide extract()")
+
+    def extract(
+        self,
+        *,
+        response_model: type[ModelT],
+        messages: list[dict[str, str]],
+        temperature: float,
+    ) -> ModelT:
+        failures: list[str] = []
+        for extractor in self.extractors:
+            try:
+                value = extractor.extract(
+                    response_model=response_model,
+                    messages=messages,
+                    temperature=temperature,
+                )
+                if isinstance(value, response_model):
+                    return value
+                if hasattr(value, "model_dump"):
+                    return response_model.model_validate(value.model_dump())
+                return response_model.model_validate(value)
+            except Exception as exc:
+                name = str(getattr(extractor, "name", extractor.__class__.__name__))
+                failures.append(f"{name}: {exc.__class__.__name__}")
+        raise RuntimeError(
+            "all structured extractors failed: " + ", ".join(failures)
+        )
+
+
+def chain_structured_extractors(*extractors: Any) -> FallbackStructuredExtractor:
+    return FallbackStructuredExtractor(extractors)
