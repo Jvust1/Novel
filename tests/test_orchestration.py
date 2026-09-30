@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 from novel_ai.orchestration import ProviderRouter, RouterConfig, TaskKind
-from novel_ai.provider import ProviderConfig
+from novel_ai.provider import LiteLLMConfig, ProviderConfig
 
 
 @dataclass
@@ -34,3 +34,30 @@ def test_missing_provider_reports_runtime_configuration() -> None:
     router = ProviderRouter(RouterConfig())
     with pytest.raises(RuntimeError, match="没有可用的 review provider"):
         router.provider_for(TaskKind.REVIEW)
+
+
+
+def test_litellm_target_is_available_as_router_fallback(monkeypatch) -> None:
+    class FakeLiteLLMProvider:
+        def __init__(self, config):
+            self.config = config
+
+        def chat(self, *_args, **_kwargs):
+            return "gateway"
+
+    monkeypatch.setattr("novel_ai.orchestration.LiteLLMProvider", FakeLiteLLMProvider)
+    router = ProviderRouter(
+        RouterConfig(litellm=LiteLLMConfig(models=("openai/a", "anthropic/b")))
+    )
+    assert router.available == ("litellm",)
+    assert router.provider_for(TaskKind.DRAFT).name == "litellm"
+    assert router.provider_for(TaskKind.REVIEW).name == "litellm"
+
+
+def test_router_config_reads_litellm_models_from_env(monkeypatch) -> None:
+    monkeypatch.setenv("NOVEL_LITELLM_MODELS", "openai/a, anthropic/b")
+    monkeypatch.setenv("NOVEL_LITELLM_API_BASE", "https://gateway.example/v1")
+    config = RouterConfig.from_env()
+    assert config.litellm is not None
+    assert config.litellm.models == ("openai/a", "anthropic/b")
+    assert config.litellm.api_base == "https://gateway.example/v1"
