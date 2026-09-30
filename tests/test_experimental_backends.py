@@ -19,4 +19,4 @@ def test_choose_backend_never_enables_missing_implicitly():
 
 def test_available_backends_filters_category():
     rows = available_backends(category="orchestration")
-    assert set(rows) <= {"llama_index", "langchain", "haystack", "crewai", "langgraph", "pydantic_ai"}
+    assert set(rows) <= {"llama_index", "langchain", "haystack", "crewai", "langgraph", "pydantic_ai", "agent_framework"}

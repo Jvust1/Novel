@@ -7,6 +7,8 @@ from novel_ai.recall import RecallDocument
 from novel_ai.upstream_adapters import (
     CrewAIReviewHook,
     DSPyReviewHook,
+    AgentFrameworkReviewHook,
+    GuardrailsReviewHook,
     LangGraphReviewHook,
     Mem0RecallBackend,
     PydanticAIReviewHook,
@@ -137,3 +139,35 @@ def test_pydantic_ai_hook_normalizes_agent_output():
         draft="正文", plan=ChapterPlan(), bible=StoryBible(), characters=[]
     )
     assert payload["issues"][0]["reason"] == "角色目标漂移"
+
+
+def test_guardrails_hook_emits_issue_on_failed_validation():
+    class Outcome:
+        validation_passed = False
+        validated_output = None
+        error = "命中禁用模式"
+
+    class Guard:
+        def validate(self, text):
+            assert text == "正文"
+            return Outcome()
+
+    payload = GuardrailsReviewHook(Guard()).review_payload(
+        draft="正文", plan=ChapterPlan(), bible=StoryBible(), characters=[]
+    )
+    assert payload["issues"][0]["reason"] == "命中禁用模式"
+
+
+def test_agent_framework_hook_normalizes_async_agent_result():
+    class Result:
+        text = '{"issues":[{"category":"一致性","severity":"medium","reason":"设定冲突","suggestion":"复核设定"}]}'
+
+    class Agent:
+        async def run(self, prompt):
+            assert "正文" in prompt
+            return Result()
+
+    payload = AgentFrameworkReviewHook(Agent()).review_payload(
+        draft="正文", plan=ChapterPlan(), bible=StoryBible(), characters=[]
+    )
+    assert payload["issues"][0]["reason"] == "设定冲突"
