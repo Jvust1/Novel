@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "graphrag-corpus-v0.12",
-  "version": "0.12.0-dev",
+  "stage": "graphrag-spacy-rapidfuzz-v0.13",
+  "version": "0.13.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "A/B spaCy entity extraction + RapidFuzz alias-drift precision on frozen Chinese long-form chapters",
     "validate GraphRAG corpus export and long-range story retrieval on frozen multi-chapter samples",
     "A/B spaCy PERSON entity-review precision on Chinese long-form chapters before default enablement",
     "calibrate character budgets against real token budgets for configured model families",
@@ -133,7 +134,8 @@
     "ordered StructuredExtractor fallback chain for Guidance/Instructor/Outlines without changing NovelEngine",
     "optional tiktoken token-aware Canon/Recall clipping with deterministic character fallback",
     "spaCy PERSON entity extraction and character-consistency review hook with explicit alias handling",
-    "GraphRAG text-corpus exporter for Novel story graph nodes, relationships and chapter summaries"
+    "GraphRAG text-corpus exporter for Novel story graph nodes, relationships and chapter summaries",
+    "RapidFuzz entity alias/name drift adapter layered after canonical/spaCy extraction and fused into longform health"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -157,4 +159,4 @@
     "drive_snapshot_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
     "pending_sync_count": 0
   }
-}\n
+}
