@@ -58,8 +58,8 @@ def test_pdf_text_is_extracted():
 
 
 def test_unsupported_extension_raises_clear_error():
-    with pytest.raises(ValueError, match="DOCX"):
-        extract_reference_text("ref.epub", b"whatever")
+    with pytest.raises(ValueError, match="暂不支持"):
+        extract_reference_text("ref.xyz", b"whatever")
 
 
 def test_corrupt_pdf_raises_pdf_error_not_silent_empty():
@@ -67,3 +67,10 @@ def test_corrupt_pdf_raises_pdf_error_not_silent_empty():
 
     with pytest.raises((PdfReadError, ValueError)):
         extract_reference_text("bad.pdf", b"not a pdf at all")
+
+
+def test_epub_without_optional_reader_explains_required_backend(monkeypatch):
+    monkeypatch.setattr("novel_ai.reading._advanced_extract", lambda *_: None)
+    with pytest.raises(ValueError, match=r"\.epub.*Docling.*MarkItDown") as exc:
+        extract_reference_text("ref.epub", b"whatever")
+    assert "requirements-extras/reference.txt" in str(exc.value)
