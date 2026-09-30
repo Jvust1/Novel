@@ -39,6 +39,8 @@ EXPERIMENTAL_BACKENDS: tuple[ExperimentalBackend, ...] = (
     ExperimentalBackend("outlines", "outlines", "structured_output", "constrained structured generation"),
     ExperimentalBackend("guardrails", "guardrails", "validation", "post-generation validation"),
     ExperimentalBackend("agent_framework", "agent_framework", "orchestration", "production multi-agent editorial workflow"),
+    ExperimentalBackend("deepeval", "deepeval", "evaluation", "LLM regression metrics"),
+    ExperimentalBackend("langfuse", "langfuse", "observability", "trace-linked regression scores"),
 )
 
 

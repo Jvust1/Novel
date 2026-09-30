@@ -8,7 +8,7 @@ from novel_ai.experimental_backends import (
 def test_backend_matrix_shape():
     rows = experimental_backend_matrix()
     keys = {row["key"] for row in rows}
-    assert {"mem0", "llama_index", "langchain", "haystack", "chroma", "dspy"} <= keys
+    assert {"mem0", "llama_index", "langchain", "haystack", "chroma", "dspy", "deepeval", "langfuse"} <= keys
     assert all(isinstance(row["available"], bool) for row in rows)
 
 

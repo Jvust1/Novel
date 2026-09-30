@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "constraints-agents-fusion-v0.6",
-  "version": "0.6.0-dev",
+  "stage": "evaluation-observability-fusion-v0.7",
+  "version": "0.7.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "run frozen long-form regressions through Novel eval harness and compare core vs optional upstream stacks",
     "validate Outlines constrained extraction, Guardrails validation and Agent Framework editorial orchestration on real samples",
     "validate schema-first structured extraction plus LangGraph/PydanticAI editorial hooks on real long-form samples",
     "finish release-candidate validation of optional Mem0/DSPy/CrewAI adapters without changing Novel core defaults",
@@ -114,7 +115,11 @@
     "Outlines constrained structured-output adapter behind Novel's StructuredExtractor contract",
     "Guardrails validation hook mapped into existing ChapterReview issues",
     "Microsoft Agent Framework async review hook as the preferred Microsoft multi-agent experiment path",
-    "AutoGen explicitly not adopted for new work because upstream is in maintenance mode"
+    "AutoGen explicitly not adopted for new work because upstream is in maintenance mode",
+    "unified EvaluationCase/MetricScore/EvaluationReport regression contract",
+    "DeepEval metric adapter with lazy LLMTestCase construction",
+    "Promptfoo config exporter for provider/prompt matrix regression",
+    "Langfuse v4 score sink for trace-linked Novel regression metrics"
   ],
   "frozen": false,
   "blocking_issues": [],
