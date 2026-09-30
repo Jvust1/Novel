@@ -8,3 +8,5 @@ langchain
 haystack-ai
 chromadb
 qdrant-client
+datasketch
+networkx

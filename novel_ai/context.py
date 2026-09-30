@@ -12,11 +12,12 @@ class WritingContext:
     canon_block: str = ""
     active_block: str = ""
     recall_block: str = ""
+    longform_block: str = ""
     recent_summaries: list[dict[str, Any]] = field(default_factory=list)
     open_foreshadowing: list[dict[str, Any]] = field(default_factory=list)
 
     def prompt_sections(self) -> str:
-        parts = [block for block in (self.canon_block, self.active_block, self.recall_block) if block]
+        parts = [block for block in (self.canon_block, self.active_block, self.recall_block, self.longform_block) if block]
         return "\n\n".join(parts)
 
 
@@ -96,6 +97,11 @@ class ContextAssembler:
                 for row in recent
             ))
         context.active_block = "\n\n".join(active_lines)
+
+        health = self.store.load_longform_health(self.project)
+        guard = str(health.get("guard_context", "") or "").strip()
+        if guard:
+            context.longform_block = "【Longform 长篇一致性】\n" + _clip(guard, 1400)
 
         if older:
             recall_lines = [

@@ -5,6 +5,7 @@ from typing import Any
 from .models import Character, MemoryExtraction
 
 FORESHADOW_STATUSES = {"planted", "advanced", "resolved"}
+FORESHADOW_STATUS_RANK = {"planted": 0, "advanced": 1, "resolved": 2}
 
 
 def _dedup(items: list[str]) -> list[str]:
@@ -23,19 +24,37 @@ def _merge_foreshadowing(existing: list[dict], incoming: list[dict]) -> list[dic
     by_desc = {str(item.get("description", "").strip()): item for item in existing}
     for item in incoming:
         status = item.get("status") if item.get("status") in FORESHADOW_STATUSES else "planted"
+        chapter_id = str(item.get("chapter_id", "") or "")
         target = by_id.get(str(item.get("id"))) or by_desc.get(str(item.get("description", "")).strip())
         if target:
-            target["status"] = status
+            old_status = str(target.get("status", "planted") or "planted")
+            history = list(target.get("history", []))
+            if chapter_id and (not history or history[-1].get("chapter_id") != chapter_id or history[-1].get("status") != status):
+                history.append({"chapter_id": chapter_id, "status": status})
+            target["history"] = history
+
+            # Once resolved, a later extraction may mention the clue again, but
+            # the lifecycle must not silently regress to planted/advanced.
+            if FORESHADOW_STATUS_RANK.get(status, 0) >= FORESHADOW_STATUS_RANK.get(old_status, 0):
+                target["status"] = status
+            else:
+                target.setdefault("lifecycle_warnings", []).append({
+                    "chapter_id": chapter_id,
+                    "attempted_status": status,
+                    "kept_status": old_status,
+                })
             if item.get("description"):
                 target["description"] = item["description"]
-            if item.get("chapter_id"):
-                target["last_chapter"] = item["chapter_id"]
+            if chapter_id:
+                target["last_chapter"] = chapter_id
         else:
             record = {
                 "id": str(item.get("id") or f"f{len(existing) + 1}"),
                 "description": item.get("description", ""),
                 "status": status,
-                "planted_chapter": item.get("chapter_id", ""),
+                "planted_chapter": chapter_id,
+                "last_chapter": chapter_id,
+                "history": [{"chapter_id": chapter_id, "status": status}] if chapter_id else [],
             }
             existing.append(record)
             by_id[record["id"]] = record
@@ -148,9 +167,15 @@ def apply_extraction(
                 state["timeline"].append(
                     {"chapter_id": key[0], "description": event.description, "time_hint": event.time_hint}
                 )
+    incoming_foreshadowing = []
+    for item in extraction.foreshadowing:
+        row = item.model_dump()
+        if not row.get("chapter_id"):
+            row["chapter_id"] = chapter_id
+        incoming_foreshadowing.append(row)
     state["foreshadowing"] = _merge_foreshadowing(
         state["foreshadowing"],
-        [item.model_dump() for item in extraction.foreshadowing],
+        incoming_foreshadowing,
     )
     if extraction.open_threads:
         threads = _dedup(state["open_threads"] + extraction.open_threads)

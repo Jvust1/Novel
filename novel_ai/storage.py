@@ -50,6 +50,13 @@ class ProjectStore:
         path.write_text(text.strip() + "\n", encoding="utf-8")
         return path
 
+    def all_chapter_texts(self, project: str) -> list[tuple[str, str]]:
+        chapter_dir = self.project_dir(project) / "chapters"
+        rows: list[tuple[str, str]] = []
+        for path in sorted(chapter_dir.glob("*.md")):
+            rows.append((path.stem, path.read_text(encoding="utf-8")))
+        return rows
+
     def recent_chapter_summaries(self, project: str, limit: int = 4) -> list[dict[str, Any]]:
         rows = self.all_chapter_summaries(project)
         return rows[-limit:]
@@ -82,6 +89,63 @@ class ProjectStore:
             for row in rows:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
         return path
+
+    def save_story_dna(self, project: str, chapter_id: str, story_dna: dict[str, Any]) -> Path:
+        safe = self.slugify(chapter_id or "chapter")
+        record = {"chapter_id": chapter_id, "story_dna": story_dna}
+        return self.write_json(project, f"memory/story_dna/{safe}.json", record)
+
+    def save_voice_dna(self, project: str, chapter_id: str, voice_dna: dict[str, Any]) -> Path:
+        safe = self.slugify(chapter_id or "chapter")
+        record = {"chapter_id": chapter_id, "voice_dna": voice_dna}
+        return self.write_json(project, f"memory/voice_dna/{safe}.json", record)
+
+    def load_voice_dna_history(self, project: str) -> list[dict[str, Any]]:
+        folder = self.project_dir(project) / "memory" / "voice_dna"
+        rows: list[dict[str, Any]] = []
+        for path in sorted(folder.glob("*.json")):
+            try:
+                row = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(row, dict) and isinstance(row.get("voice_dna"), dict):
+                    rows.append(row)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return rows
+
+    def save_longform_health(self, project: str, health: dict[str, Any]) -> Path:
+        return self.write_json(project, "memory/longform_health.json", health)
+
+    def load_longform_health(self, project: str) -> dict[str, Any]:
+        return self.read_json(project, "memory/longform_health.json", default={})
+
+    def save_chapter_analytics(self, project: str, chapter_id: str, analytics: dict[str, Any]) -> Path:
+        safe = self.slugify(chapter_id or "chapter")
+        record = {"chapter_id": chapter_id, "analytics": analytics}
+        return self.write_json(project, f"memory/chapter_analytics/{safe}.json", record)
+
+    def load_chapter_analytics_history(self, project: str) -> list[dict[str, Any]]:
+        folder = self.project_dir(project) / "memory" / "chapter_analytics"
+        rows: list[dict[str, Any]] = []
+        for path in sorted(folder.glob("*.json")):
+            try:
+                row = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(row, dict) and isinstance(row.get("analytics"), dict):
+                    rows.append(row)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return rows
+
+    def load_story_dna_history(self, project: str) -> list[dict[str, Any]]:
+        folder = self.project_dir(project) / "memory" / "story_dna"
+        rows: list[dict[str, Any]] = []
+        for path in sorted(folder.glob("*.json")):
+            try:
+                row = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(row, dict) and isinstance(row.get("story_dna"), dict):
+                    rows.append(row)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return rows
 
     def load_story_state(self, project: str) -> dict[str, Any]:
         return self.read_json(

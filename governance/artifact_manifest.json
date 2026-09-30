@@ -20,7 +20,7 @@
       "artifact_id": "novel-openwrite-mass-import-20260930",
       "type": "github_source_integration",
       "branch": "feat/openwrite-mass-import-20260929",
-      "status": "DRAFT_PR_OPEN_CI_INFRA_NOT_STARTED",
+      "status": "ACTIVE_WORK_BRANCH_RECONCILED_WITH_LATEST_MAIN",
       "source_files_total": 766,
       "upstreams": [
         {
@@ -39,7 +39,8 @@
           "repo": "travsteward/openwriter",
           "commit": "142002677685298d45569ac132af11e7ed8e70e2",
           "license": "MIT",
-          "files": 465
+          "files": 465,
+          "complete_submodule": "third_party/openwrite/openwriter-full"
         },
         {
           "repo": "ilrein/openwrite",
@@ -48,9 +49,13 @@
           "mode": "reference-only"
         }
       ],
+      "integration": [
+        "novel_ai/completion_gate.py",
+        "NovelEngine/RoutedNovelEngine completion_gate_report",
+        "benchmark completion_gate record"
+      ],
       "main_modified": false,
-      "pr_number": 26,
-      "ci_run_id": 36658882876
+      "pr_number": 26
     }
   ],
   "notes": [

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from novel_ai.quality_gate import run_quality_gate
+from novel_ai.completion_gate import run_quality_gate
 
 
 def _read_md_dir(path: Path) -> dict[str, str]:

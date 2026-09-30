@@ -148,7 +148,7 @@ def run_case(
         "ai_flavor": result.ai_flavor,
         "extra_context_chars": len(extra_context),
         "recent_summary_count": len(recent),
-        "quality_gate": result.quality_gate,
+        "completion_gate": result.completion_gate_report,
     }
 
 
