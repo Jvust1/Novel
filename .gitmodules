@@ -157,3 +157,18 @@
 	path = vendor/dspy
 	url = https://github.com/stanfordnlp/dspy.git
 	branch = main
+
+[submodule "vendor/chinese-novelist-skill"]
+	path = vendor/chinese-novelist-skill
+	url = https://github.com/PenglongHuang/chinese-novelist-skill.git
+	branch = master
+
+[submodule "vendor/kag"]
+	path = vendor/kag
+	url = https://github.com/OpenSPG/KAG.git
+	branch = master
+
+[submodule "vendor/paddlenlp"]
+	path = vendor/paddlenlp
+	url = https://github.com/PaddlePaddle/PaddleNLP.git
+	branch = develop
