@@ -172,3 +172,23 @@
 	path = vendor/paddlenlp
 	url = https://github.com/PaddlePaddle/PaddleNLP.git
 	branch = develop
+
+[submodule "vendor/scikit-learn"]
+	path = vendor/scikit-learn
+	url = https://github.com/scikit-learn/scikit-learn.git
+	branch = main
+
+[submodule "vendor/river"]
+	path = vendor/river
+	url = https://github.com/online-ml/river.git
+	branch = main
+
+[submodule "vendor/plotly"]
+	path = vendor/plotly
+	url = https://github.com/plotly/plotly.py.git
+	branch = main
+
+[submodule "vendor/umap"]
+	path = vendor/umap
+	url = https://github.com/lmcinnes/umap.git
+	branch = master
