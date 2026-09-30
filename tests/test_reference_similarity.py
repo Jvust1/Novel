@@ -23,3 +23,16 @@ def test_event_sequence_similarity_rewards_same_order():
     b = ["接到匿名来电", "赶到旧仓库", "发现一把钥匙"]
     c = ["城外下雪", "商队进城", "酒馆争吵"]
     assert event_sequence_similarity(a, b) > event_sequence_similarity(a, c)
+
+
+def test_event_sequence_similarity_preserves_order_and_length_penalty():
+    events = ["收到匿名电话", "前往旧仓库", "找到一把钥匙"]
+    assert event_sequence_similarity(events, events) == 1.0
+    assert event_sequence_similarity(events, events) > event_sequence_similarity(events, events[::-1])
+    assert event_sequence_similarity(events, events[:2]) == 0.666667
+
+
+def test_empty_or_punctuation_only_event_sequences_have_no_similarity():
+    assert event_sequence_similarity([], ["事件"]) == 0.0
+    assert event_sequence_similarity([""], [""]) == 0.0
+    assert event_sequence_similarity(["。！？"], ["..."]) == 0.0
