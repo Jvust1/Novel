@@ -2,3 +2,4 @@
 litellm
 ollama
 # vllm is intentionally not installed here: install it separately on a supported Linux/CUDA host.
+tiktoken
