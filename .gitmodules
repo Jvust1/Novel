@@ -42,3 +42,33 @@
 	path = vendor/opencc
 	url = https://github.com/BYVoid/OpenCC.git
 	branch = master
+
+[submodule "vendor/markitdown"]
+	path = vendor/markitdown
+	url = https://github.com/microsoft/markitdown.git
+	branch = main
+
+[submodule "vendor/docling"]
+	path = vendor/docling
+	url = https://github.com/docling-project/docling.git
+	branch = main
+
+[submodule "vendor/text2vec"]
+	path = vendor/text2vec
+	url = https://github.com/shibing624/text2vec.git
+	branch = master
+
+[submodule "vendor/flagem-bedding"]
+	path = vendor/flagem-bedding
+	url = https://github.com/FlagOpen/FlagEmbedding.git
+	branch = master
+
+[submodule "vendor/rapidfuzz"]
+	path = vendor/rapidfuzz
+	url = https://github.com/rapidfuzz/RapidFuzz.git
+	branch = main
+
+[submodule "vendor/deepke"]
+	path = vendor/deepke
+	url = https://github.com/zjunlp/DeepKE.git
+	branch = main
