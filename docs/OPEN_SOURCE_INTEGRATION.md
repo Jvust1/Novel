@@ -26,7 +26,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 6. `requirements-extras/*` — heavy dependencies split by capability so the default install stays small.
 7. `governance/open_source_registry.json` — auditable upstream registry.
 
-## Upstream registry (39 projects)
+## Upstream registry (43 projects)
 
 | Priority | Key | Upstream | License | Adoption mode | Novel use |
 |---|---|---|---|---|---|
@@ -34,6 +34,10 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `doc_story` | [yangkevin2/doc-story-generation](https://github.com/yangkevin2/doc-story-generation) | MIT | research-port | 详细大纲控制；吸收到 Story Forge 的层级规划 |
 | P0 | `doc_story_v2` | [facebookresearch/doc-storygen-v2](https://github.com/facebookresearch/doc-storygen-v2) | Apache-2.0 | research-port | Premise→Plan→Story 现代化实现；作为 Story DNA/长篇生成骨架参考 |
 | P1 | `chinese_novelist_skill` | [PenglongHuang/chinese-novelist-skill](https://github.com/PenglongHuang/chinese-novelist-skill) | MIT | research-port | 中文小说问答、偏好记忆、断点续写与校验流程 |
+| P0 | `lexicalrichness` | [LSYS/LexicalRichness](https://github.com/LSYS/LexicalRichness) | MIT | git-submodule | 词汇丰富度、重复度和词汇变化诊断 |
+| P1 | `textstat` | [textstat/textstat](https://github.com/textstat/textstat) | MIT | git-submodule | 可读性与句子复杂度统计 |
+| P1 | `proselint` | [amperser/proselint](https://github.com/amperser/proselint) | BSD-3-Clause | git-submodule | prose lint；英文规则为主，只作可选/参考层 |
+| P0 | `pkuseg` | [lancopku/pkuseg-python](https://github.com/lancopku/pkuseg-python) | MIT | git-submodule | 中文分词，为风格与重复分析提供稳定切分 |
 | P0 | `book_to_skill` | [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill) | MIT | git-submodule | 把参考书/文档转换为按需加载的 Agent Skill，为 Reference Pack / Story DNA 提供结构化知识层 |
 | P2 | `booknlp` | [booknlp/booknlp](https://github.com/booknlp/booknlp) | MIT | research-port | 人物/对白/叙事分析思想；英文中心，不作为中文默认后端 |
 | P1 | `hanlp` | [hankcs/HanLP](https://github.com/hankcs/HanLP) | Apache-2.0 | direct-optional | 中文分词、词性、NER 等深层文本特征 |

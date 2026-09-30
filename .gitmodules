@@ -2,3 +2,23 @@
 	path = vendor/book-to-skill
 	url = https://github.com/virgiliojr94/book-to-skill.git
 	branch = master
+
+[submodule "vendor/lexicalrichness"]
+	path = vendor/lexicalrichness
+	url = https://github.com/LSYS/LexicalRichness.git
+	branch = master
+
+[submodule "vendor/textstat"]
+	path = vendor/textstat
+	url = https://github.com/textstat/textstat.git
+	branch = main
+
+[submodule "vendor/proselint"]
+	path = vendor/proselint
+	url = https://github.com/amperser/proselint.git
+	branch = main
+
+[submodule "vendor/pkuseg-python"]
+	path = vendor/pkuseg-python
+	url = https://github.com/lancopku/pkuseg-python.git
+	branch = master

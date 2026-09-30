@@ -1,3 +1,10 @@
+## 2026-09-30 — style-quality toolset expanded
+
+- Added pinned submodules for `LSYS/LexicalRichness`, `textstat/textstat`, `amperser/proselint`, and `lancopku/pkuseg-python`.
+- Purpose: diagnose lexical repetition, sentence/readability patterns, prose issues, and Chinese tokenization quality so Novel can improve originality and naturalness through measurable writing-quality signals.
+- These tools are not used to target or bypass any specific AI detector; detector scores are not a release gate.
+- All four upstream licenses were checked before inclusion (MIT / BSD-3-Clause).
+
 ## 2026-09-30 — book-to-skill integrated
 
 - Added `virgiliojr94/book-to-skill` as pinned submodule `vendor/book-to-skill` at upstream commit `c108d25b0cb58e1bdc361f3de02ed9f37075152f`.

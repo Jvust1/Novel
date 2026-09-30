@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 39,
-    "p0": 9,
-    "p1": 15,
+    "total": 43,
+    "p0": 11,
+    "p1": 17,
     "no_license": 2,
     "agpl": 2
   },
@@ -366,6 +366,42 @@
       "mode": "git-submodule",
       "priority": "P0",
       "use": "把用户提供的书籍/参考文档转换为按需加载的 Agent Skill，作为 Reference Pack / Story DNA 前的结构化知识层"
+    },
+    {
+      "key": "lexicalrichness",
+      "repo": "LSYS/LexicalRichness",
+      "category": "style_quality",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P0",
+      "use": "词汇丰富度、重复度与词汇变化指标，用于发现模板化和机械重复"
+    },
+    {
+      "key": "textstat",
+      "repo": "textstat/textstat",
+      "category": "style_quality",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P1",
+      "use": "句子复杂度和可读性统计，作为节奏与难度诊断信号"
+    },
+    {
+      "key": "proselint",
+      "repo": "amperser/proselint",
+      "category": "style_quality",
+      "license": "BSD-3-Clause",
+      "mode": "git-submodule",
+      "priority": "P1",
+      "use": "英文 prose lint 规则参考/可选适配，用于机械措辞、冗余和风格问题诊断；中文不直接套用"
+    },
+    {
+      "key": "pkuseg",
+      "repo": "lancopku/pkuseg-python",
+      "category": "chinese_nlp",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P0",
+      "use": "中文分词，为词汇、重复、句式和风格统计提供更稳定的中文切分"
     }
   ]
 }
