@@ -127,3 +127,33 @@
 	path = vendor/hanlp
 	url = https://github.com/hankcs/HanLP.git
 	branch = doc-zh
+
+[submodule "vendor/mem0"]
+	path = vendor/mem0
+	url = https://github.com/mem0ai/mem0.git
+	branch = main
+
+[submodule "vendor/llama-index"]
+	path = vendor/llama-index
+	url = https://github.com/run-llama/llama_index.git
+	branch = main
+
+[submodule "vendor/langchain"]
+	path = vendor/langchain
+	url = https://github.com/langchain-ai/langchain.git
+	branch = master
+
+[submodule "vendor/haystack"]
+	path = vendor/haystack
+	url = https://github.com/deepset-ai/haystack.git
+	branch = main
+
+[submodule "vendor/chroma"]
+	path = vendor/chroma
+	url = https://github.com/chroma-core/chroma.git
+	branch = main
+
+[submodule "vendor/dspy"]
+	path = vendor/dspy
+	url = https://github.com/stanfordnlp/dspy.git
+	branch = main
