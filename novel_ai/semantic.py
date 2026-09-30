@@ -61,6 +61,21 @@ class Text2VecEncoder:
         return self._model.encode(list(texts))
 
 
+class SentenceTransformerEncoder:
+    """Lazy adapter around sentence-transformers."""
+
+    def __init__(self, model_name: str = "BAAI/bge-small-zh-v1.5"):
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as exc:
+            raise RuntimeError("需要安装 sentence-transformers：pip install -r requirements-extras/nlp.txt") from exc
+        self._model = SentenceTransformer(model_name)
+
+    def encode(self, texts: Sequence[str]) -> Sequence[Sequence[float]]:
+        values = self._model.encode(list(texts), normalize_embeddings=True)
+        return values.tolist() if hasattr(values, "tolist") else values
+
+
 class FlagEmbeddingEncoder:
     """Lazy adapter around FlagOpen/FlagEmbedding."""
 
@@ -100,7 +115,7 @@ def max_reference_similarity(text: str, references: Sequence[str], encoder: Enco
 def preferred_encoder(prefer: str = "auto") -> tuple[Encoder | None, str]:
     """Select an installed Chinese semantic encoder without making it mandatory.
 
-    auto preference: FlagEmbedding -> text2vec -> dependency-free char n-grams.
+    auto preference: FlagEmbedding -> sentence-transformers -> text2vec -> dependency-free char n-grams.
     Model loading happens only when this function is explicitly called.
     """
     import importlib.util
@@ -109,6 +124,12 @@ def preferred_encoder(prefer: str = "auto") -> tuple[Encoder | None, str]:
     if choice in {"auto", "flagembedding", "bge"} and importlib.util.find_spec("FlagEmbedding") is not None:
         try:
             return FlagEmbeddingEncoder(), "FlagEmbedding"
+        except Exception:
+            if choice not in {"auto"}:
+                raise
+    if choice in {"auto", "sentence-transformers", "sentence_transformers"} and importlib.util.find_spec("sentence_transformers") is not None:
+        try:
+            return SentenceTransformerEncoder(), "sentence-transformers"
         except Exception:
             if choice not in {"auto"}:
                 raise

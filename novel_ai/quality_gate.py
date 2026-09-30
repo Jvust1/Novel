@@ -260,6 +260,7 @@ def analyze_prose_quality(text: str) -> ProseQualityReport:
             "lexicalrichness": bool(lexical.get("lexicalrichness")),
             "pycorrector": importlib.util.find_spec("pycorrector") is not None,
             "spacy": bool(_spacy_signals(normalized).get("available")),
+            "hanlp": importlib.util.find_spec("hanlp") is not None,
         },
         correction_samples=corrections,
         issues=issues,
