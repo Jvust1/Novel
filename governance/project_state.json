@@ -1,16 +1,17 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "foundation-v0.2-open-source-integration",
-  "version": "0.2.0-dev",
+  "stage": "foundation-v0.3-openwrite-integration",
+  "version": "0.3.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
-    "build Story DNA schema/extractor on top of the new multi-source Reference Pack",
+    "wire the new deterministic OpenWrite-derived quality gate into chapter finalization and frozen benchmarks",
     "add originality gate: shingle + fuzzy + embedding + event-sequence similarity",
     "port hierarchical outline ideas from DOC/DOC StoryGen v2 behind frozen A/B tests",
     "evaluate graph/RAG recall backends without replacing Canon/Active/Recall by default",
-    "add Fanqie opening/first-20-chapter commercial-readiness benchmark"
+    "add Fanqie opening/first-20-chapter commercial-readiness benchmark",
+    "build Story DNA schema/extractor on top of the multi-source Reference Pack"
   ],
   "implemented": [
     "Streamlit local web workspace",
@@ -30,12 +31,15 @@
     "non-reversible reference shingle signature and overlap warning",
     "local project storage",
     "basic tests and GitHub Actions workflow",
-    "open-source integration registry covering 38 upstream GitHub projects with license/adoption gates",
+    "open-source integration registry covering 42 upstream GitHub projects with license/adoption gates",
     "multi-source non-reversible Reference Pack builder",
     "optional jieba lexical statistics in Reference Pack",
     "semantic similarity module with dependency-free fallback plus text2vec/FlagEmbedding adapters",
     "capability-grouped optional dependency manifests",
-    "integration health-check and Reference Pack CLI scripts"
+    "integration health-check and Reference Pack CLI scripts",
+    "curated OpenWrite source mirror: Open-Write/Open-Write (Apache-2.0), LiPu-jpg/Openwrite (Apache-2.0), travsteward/openwriter (MIT), with pinned provenance and license notices",
+    "Novel-native Chinese deterministic long-form quality gate: chapter byte hashes, critic evidence binding, chapter floor, duplicate-paragraph blocking, repeated-sentence advisory",
+    "OpenWriter editor/reference source for accept/reject revisions, document/workspace state, manuscript composition and regression patterns"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -51,12 +55,29 @@
     "add first-3-chapter / first-20-chapter benchmark cases and publishability blind scoring",
     "finish human scoring of run-20260914-153013 and keep it as continuity baseline"
   ],
-  "updated_at": "2026-09-28",
+  "updated_at": "2026-09-30",
   "last_sync": {
     "github_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
     "github_ci": "success",
     "drive_snapshot_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
     "drive_snapshot_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
     "pending_sync_count": 0
+  },
+  "openwrite_integration": {
+    "status": "ACTIVE_WORK_BRANCH",
+    "branch": "feat/openwrite-mass-import-20260929",
+    "upstreams": {
+      "Open-Write/Open-Write": "14a65ac9e4f88712ec9caa62dfab4abf54f9e3e8",
+      "LiPu-jpg/Openwrite": "024e09d751457a02fcda628f1d94bad5aff03425",
+      "travsteward/openwriter": "142002677685298d45569ac132af11e7ed8e70e2",
+      "ilrein/openwrite": "reference-only AGPL-3.0 @ b029dcf996b21750fac033b9267e610abca24694"
+    },
+    "vendored_file_counts": {
+      "open_write": 94,
+      "lipu_openwrite": 143,
+      "openwriter": 465
+    },
+    "source_files_total": 702,
+    "main_modified": false
   }
 }

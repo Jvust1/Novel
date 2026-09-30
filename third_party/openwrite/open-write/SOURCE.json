@@ -1,0 +1,19 @@
+{
+  "source_repository": "Open-Write/Open-Write",
+  "source_commit": "14a65ac9e4f88712ec9caa62dfab4abf54f9e3e8",
+  "source_tree": "2c77c6252944666bdc72621297e6263e5e8f4654",
+  "license": "Apache-2.0",
+  "imported_at": "2026-09-29",
+  "files": 94,
+  "scope": [
+    ".kilo/**",
+    "novel_template/**",
+    "skills/**",
+    "tools/**",
+    "LICENSE",
+    "README.md",
+    "user_manual.md",
+    "update_log.md"
+  ],
+  "purpose": "Long-form novel production, critic/revision workflows and deterministic completion verification."
+}

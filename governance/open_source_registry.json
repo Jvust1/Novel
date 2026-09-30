@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-27",
+  "updated_at": "2026-09-30",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,11 +9,11 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 38,
-    "p0": 8,
-    "p1": 15,
+    "total": 42,
+    "p0": 9,
+    "p1": 17,
     "no_license": 2,
-    "agpl": 2
+    "agpl": 3
   },
   "entries": [
     {
@@ -357,6 +357,46 @@
       "mode": "external-runtime",
       "priority": "P3",
       "use": "GGUF 外部运行时，可通过 API 使用，不嵌入源码"
+    },
+    {
+      "key": "open_write",
+      "repo": "Open-Write/Open-Write",
+      "category": "longform_workflow",
+      "license": "Apache-2.0",
+      "mode": "vendored-adapted",
+      "priority": "P0",
+      "pinned_commit": "14a65ac9e4f88712ec9caa62dfab4abf54f9e3e8",
+      "use": "小说 Bible、voice experiment、critic/revision、确定性 completion/finalize gate；已精选 vendor 并做中文质量门适配"
+    },
+    {
+      "key": "lipu_openwrite",
+      "repo": "LiPu-jpg/Openwrite",
+      "category": "writing_workbench",
+      "license": "Apache-2.0",
+      "mode": "vendored-reference",
+      "priority": "P1",
+      "pinned_commit": "024e09d751457a02fcda628f1d94bad5aff03425",
+      "use": "预设/技能系统、OpenWrite bridge、Studio 工作台与长写作产品结构；精选 vendor"
+    },
+    {
+      "key": "openwriter",
+      "repo": "travsteward/openwriter",
+      "category": "writing_editor",
+      "license": "MIT",
+      "mode": "vendored-reference",
+      "priority": "P1",
+      "pinned_commit": "142002677685298d45569ac132af11e7ed8e70e2",
+      "use": "Markdown/富文本编辑、批注/修订接受拒绝、版本历史、manuscript compose、工作区与同步交互；核心源码与通用回归脚本已 vendor"
+    },
+    {
+      "key": "ilrein_openwrite",
+      "repo": "ilrein/openwrite",
+      "category": "writing_platform",
+      "license": "AGPL-3.0",
+      "mode": "architecture-reference-only",
+      "priority": "P2",
+      "pinned_commit": "b029dcf996b21750fac033b9267e610abca24694",
+      "use": "Story map / premise→acts→chapters→scenes 产品与架构参考；AGPL 源码不并入 Novel"
     }
   ]
 }

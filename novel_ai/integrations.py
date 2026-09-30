@@ -26,9 +26,9 @@ class IntegrationSpec:
         return data
 
 
-# Keep this registry intentionally explicit: upstream projects are absorbed as
-# capabilities, adapters, algorithms or external runtimes.  We do not vendor
-# arbitrary upstream source trees into Novel.
+# Keep this registry intentionally explicit. Most upstreams are adapters or references;
+# a small number of license-compatible writing systems may be selectively vendored at a
+# pinned commit when provenance/notices are preserved and the import directly serves Novel.
 INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("re3", "yangkevin2/emnlp22-re3-story-generation", "story_generation", "MIT", "research-port", "recursive reprompting and revision for long stories"),
     IntegrationSpec("doc_story", "yangkevin2/doc-story-generation", "story_generation", "MIT", "research-port", "detailed outline control for coherent long stories"),
@@ -68,6 +68,10 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("openai_evals", "openai/evals", "evaluation", "MIT", "research-port", "evaluation registry and reproducible benchmark patterns"),
     IntegrationSpec("sillytavern", "SillyTavern/SillyTavern", "context_product", "AGPL-3.0", "architecture-reference-only", "lorebook/world-info and context UX ideas"),
     IntegrationSpec("koboldcpp", "LostRuins/koboldcpp", "model_runtime", "AGPL-3.0", "external-runtime", "GGUF local runtime; keep outside Novel source tree"),
+    IntegrationSpec("open_write", "Open-Write/Open-Write", "longform_workflow", "Apache-2.0", "vendored-adapted", "novel bible, critic/revision and deterministic completion gates"),
+    IntegrationSpec("lipu_openwrite", "LiPu-jpg/Openwrite", "writing_workbench", "Apache-2.0", "vendored-reference", "preset/skill/bridge and writing-workbench patterns"),
+    IntegrationSpec("openwriter", "travsteward/openwriter", "writing_editor", "MIT", "vendored-reference", "editor, tracked changes, comments, versions and manuscript composition"),
+    IntegrationSpec("ilrein_openwrite", "ilrein/openwrite", "writing_platform", "AGPL-3.0", "architecture-reference-only", "story-map/product architecture; source not embedded"),
 )
 
 

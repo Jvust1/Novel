@@ -1,5 +1,18 @@
 # Current State
 
+## 2026-09-30（OpenWrite 大规模纳入）
+
+- 工作分支：`feat/openwrite-mass-import-20260929`；`main` 未修改。
+- 已精选 vendor 三套许可兼容源码：Open-Write/Open-Write（Apache-2.0）94 文件、LiPu-jpg/Openwrite（Apache-2.0）143 文件、travsteward/openwriter（MIT）465 文件，当前合计 **702 个上游文件**；许可证和固定 commit 均保留。
+- Open-Write 重点纳入：小说 Bible/模板、voice experiment、critic architecture、iterative revision、word-count / manifest / completion / finalize / lint 等确定性验证工具。
+- LiPu/Openwrite 重点纳入：presets、openwrite-bridge、文档/设计资料与写作工作台结构。
+- OpenWriter 重点纳入：编辑器核心、server、skills、plugins、ADR、批注与接受/拒绝修改、版本/文档状态、manuscript compose、通用回归脚本。
+- ilrein/openwrite 明确为 AGPL-3.0，仅登记为架构参考，不把源码混入 Novel。
+- 新增 `novel_ai/quality_gate.py`：面向中文长篇的确定性完成/审稿质量门；章节与审稿通过 SHA-256 绑定，检查章节长度、审稿证据、跨章重复段落，并把跨章重复句作为 advisory。
+- 新增 `scripts/run_quality_gate.py` 与 `tests/test_quality_gate.py`。
+- 开源登记从 38 项扩展为 **42 项**。
+
+
 ## 2026-09-28（成果同步）
 
 - GitHub `main` 的开源生态集成提交 `a84917cc6d637ccade3da4d721828c6613bfc92b` 已通过 CI workflow #74。

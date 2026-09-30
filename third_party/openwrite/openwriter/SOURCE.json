@@ -1,0 +1,18 @@
+{
+  "source_repository": "travsteward/openwriter",
+  "source_commit": "142002677685298d45569ac132af11e7ed8e70e2",
+  "source_tree": "0c913c92b90980d69ba929de38a8bef7ab59ab3d",
+  "license": "MIT",
+  "imported_at": "2026-09-30",
+  "files": 465,
+  "scope": [
+    "root docs/license/package metadata",
+    "adr/**",
+    "skills/**",
+    "plugins/**",
+    "packages/openwriter core source",
+    "packages/openwriter scripts except test-node-mapping corpus",
+    "binary icons/fonts excluded"
+  ],
+  "purpose": "Editor/workspace architecture, comments, tracked changes, versions, manuscript composition and regression patterns."
+}
