@@ -27,13 +27,14 @@ class IntegrationSpec:
 
 
 # Keep this registry intentionally explicit: upstream projects are absorbed as
-# capabilities, adapters, algorithms or external runtimes.  We do not vendor
-# arbitrary upstream source trees into Novel.
+# capabilities, adapters, algorithms, external runtimes, or explicitly approved
+# pinned submodules. Any source inclusion requires a compatible license and provenance.
 INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("re3", "yangkevin2/emnlp22-re3-story-generation", "story_generation", "MIT", "research-port", "recursive reprompting and revision for long stories"),
     IntegrationSpec("doc_story", "yangkevin2/doc-story-generation", "story_generation", "MIT", "research-port", "detailed outline control for coherent long stories"),
     IntegrationSpec("doc_story_v2", "facebookresearch/doc-storygen-v2", "story_generation", "Apache-2.0", "research-port", "Premise -> Plan -> Story pipeline for modern chat/open models"),
     IntegrationSpec("chinese_novelist_skill", "PenglongHuang/chinese-novelist-skill", "story_generation", "MIT", "research-port", "Chinese novel planning, continuation and validation workflow"),
+    IntegrationSpec("book_to_skill", "virgiliojr94/book-to-skill", "document_ingest", "MIT", "git-submodule", "convert user-provided books/documents into on-demand Agent Skills"),
     IntegrationSpec("booknlp", "booknlp/booknlp", "literary_nlp", "MIT", "research-port", "character, quote and narrative analysis ideas; English-centric, not default runtime"),
     IntegrationSpec("hanlp", "hankcs/HanLP", "chinese_nlp", "Apache-2.0", "direct-optional", "Chinese segmentation, tagging and NLP features", "hanlp", "hanlp"),
     IntegrationSpec("jieba", "fxsjy/jieba", "chinese_nlp", "MIT", "direct-optional", "lightweight Chinese tokenization for lexical statistics", "jieba", "jieba"),

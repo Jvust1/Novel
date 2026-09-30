@@ -1,0 +1,4 @@
+[submodule "vendor/book-to-skill"]
+	path = vendor/book-to-skill
+	url = https://github.com/virgiliojr94/book-to-skill.git
+	branch = master

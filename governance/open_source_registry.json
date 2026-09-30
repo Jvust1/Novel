@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-27",
+  "updated_at": "2026-09-30",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,8 +9,8 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 38,
-    "p0": 8,
+    "total": 39,
+    "p0": 9,
     "p1": 15,
     "no_license": 2,
     "agpl": 2
@@ -357,6 +357,15 @@
       "mode": "external-runtime",
       "priority": "P3",
       "use": "GGUF 外部运行时，可通过 API 使用，不嵌入源码"
+    },
+    {
+      "key": "book_to_skill",
+      "repo": "virgiliojr94/book-to-skill",
+      "category": "document_ingest",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P0",
+      "use": "把用户提供的书籍/参考文档转换为按需加载的 Agent Skill，作为 Reference Pack / Story DNA 前的结构化知识层"
     }
   ]
 }

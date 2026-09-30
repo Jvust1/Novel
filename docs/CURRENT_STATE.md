@@ -1,3 +1,10 @@
+## 2026-09-30 — book-to-skill integrated
+
+- Added `virgiliojr94/book-to-skill` as pinned submodule `vendor/book-to-skill` at upstream commit `c108d25b0cb58e1bdc361f3de02ed9f37075152f`.
+- MIT license confirmed upstream; the upstream tree retains its original `LICENSE.md` and copyright notice.
+- Novel use: convert user-provided reference books/documents into structured on-demand Agent Skills before/alongside Reference Pack and Story DNA extraction.
+- Raw reference novels remain outside GitHub; only tooling is integrated.
+
 # Current State
 
 ## 2026-09-28（成果同步）

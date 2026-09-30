@@ -35,7 +35,8 @@
     "optional jieba lexical statistics in Reference Pack",
     "semantic similarity module with dependency-free fallback plus text2vec/FlagEmbedding adapters",
     "capability-grouped optional dependency manifests",
-    "integration health-check and Reference Pack CLI scripts"
+    "integration health-check and Reference Pack CLI scripts",
+    "pinned virgiliojr94/book-to-skill as vendor/book-to-skill git submodule at c108d25b0cb58e1bdc361f3de02ed9f37075152f"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -51,7 +52,7 @@
     "add first-3-chapter / first-20-chapter benchmark cases and publishability blind scoring",
     "finish human scoring of run-20260914-153013 and keep it as continuity baseline"
   ],
-  "updated_at": "2026-09-28",
+  "updated_at": "2026-09-30",
   "last_sync": {
     "github_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
     "github_ci": "success",
