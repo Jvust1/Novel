@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust/Novel",
-  "stage": "longform-engineering-fusion-v0.3",
-  "version": "0.3.0-dev",
+  "stage": "1000star-final-fusion-v0.4",
+  "version": "0.4.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "finish release-candidate validation of optional Mem0/DSPy/CrewAI adapters without changing Novel core defaults",
     "harden character Voice DNA and behavior-repetition guard with real multi-chapter samples",
     "validate timeline contradiction and foreshadow lifecycle heuristics against manually checked novels",
     "calibrate whole-book tension/climax density by genre instead of one universal threshold",
@@ -98,12 +99,18 @@
     "four-layer originality gate CLI/module",
     "hierarchical series/volume/arc/chapter/scene outline module",
     "Fanqie-oriented market benchmark module",
-    "market release pack module"
+    "market release pack module",
+    "Mem0 RecallBackend adapter with infer-false/add-only writes and Novel document provenance",
+    "DSPy Predict review hook behind the explicit external-review contract",
+    "CrewAI Crew/Flow review hook behind the explicit external-review contract",
+    "NovelEngine opt-in external review-hook merge path for draft and repaired-text second pass",
+    "1000+ star final-fusion provenance record for Mem0, DSPy, CrewAI, Qdrant and SillyTavern license boundaries"
   ],
   "frozen": false,
   "blocking_issues": [],
   "pending_sync": [],
   "next_steps": [
+    "run full pytest/CI for the 1000-star final-fusion branch before release-candidate tagging",
     "run full pytest/CI on the fusion branch and fix any integration regressions",
     "add frozen longform benchmark cases with known voice, timeline, foreshadow and tension failures",
     "calibrate Voice DNA thresholds per character sample size and intentional character-state shifts",
