@@ -4,6 +4,7 @@ from typing import Any
 
 from .engine import ChapterResult, NovelEngine
 from .models import Character, StoryBible, StyleFingerprint
+from .quality_gate import analyze_prose_quality, quality_review_payload
 from .orchestration import ProviderRouter, TaskKind
 
 
@@ -48,15 +49,19 @@ class RoutedNovelEngine:
         if review:
             reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider)
             review_result = reviewer.review(bible, plan, characters, draft)
+            from .engine import merge_quality_issues
+            review_result = merge_quality_issues(review_result, quality_review_payload(analyze_prose_quality(draft)))
         revised = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = writer.repair(draft, review_result, style)
         from .style_engine import detect_ai_flavor
+        quality_payload = quality_review_payload(analyze_prose_quality(draft))
 
         return ChapterResult(
             plan=plan,
             draft=draft,
             review=review_result,
             ai_flavor=detect_ai_flavor(draft),
+            quality_report=quality_payload,
             revised=revised,
         )

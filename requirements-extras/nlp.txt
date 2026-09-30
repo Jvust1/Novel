@@ -5,3 +5,9 @@ text2vec
 FlagEmbedding
 sentence-transformers
 rapidfuzz
+pkuseg
+lexicalrichness
+pycorrector
+opencc-python-reimplemented
+spacy
+textstat

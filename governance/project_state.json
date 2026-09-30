@@ -40,7 +40,13 @@
     "pinned explosion/spaCy as vendor/spacy at 26b4d1dc04a812f426e4bef3e8a1b6f159d6f048",
     "pinned shibing624/pycorrector as vendor/pycorrector at fc8aa56c336276fbd8cdd3a49eef505dc67b8a6e",
     "pinned jbesomi/texthero as vendor/texthero at 37d09f0299fe14329b4fae5002c3a1950e4f563e",
-    "pinned BYVoid/OpenCC as vendor/opencc at 2939943bd6f4d459b46d7fdcf07a885ab3f01761"
+    "pinned BYVoid/OpenCC as vendor/opencc at 2939943bd6f4d459b46d7fdcf07a885ab3f01761",
+    "deterministic prose quality gate integrated into NovelEngine and RoutedNovelEngine",
+    "optional OpenCC normalization with identity fallback",
+    "optional pkuseg/jieba tokenization for Chinese lexical diagnostics",
+    "optional LexicalRichness metrics for vocabulary diversity",
+    "optional pycorrector suggestions surfaced as review candidates without blind auto-fix",
+    "quality findings merged into ChapterReview and can trigger local repair for medium/high issues"
   ],
   "frozen": false,
   "blocking_issues": [],

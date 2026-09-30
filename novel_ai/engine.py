@@ -9,6 +9,7 @@ from .models import (
     Character,
     ChapterPlan,
     ChapterReview,
+    ReviewIssue,
     MemoryExtraction,
     StoryBible,
     StyleFingerprint,
@@ -22,6 +23,7 @@ from .prompts import (
     semantic_style_messages,
 )
 from .provider import OpenAICompatibleProvider
+from .quality_gate import analyze_prose_quality, quality_review_payload
 from .style_engine import detect_ai_flavor
 
 
@@ -70,12 +72,39 @@ class ChapterResult:
     draft: str
     review: ChapterReview | None
     ai_flavor: dict[str, Any]
+    quality_report: dict[str, Any] | None = None
     revised: str | None = None
     review_after_repair: ChapterReview | None = None
 
     @property
     def final_text(self) -> str:
         return self.revised or self.draft
+
+
+def merge_quality_issues(review: ChapterReview | None, quality: dict[str, Any]) -> ChapterReview | None:
+    """Merge deterministic prose-quality findings into model review."""
+    if review is None:
+        return None
+    existing = {(i.category, i.reason) for i in review.issues}
+    added = []
+    for issue in quality.get("issues", []):
+        key = (issue.get("category", ""), issue.get("reason", ""))
+        if key in existing:
+            continue
+        added.append(
+            ReviewIssue(
+                category=issue.get("category", "文本质量"),
+                severity=issue.get("severity", "low"),
+                excerpt=issue.get("excerpt", ""),
+                reason=issue.get("reason", ""),
+                suggestion=issue.get("suggestion", ""),
+            )
+        )
+    issues = [*review.issues, *added]
+    verdict = review.verdict
+    if any(i.severity in {"medium", "high"} for i in added):
+        verdict = "revise"
+    return review.model_copy(update={"issues": issues, "verdict": verdict})
 
 
 class NovelEngine:
@@ -215,17 +244,23 @@ class NovelEngine:
             extra_context,
         )
         local_signals = detect_ai_flavor(draft)
+        quality = analyze_prose_quality(draft)
+        quality_payload = quality_review_payload(quality)
         review_result = self.review(bible, plan, characters, draft) if review else None
+        review_result = merge_quality_issues(review_result, quality_payload)
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
             revised = self.repair(draft, review_result, style)
+            revised_quality = analyze_prose_quality(revised)
             review_after_repair = self.review(bible, plan, characters, revised)
+            review_after_repair = merge_quality_issues(review_after_repair, quality_review_payload(revised_quality))
         return ChapterResult(
             plan=plan,
             draft=draft,
             review=review_result,
             ai_flavor=local_signals,
+            quality_report=quality_payload,
             revised=revised,
             review_after_repair=review_after_repair,
         )

@@ -1,3 +1,12 @@
+## 2026-09-30 — deep prose-quality fusion
+
+- Added `novel_ai/quality_gate.py`: dependency-free core plus optional OpenCC / pkuseg / jieba / LexicalRichness / pycorrector / spaCy capability detection.
+- NovelEngine now runs deterministic quality analysis immediately after drafting. Medium/high deterministic findings are merged into `ChapterReview` and can trigger the existing local repair path; low findings remain advisory.
+- RoutedNovelEngine receives the same quality gate so multi-model writer/reviewer routing no longer bypasses local quality checks.
+- Added optional NLP dependencies to `requirements-extras/nlp.txt`; default install remains lightweight and functional without them.
+- pycorrector output is never blindly applied: names, dialogue, dialect and intentional colloquial language require review.
+- The gate optimizes naturalness, correctness, variation and originality signals; it is not a detector-evasion score.
+
 ## 2026-09-30 — 1000+ star NLP integrations
 
 - Added four pinned 1000+ star upstream projects as Git submodules: spaCy (33k+), pycorrector (6.5k+), texthero (2.9k+), OpenCC (10k+), star counts checked on 2026-09-30.
