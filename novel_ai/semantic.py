@@ -95,3 +95,27 @@ def max_reference_similarity(text: str, references: Sequence[str], encoder: Enco
         return {"max_similarity": 0.0, "reference_index": None, "scores": []}
     best = max(range(len(scores)), key=scores.__getitem__)
     return {"max_similarity": scores[best], "reference_index": best, "scores": scores}
+
+
+def preferred_encoder(prefer: str = "auto") -> tuple[Encoder | None, str]:
+    """Select an installed Chinese semantic encoder without making it mandatory.
+
+    auto preference: FlagEmbedding -> text2vec -> dependency-free char n-grams.
+    Model loading happens only when this function is explicitly called.
+    """
+    import importlib.util
+
+    choice = (prefer or "auto").lower()
+    if choice in {"auto", "flagembedding", "bge"} and importlib.util.find_spec("FlagEmbedding") is not None:
+        try:
+            return FlagEmbeddingEncoder(), "FlagEmbedding"
+        except Exception:
+            if choice not in {"auto"}:
+                raise
+    if choice in {"auto", "text2vec"} and importlib.util.find_spec("text2vec") is not None:
+        try:
+            return Text2VecEncoder(), "text2vec"
+        except Exception:
+            if choice not in {"auto"}:
+                raise
+    return None, "char-ngram"

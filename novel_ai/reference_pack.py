@@ -8,7 +8,7 @@ from typing import Iterable
 from pydantic import BaseModel, Field
 
 from .models import StyleFingerprint
-from .reading import extract_reference_text
+from .reading import extract_reference_text_with_backend
 from .style_engine import analyze_style, blend_styles, build_reference_signature
 
 
@@ -25,6 +25,7 @@ class ReferenceSourceProfile(BaseModel):
     style: StyleFingerprint
     signature_hashes: list[str] = Field(default_factory=list)
     token_stats: dict[str, float | int] = Field(default_factory=dict)
+    extraction_backend: str = ""
 
 
 class ReferencePack(BaseModel):
@@ -54,7 +55,7 @@ def _jieba_stats(text: str) -> dict[str, float | int]:
 
 def build_reference_source(filename: str, data: bytes, *, weight: float = 1.0) -> ReferenceSourceProfile:
     """Turn one uploaded novel/reference into non-reversible derived features."""
-    text = extract_reference_text(filename, data)
+    text, extraction_backend = extract_reference_text_with_backend(filename, data)
     compact_chars = len(re.sub(r"\s+", "", text))
     paragraphs = [p for p in re.split(r"\n\s*\n|\n", text) if p.strip()]
     source_id = hashlib.sha256(data).hexdigest()[:24]
@@ -70,6 +71,7 @@ def build_reference_source(filename: str, data: bytes, *, weight: float = 1.0) -
         style=style,
         signature_hashes=sorted(build_reference_signature(text)),
         token_stats=_jieba_stats(text),
+        extraction_backend=extraction_backend,
     )
 
 

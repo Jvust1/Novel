@@ -1,3 +1,12 @@
+## 2026-09-30 — high-fidelity reference and semantic fusion
+
+- Pinned MarkItDown, Docling, text2vec, FlagEmbedding, RapidFuzz and DeepKE as reviewed upstream submodules.
+- Reference ingestion now prefers Docling, then MarkItDown, then the lightweight python-docx/pypdf fallback. HTML/RTF/EPUB become available when an advanced backend is installed.
+- Reference Pack records which extraction backend produced each source profile.
+- Semantic layer can explicitly select the strongest installed backend: FlagEmbedding → text2vec → dependency-free char n-gram.
+- RapidFuzz is already consumed by the reference-similarity protection layer.
+- DeepKE is registered as an opt-in Story DNA structure extractor candidate; it is not forced into the default lightweight runtime.
+
 ## 2026-09-30 — reference similarity + book-to-skill runtime fusion
 
 - Added `novel_ai/reference_similarity.py`: non-reversible shingle overlap is the default protection; RapidFuzz/embedding/event-sequence layers are optional runtime inputs.

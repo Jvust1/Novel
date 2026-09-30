@@ -49,7 +49,11 @@
     "quality findings merged into ChapterReview and can trigger local repair for medium/high issues",
     "layered reference similarity guard using non-reversible shingle hashes by default",
     "reference similarity findings integrated into NovelEngine and RoutedNovelEngine review flow",
-    "book-to-skill adapter executes pinned vendored converter against local user documents with project-local output"
+    "book-to-skill adapter executes pinned vendored converter against local user documents with project-local output",
+    "high-fidelity reference reader chain: Docling -> MarkItDown -> python-docx/pypdf fallback",
+    "Reference Pack records the actual extraction backend per source",
+    "preferred semantic encoder selector: FlagEmbedding -> text2vec -> char-ngram fallback",
+    "DeepKE pinned as opt-in Story DNA entity/relation/event extraction candidate"
   ],
   "frozen": false,
   "blocking_issues": [],

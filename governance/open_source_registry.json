@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 47,
+    "total": 48,
     "p0": 13,
-    "p1": 19,
+    "p1": 20,
     "no_license": 2,
     "agpl": 2
   },
@@ -84,7 +84,7 @@
       "repo": "shibing624/text2vec",
       "category": "embeddings",
       "license": "Apache-2.0",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P0",
       "use": "中文语义向量、相似度、原创性/Recall 检索"
     },
@@ -93,7 +93,7 @@
       "repo": "FlagOpen/FlagEmbedding",
       "category": "embeddings",
       "license": "MIT",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P0",
       "use": "BGE 向量/重排器；Reference similarity 与 Recall"
     },
@@ -111,7 +111,7 @@
       "repo": "rapidfuzz/RapidFuzz",
       "category": "originality",
       "license": "MIT",
-      "mode": "direct-optional",
+      "mode": "git-submodule+direct-optional",
       "priority": "P0",
       "use": "人名/短语/事件摘要近似匹配与去重"
     },
@@ -120,7 +120,7 @@
       "repo": "docling-project/docling",
       "category": "document_ingest",
       "license": "MIT",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P0",
       "use": "复杂 PDF/DOCX/版面解析，增强参考小说导入"
     },
@@ -129,7 +129,7 @@
       "repo": "microsoft/markitdown",
       "category": "document_ingest",
       "license": "MIT",
-      "mode": "adapter",
+      "mode": "git-submodule+adapter",
       "priority": "P1",
       "use": "多文档统一转 Markdown"
     },
@@ -438,6 +438,15 @@
       "mode": "git-submodule",
       "priority": "P0",
       "use": "中文简繁与词汇规范转换，统一参考文本和生成文本的中文字符体系"
+    },
+    {
+      "key": "deepke",
+      "repo": "zjunlp/DeepKE",
+      "category": "story_structure",
+      "license": "MIT",
+      "mode": "git-submodule+experiment-candidate",
+      "priority": "P1",
+      "use": "人物实体、关系、事件结构抽取候选，用于 Story DNA；重依赖后端只在实验开关下启用"
     }
   ]
 }
