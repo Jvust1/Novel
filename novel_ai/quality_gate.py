@@ -63,7 +63,7 @@ def _bigram_diversity(text: str) -> float:
     chars = [c for c in _compact(text) if c not in _PUNCT]
     if len(chars) < 2:
         return 0.0
-    grams = [chars[i : i + 2] for i in range(len(chars) - 1)]
+    grams = [tuple(chars[i : i + 2]) for i in range(len(chars) - 1)]
     return round(len(set(grams)) / len(grams), 4)
 
 
