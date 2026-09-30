@@ -1,5 +1,5 @@
 from novel_ai.models import ChapterPlan
-from novel_ai.structured_output import GuidanceStructuredExtractor, InstructorStructuredExtractor, OutlinesStructuredExtractor
+from novel_ai.structured_output import FallbackStructuredExtractor, GuidanceStructuredExtractor, InstructorStructuredExtractor, OutlinesStructuredExtractor
 
 
 class FakeCompletions:
@@ -77,3 +77,47 @@ def test_guidance_structured_extractor_uses_pydantic_schema_and_captured_json():
     assert result.chapter_title == "第九章"
     assert calls[0]["schema"] is ChapterPlan
     assert calls[0]["temperature"] == 0.15
+
+
+
+def test_structured_fallback_chain_uses_next_backend_after_failure():
+    class Broken:
+        name = "broken"
+
+        def extract(self, **_kwargs):
+            raise RuntimeError("boom")
+
+    class Working:
+        name = "working"
+
+        def extract(self, *, response_model, **_kwargs):
+            return response_model(
+                chapter_title="第十章",
+                chapter_promise="备用后端接管",
+            )
+
+    extractor = FallbackStructuredExtractor([Broken(), Working()])
+    result = extractor.extract(
+        response_model=ChapterPlan,
+        messages=[{"role": "user", "content": "计划"}],
+        temperature=0.2,
+    )
+    assert result.chapter_title == "第十章"
+
+
+def test_structured_fallback_chain_reports_all_failed_backend_names():
+    class Broken:
+        def __init__(self, name):
+            self.name = name
+
+        def extract(self, **_kwargs):
+            raise ValueError("bad")
+
+    extractor = FallbackStructuredExtractor([Broken("guidance"), Broken("outlines")])
+    import pytest
+    with pytest.raises(RuntimeError, match="guidance.*outlines"):
+        extractor.extract(
+            response_model=ChapterPlan,
+            messages=[{"role": "user", "content": "计划"}],
+            temperature=0.2,
+        )
