@@ -26,7 +26,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 6. `requirements-extras/*` — heavy dependencies split by capability so the default install stays small.
 7. `governance/open_source_registry.json` — auditable upstream registry.
 
-## Upstream registry (43 projects)
+## Upstream registry (47 projects)
 
 | Priority | Key | Upstream | License | Adoption mode | Novel use |
 |---|---|---|---|---|---|
@@ -34,6 +34,10 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `doc_story` | [yangkevin2/doc-story-generation](https://github.com/yangkevin2/doc-story-generation) | MIT | research-port | 详细大纲控制；吸收到 Story Forge 的层级规划 |
 | P0 | `doc_story_v2` | [facebookresearch/doc-storygen-v2](https://github.com/facebookresearch/doc-storygen-v2) | Apache-2.0 | research-port | Premise→Plan→Story 现代化实现；作为 Story DNA/长篇生成骨架参考 |
 | P1 | `chinese_novelist_skill` | [PenglongHuang/chinese-novelist-skill](https://github.com/PenglongHuang/chinese-novelist-skill) | MIT | research-port | 中文小说问答、偏好记忆、断点续写与校验流程 |
+| P1 | `spacy` | [explosion/spaCy](https://github.com/explosion/spaCy) | MIT | git-submodule | 成熟 NLP pipeline；结构/实体/句法/风格特征分析 |
+| P0 | `pycorrector` | [shibing624/pycorrector](https://github.com/shibing624/pycorrector) | Apache-2.0 | git-submodule | 中文错别字/语病诊断与局部修订信号 |
+| P1 | `texthero` | [jbesomi/texthero](https://github.com/jbesomi/texthero) | MIT | git-submodule | 文本清洗、向量化和探索分析 |
+| P0 | `opencc` | [BYVoid/OpenCC](https://github.com/BYVoid/OpenCC) | Apache-2.0 | git-submodule | 中文简繁/词汇规范统一 |
 | P0 | `lexicalrichness` | [LSYS/LexicalRichness](https://github.com/LSYS/LexicalRichness) | MIT | git-submodule | 词汇丰富度、重复度和词汇变化诊断 |
 | P1 | `textstat` | [textstat/textstat](https://github.com/textstat/textstat) | MIT | git-submodule | 可读性与句子复杂度统计 |
 | P1 | `proselint` | [amperser/proselint](https://github.com/amperser/proselint) | BSD-3-Clause | git-submodule | prose lint；英文规则为主，只作可选/参考层 |

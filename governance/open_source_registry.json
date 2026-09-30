@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 43,
-    "p0": 11,
-    "p1": 17,
+    "total": 47,
+    "p0": 13,
+    "p1": 19,
     "no_license": 2,
     "agpl": 2
   },
@@ -402,6 +402,42 @@
       "mode": "git-submodule",
       "priority": "P0",
       "use": "中文分词，为词汇、重复、句式和风格统计提供更稳定的中文切分"
+    },
+    {
+      "key": "spacy",
+      "repo": "explosion/spaCy",
+      "category": "nlp_pipeline",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P1",
+      "use": "成熟NLP流水线与句法/实体分析框架，用于可选的结构、重复与角色语言特征分析"
+    },
+    {
+      "key": "pycorrector",
+      "repo": "shibing624/pycorrector",
+      "category": "chinese_quality",
+      "license": "Apache-2.0",
+      "mode": "git-submodule",
+      "priority": "P0",
+      "use": "中文错别字、语病与文本纠错辅助，作为生成后质量诊断与局部修订信号"
+    },
+    {
+      "key": "texthero",
+      "repo": "jbesomi/texthero",
+      "category": "text_analysis",
+      "license": "MIT",
+      "mode": "git-submodule",
+      "priority": "P1",
+      "use": "文本清洗、向量化、可视化与探索分析，辅助批量分析参考文本/生成文本"
+    },
+    {
+      "key": "opencc",
+      "repo": "BYVoid/OpenCC",
+      "category": "chinese_normalization",
+      "license": "Apache-2.0",
+      "mode": "git-submodule",
+      "priority": "P0",
+      "use": "中文简繁与词汇规范转换，统一参考文本和生成文本的中文字符体系"
     }
   ]
 }

@@ -1,3 +1,9 @@
+## 2026-09-30 — 1000+ star NLP integrations
+
+- Added four pinned 1000+ star upstream projects as Git submodules: spaCy (33k+), pycorrector (6.5k+), texthero (2.9k+), OpenCC (10k+), star counts checked on 2026-09-30.
+- Primary Novel goal: improve Chinese text quality, normalization, structural analysis, lexical/phrase variation diagnostics, and post-generation repair inputs.
+- These integrations support writing quality/originality evaluation; they are not detector-evasion mechanisms.
+
 ## 2026-09-30 — style-quality toolset expanded
 
 - Added pinned submodules for `LSYS/LexicalRichness`, `textstat/textstat`, `amperser/proselint`, and `lancopku/pkuseg-python`.

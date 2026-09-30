@@ -36,7 +36,11 @@
     "semantic similarity module with dependency-free fallback plus text2vec/FlagEmbedding adapters",
     "capability-grouped optional dependency manifests",
     "integration health-check and Reference Pack CLI scripts",
-    "pinned virgiliojr94/book-to-skill as vendor/book-to-skill git submodule at c108d25b0cb58e1bdc361f3de02ed9f37075152f"
+    "pinned virgiliojr94/book-to-skill as vendor/book-to-skill git submodule at c108d25b0cb58e1bdc361f3de02ed9f37075152f",
+    "pinned explosion/spaCy as vendor/spacy at 26b4d1dc04a812f426e4bef3e8a1b6f159d6f048",
+    "pinned shibing624/pycorrector as vendor/pycorrector at fc8aa56c336276fbd8cdd3a49eef505dc67b8a6e",
+    "pinned jbesomi/texthero as vendor/texthero at 37d09f0299fe14329b4fae5002c3a1950e4f563e",
+    "pinned BYVoid/OpenCC as vendor/opencc at 2939943bd6f4d459b46d7fdcf07a885ab3f01761"
   ],
   "frozen": false,
   "blocking_issues": [],

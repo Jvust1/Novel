@@ -22,3 +22,23 @@
 	path = vendor/pkuseg-python
 	url = https://github.com/lancopku/pkuseg-python.git
 	branch = master
+
+[submodule "vendor/spacy"]
+	path = vendor/spacy
+	url = https://github.com/explosion/spaCy.git
+	branch = master
+
+[submodule "vendor/pycorrector"]
+	path = vendor/pycorrector
+	url = https://github.com/shibing624/pycorrector.git
+	branch = master
+
+[submodule "vendor/texthero"]
+	path = vendor/texthero
+	url = https://github.com/jbesomi/texthero.git
+	branch = master
+
+[submodule "vendor/opencc"]
+	path = vendor/opencc
+	url = https://github.com/BYVoid/OpenCC.git
+	branch = master
