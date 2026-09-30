@@ -53,10 +53,17 @@ class RoutedNovelEngine:
             revised = writer.repair(draft, review_result, style)
         from .style_engine import detect_ai_flavor
 
+        final_text = revised or draft
+        gate = writer.finalize_quality(
+            final_text,
+            chapter_id=plan.chapter_title or "chapter",
+            min_chapter_units=max(800, int(target_chars * 0.45)),
+        )
         return ChapterResult(
             plan=plan,
             draft=draft,
             review=review_result,
             ai_flavor=detect_ai_flavor(draft),
             revised=revised,
+            quality_gate=gate,
         )
