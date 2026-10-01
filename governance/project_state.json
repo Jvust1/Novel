@@ -502,7 +502,26 @@
       "local_python": "3.13.5",
       "local_ruff": "unavailable; package download blocked",
       "local_pip_check": "shared-environment MoviePy/Pillow conflict not attributable to Novel requirements",
-      "github_ci": "pending publication"
+      "github_ci": "rerun pending after integration CLI fix",
+      "first_ci_run": "https://github.com/Jvust1/Novel/actions/runs/36900218281",
+      "pip_check": "passed on Python 3.11/3.12",
+      "high_risk_ruff": "passed: E9/F63/F7/F82 = 0",
+      "default_ruff_diagnostics": 329,
+      "default_ruff_top_rules": {
+        "I001": 93,
+        "BLE001": 32,
+        "UP035": 26,
+        "F401": 23,
+        "TRY004": 20,
+        "UP031": 16,
+        "C408": 15,
+        "SIM117": 15,
+        "PLW1510": 12,
+        "S110": 10,
+        "UP037": 7,
+        "FURB167": 7
+      },
+      "first_ci_blocker": "scripts/check_integrations.py direct execution could not import novel_ai; fixed by repository-root bootstrap"
     },
     "boundaries": [
       "default Ruff maintenance diagnostics are not yet a blocking gate",

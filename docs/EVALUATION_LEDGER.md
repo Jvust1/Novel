@@ -268,3 +268,13 @@ Remote CI must verify the real workbench surface: extraction creates a candidate
 The local shared Python 3.13 environment cannot produce a trustworthy Ruff or dependency verdict: Ruff is not installed and outbound package download is unavailable; `pip check` reports a MoviePy/Pillow conflict from packages not declared by Novel. Those observations are environment limitations, not Novel failures.
 
 The candidate therefore moves dependency/static verification into GitHub Actions' clean Python 3.11/3.12 jobs. Hard gates: pip check, Ruff E9/F63/F7/F82, compileall and full pytest. Default Ruff diagnostics are emitted from the same pinned Ruff 0.16.9 as a non-blocking JSON baseline. Exact current counts must come from the candidate CI logs after publication.
+
+### First quality-gate CI observation and fix
+
+Run 36900218281 established the clean-environment results before pytest:
+- pip check: success on Python 3.11 and 3.12;
+- high-risk Ruff E9/F63/F7/F82: success (zero blocking findings);
+- default Ruff 0.16.9 baseline: 329 diagnostics on both jobs, with I001=93, BLE001=32, UP035=26, F401=23 as the largest categories;
+- compileall: success.
+
+The run then failed before pytest because direct `python scripts/check_integrations.py` could not import `novel_ai`; this was a real CLI entry defect, not an optional-package failure. The script now prepends the repository root to sys.path. Local direct execution returns 0 and reports 68 integration records. A clean CI rerun is required before this candidate is considered verified.
