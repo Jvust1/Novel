@@ -3,6 +3,9 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import io
+import re
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +15,8 @@ from .context import ContextAssembler
 from .engine import NovelEngine
 from .models import Character, StoryBible
 from .storage import ProjectStore
+from .storage_guard import reject_links
+from ._vendor.boltons_atomic import atomic_save
 
 # E-000 固定评分维度：12 项，人工 1–5 分。
 RUBRIC: list[dict[str, str]] = [
@@ -161,9 +166,6 @@ def run_benchmark(
     provider_note: str = "",
 ) -> Path:
     """Run all (case, variant) pairs into an immutable run folder. Returns the run dir."""
-    run_id = datetime.now(timezone.utc).strftime("run-%Y%m%d-%H%M%S")
-    run_dir = Path(out_root) / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
     variants = variants or list(VARIANTS)
     for variant in variants:
         if variant not in VARIANTS:
@@ -171,6 +173,18 @@ def run_benchmark(
 
     all_cases = load_benchmark(bench_dir)
     selected = [c for c in all_cases if not cases or c.case_id in cases]
+    if not selected:
+        raise ValueError("No benchmark cases matched; no evidence directory created")
+    if len(variants) != len(set(variants)) or len({c.case_id for c in selected}) != len(selected):
+        raise ValueError("benchmark cases and variants must be unique")
+    if any(not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", c.case_id) for c in selected):
+        raise ValueError("benchmark case IDs must be safe stable filename identifiers")
+    root = Path(out_root).absolute()
+    reject_links(root)
+    root.mkdir(parents=True, exist_ok=True)
+    # Exclusive randomized directory allocation: same-second runs never share evidence.
+    run_dir = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("run-%Y%m%d-%H%M%S-"), dir=root))
+    run_id = run_dir.name
 
     run_record: dict[str, Any] = {
         "run_id": run_id,
@@ -183,25 +197,31 @@ def run_benchmark(
         for variant in variants:
             record = run_case(engine, case, variant, store_root=run_dir / "_stores" / case.case_id)
             slug = f"{case.case_id}__{variant}"
-            (run_dir / f"{slug}.txt").write_text(record.pop("text"), encoding="utf-8")
+            _write_new_evidence(run_dir / f"{slug}.txt", record.pop("text").encode("utf-8"))
             run_record["cases"].append(record)
 
-    (run_dir / "run.json").write_text(json.dumps(run_record, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_new_evidence(run_dir / "run.json", json.dumps(run_record, ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8"))
     make_scoring_sheet(run_record, run_dir / "scoring_sheet.csv")
     return run_dir
 
 
+def _write_new_evidence(path: Path, content: bytes) -> None:
+    reject_links(path)
+    with atomic_save(path, overwrite=False, file_perms=0o600) as stream:
+        stream.write(content)
+
+
 def make_scoring_sheet(run_record: dict[str, Any], path: str | Path) -> Path:
-    """Emit a blank human-scoring CSV (E-000's 12 dimensions, 1-5 scale)."""
+    """Emit a NEW blank scoring CSV; existing human scores are never overwritten."""
     path = Path(path)
-    with path.open("w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.writer(f)
-        writer.writerow(["run_id", "case_id", "variant", "dimension_key", "dimension_label", "score", "notes"])
-        for record in run_record["cases"]:
-            for item in RUBRIC:
-                writer.writerow(
-                    [run_record["run_id"], record["case_id"], record["variant"], item["key"], item["label"], "", item["anchor"]]
-                )
+    content = io.StringIO(newline="")
+    writer = csv.writer(content)
+    writer.writerow(["run_id", "case_id", "variant", "dimension_key", "dimension_label", "score", "notes"])
+    for record in run_record["cases"]:
+        for item in RUBRIC:
+            writer.writerow([run_record["run_id"], record["case_id"], record["variant"],
+                             item["key"], item["label"], "", item["anchor"]])
+    _write_new_evidence(path, content.getvalue().encode("utf-8-sig"))
     return path
 
 

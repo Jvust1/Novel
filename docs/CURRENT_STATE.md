@@ -1,3 +1,11 @@
+# 2026-10-01 — Project storage and benchmark evidence (candidate)
+
+- Reconcile existing Novel PR16 confinement with a licensed boltons atomic-write source port used by actual ProjectStore and benchmark writers
+- Preserve complete old/new files through publication failures, coordinate cooperating processes, and recover the fixed extraction/summary pair from checked intent
+- Refuse traversal/links/internal-file aliases and keep same-second runs and existing human scores separate
+- Linux CI matrix covers Python 3.11/3.12 with contents:read; Windows native acceptance, full vulnerability/lint gates and general cross-file/Drive transactions remain unclaimed
+- [Source pins, operational limits and tests](STORAGE_INTEGRITY.md)
+
 # 2026-10-01 — Author setting/style amendments (candidate)
 
 - Additive private journal preserves the complete v1 origin and accepted evidence; chapter revisions remain unchanged by amendments
