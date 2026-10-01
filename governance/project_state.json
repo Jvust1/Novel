@@ -6,6 +6,7 @@
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Validate explicit author setting/style amendment migration, affected-source reviews and private save/readback before continuing GPT writing",
     "Use GPT + GitHub repository instructions as the primary writing entry; adapt style to genre/reader/scene and preserve private version-bound book state without requiring a local UI",
     "Validate local author workflow: explicit Markdown hierarchy → confirmed chapter writing → revision-bound human review → local release candidate; real story-quality evidence still pending",
     "Validate conservative speaker attribution with overlapping registered character names and fresh version-2 Voice DNA baselines",
@@ -158,7 +159,8 @@
     "Pinned MIT humanizer prompt adaptations actually hooked into writing-before/editorial-review/local-repair instructions; nine composable genre style profiles",
     "Original public plugin-written chapter with verified remote readback and three fact-locked, separately saved style comparison candidates",
     "Whole unmodified MIT pytransitions core used by optional GPT story-state Machine with Pydantic validation, exact-source confirmations, idempotent operations and private save/readback",
-    "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth"
+    "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth",
+    "Additive private author-change journal using pinned BSD-3-Clause eventsourcing immutable replay/version guards, original v1 evidence retention, conservative chapter/derived-context review and explicit author resume"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -250,6 +252,30 @@
       "first_chapter_r1_unchanged": true,
       "north_star_unchanged": true,
       "real_human_quality_evidence": "not_established"
+    }
+  },
+  "author_amendment_candidate": {
+    "branch": "feat/author-reconcile-20261001",
+    "base_pr": 46,
+    "base_head": "76e5c9433039bb8a607854e17ebf8115f75b6f58",
+    "format": "gpt-author-journal-v1",
+    "docs": "docs/GPT_AUTHOR_AMENDMENTS.md",
+    "source_reuse": "pyeventsourcing/eventsourcing@575d42c10a821828639b90178ed56703abe9c9f1 BSD-3-Clause → frozen events/order guards → actual journal projector → author change/review/save/restore/next chapter",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 534,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 534,
+        "skipped": 1
+      },
+      "independent_adversarial_tests": 11,
+      "skip_reason": "optional qdrant-client absent",
+      "real_author_acceptance": "not_claimed",
+      "old_manuscript_rewrite": "not_implemented",
+      "real_human_quality_evidence": "not_established",
+      "journal_tests": 31
     }
   }
 }

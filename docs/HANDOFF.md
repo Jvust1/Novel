@@ -2,7 +2,8 @@
 
 当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
 
-- GPT 入口与文风提示随 `feat/gpt-writing-prompts-20261001` 分支交付，未合入 `main`；读取时指定 ref，不能将旧默认分支当作本次入口。
+- 当前作者变更候选入口为 `feat/author-reconcile-20261001`，叠在已验证 [Draft PR #46](https://github.com/Jvust1/Novel/pull/46) 上；#46 原快照 head `76e5c9433039bb8a607854e17ebf8115f75b6f58` 保留不动。两者均未合入 `main`。
+- 新增 [作者设定/文风变更日志](GPT_AUTHOR_AMENDMENTS.md)：保留旧稿与接受历史，明确确认、影响复审、保存读回后继续；历史正文替换与记忆重算仍未实现。
 - 现有本地作者工作流已发布为 [Draft PR #45](https://github.com/Jvust1/Novel/pull/45)，head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`。[该提交 CI](https://github.com/Jvust1/Novel/actions/runs/36826620415) 成功，413 passed / 1 skipped；未合并。用法见 [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md)。
 - [原创插件演示](../writing_demos/plugin-first-chapter-20261001/README.md) 已在提交 `badcfab4d925a1fbe464b4a314cf9abf004a675b` 发布并通过插件读回；它仍是待作者审阅的公开测试候选，不代表真实用户作品可公开或已被接受。
 - 文件读取不代表 Python 执行；GPT 入口是对话与归档协议，不是自动运行的新后端。真实故事质量、独立真人评测和平台结果仍需各自的证据。

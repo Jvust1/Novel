@@ -378,6 +378,7 @@ def create_state(story_id: str, title: str = "", *, template: dict | None = None
     if not story_id.strip():
         raise StateError("story_id must be nonempty")
     state = validate_state(template or {})
+    _require_unowned(state)
     if state.story_id or state.revision or state.accepted_chapters or state.progress.phase != "awaiting_story":
         raise StateError("create requires a blank template; import existing JSON with validate_state")
     state.canon.setdefault("reader_reveal_ledger", [])
@@ -390,6 +391,11 @@ def create_state(story_id: str, title: str = "", *, template: dict | None = None
 def _base_context_digest(state: StoryState) -> str:
     return _hash(_json({"canon": state.canon, "style_profile": state.style_profile,
                         "active": state.active, "recall": state.recall}))
+
+
+def _require_unowned(state: StoryState) -> None:
+    if getattr(state, "journal_owner", None):
+        raise StateError("this projection belongs to an author journal; use its amendment/review/save APIs")
 
 
 def _check_confirmation(state: StoryState, c: Confirmation, scope: str) -> None:
@@ -528,6 +534,7 @@ def _candidate(state: StoryState) -> MemoryCandidate:
 def transition(state: StoryState | dict, command: Command | dict) -> StoryState:
     """Pure copy-on-update reducer. All executable actions are fixed in Command."""
     state = validate_state(state)
+    _require_unowned(state)
     command = Command.model_validate(command.model_dump() if isinstance(command, Command) else copy.deepcopy(command))
     if state.story_id != command.story_id:
         raise StateError("cross-story command refused")
@@ -694,6 +701,7 @@ def save_state(path: str | Path, state: StoryState | dict, *, expected_disk_revi
     reduces stale overwrites, but external concurrent writers must be serialized.
     """
     state = validate_state(state)
+    _require_unowned(state)
     path = _local_path(path)
     existed = path.exists()
     if existed:
@@ -783,6 +791,7 @@ def preflight_context(state: StoryState | dict, sources: list[dict], budget_byte
     are indivisible. Only optional Recall can be omitted. Retrieved text is data.
     """
     state = validate_state(state)
+    _require_unowned(state)
     if type(budget_bytes) is not int or type(reserve_bytes) is not int or budget_bytes <= 0 or reserve_bytes < 0:
         raise StateError("budget_bytes must be positive and reserve_bytes nonnegative integers")
     available = budget_bytes - reserve_bytes
