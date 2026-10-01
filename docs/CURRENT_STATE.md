@@ -1,3 +1,12 @@
+# 2026-10-02 — Full-input and cumulative model-call budget (candidate)
+
+- Count complete normalized messages before actual model/backend calls; over-budget required context fails before provider execution and is not clipped
+- Reserve output allowance before every retry/fallback attempt and never refund on failure; later attempts receive only the remaining cumulative allowance
+- OpenAI-compatible response-format downgrade, structured fallback and budgeted LiteLLM multi-model fallback now share the same per-stage ledger
+- Default three visible attempts preserves the existing Guidance / Instructor / Outlines chain while establishing a finite cumulative ceiling
+- Local Python 3.13 targeted evidence: 188 related tests passed plus 22 non-Streamlit writer-output tests; full Python 3.11/3.12 CI pending
+- [Behavior, guarantees and limits](MODEL_CALL_BUDGETS.md)
+
 # 2026-10-02 — Accepted-history rebuild and stale-candidate isolation (candidate)
 
 - Rebuild accepted history only from append-only author-accepted chapter records; current/future/other-story candidates are excluded

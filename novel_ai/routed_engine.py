@@ -6,6 +6,7 @@ from .engine import ChapterResult, NovelEngine
 from .models import Character, StoryBible, StyleFingerprint
 from .orchestration import ProviderRouter, TaskKind
 from .output_policy import OutputPolicy
+from .token_budget import TokenCounter
 
 
 
@@ -13,13 +14,17 @@ class RoutedNovelEngine:
     """Use separate provider roles without changing the existing engine contract."""
 
     def __init__(self, router: ProviderRouter, *, output_policy: OutputPolicy | None = None,
-                 external_review_hooks: list[Any] | None = None):
+                 external_review_hooks: list[Any] | None = None, token_counter: TokenCounter | None = None):
         self.router = router
         self.output_policy = output_policy
+        if token_counter is not None and not isinstance(token_counter, TokenCounter):
+            raise TypeError("token_counter must be TokenCounter")
+        self.token_counter = token_counter
         self.external_review_hooks = list(external_review_hooks or [])
 
     def enrich_style(self, text: str, surface: StyleFingerprint) -> StyleFingerprint:
-        reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider, output_policy=self.output_policy)
+        reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider, output_policy=self.output_policy,
+                               token_counter=self.token_counter)
         return reviewer.enrich_style(text, surface)
 
     def run(
@@ -42,9 +47,10 @@ class RoutedNovelEngine:
         external_review_hooks: list[Any] | None = None,
     ) -> ChapterResult:
         writer = NovelEngine(self.router.provider_for(TaskKind.DRAFT).provider, output_policy=self.output_policy,
-                             external_review_hooks=self.external_review_hooks)
+                             external_review_hooks=self.external_review_hooks, token_counter=self.token_counter)
         plan = writer.plan(bible, outline, chapter_goal, characters, recent_summaries, extra_context)
-        reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider, output_policy=self.output_policy) if review else None
+        reviewer = NovelEngine(self.router.provider_for(TaskKind.REVIEW).provider, output_policy=self.output_policy,
+                               token_counter=self.token_counter) if review else None
         return writer.run_from_plan(
             bible=bible, plan=plan, characters=characters, recent_summaries=recent_summaries,
             style=style, target_chars=target_chars, user_notes=user_notes, review=review,

@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "accepted-history-rebuild-candidate",
-  "version": "0.14.0-dev",
+  "stage": "model-call-budget-candidate",
+  "version": "0.15.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Enforce full-message input accounting and cumulative retry/fallback token reservations across actual model call paths without silently clipping required story context",
     "Rebuild next-chapter context only from author-accepted history; exclude stale retained drafts and bind explicit historical source versions across restart/readback",
     "Unify actual final-text diagnostics and review/hook paths; apply bounded complete model output without changing explicit author acceptance",
     "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
@@ -170,7 +171,13 @@
     "accepted-history snapshot/fingerprint rebuilt only from validated append-only accepted chapter records",
     "preflight excludes retained stale draft after replanning until explicitly rebound to the current accepted plan",
     "explicit accepted-history chapter inclusion is whole-record and budget-blocking rather than silently truncated",
-    "story_state CLI accepted-history readback entry for restart/session recovery evidence"
+    "story_state CLI accepted-history readback entry for restart/session recovery evidence",
+    "complete normalized-message input budget checked before NovelEngine provider/backend calls",
+    "cumulative per-stage ModelCallBudget with non-refundable pre-attempt output reservations",
+    "OpenAI-compatible response-format downgrade shares one cumulative stage allowance",
+    "FallbackStructuredExtractor shares one cumulative allowance across selected backends",
+    "budgeted LiteLLM fallbacks expanded into visible zero-retry sequential attempts",
+    "RoutedNovelEngine carries one configured TokenCounter contract into writer/reviewer engines"
   ],
   "frozen": false,
   "blocking_issues": [
@@ -425,6 +432,31 @@
       "no Drive cross-file transaction or remote lock",
       "no automatic promotion of memory/Voice/Story DNA candidates",
       "input tokenizer and cumulative multi-call budget still pending"
+    ]
+  },
+  "model_call_budget_candidate": {
+    "branch": "fix/input-cumulative-budget-20261002",
+    "base_pr": 55,
+    "base_head": "6087261fff0069176a24d243da0f1e0d417d6a23",
+    "docs": "docs/MODEL_CALL_BUDGETS.md",
+    "defaults": {
+      "max_input_tokens": 65536,
+      "max_attempts_per_stage": 3,
+      "cumulative_rule": "stage max_tokens * max_attempts_per_stage"
+    },
+    "validation": {
+      "local_python": "3.13.5",
+      "related_tests": "188 passed",
+      "writer_output_non_streamlit": "22 passed",
+      "py_compile": "passed",
+      "python_3_11_ci": "pending",
+      "python_3_12_ci": "pending"
+    },
+    "boundaries": [
+      "configured tokenizer count is not provider billing/context-window proof",
+      "custom extensions with hidden internal retries need the explicit budget contract for cumulative guarantees",
+      "different semantic stages retain separate budgets rather than one monetary chapter budget",
+      "required Canon/knowledge/accepted-history context is blocked rather than silently clipped"
     ]
   }
 }

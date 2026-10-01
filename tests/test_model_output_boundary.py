@@ -516,3 +516,127 @@ def test_untrusted_oversized_content_length_is_refused_without_integer_overflow(
     provider = provider_with_transport(monkeypatch, lambda req: httpx.Response(200, content=b"", headers={"content-length": "9" * 5000}))
     with pytest.raises(OutputValidationError, match="byte allowance"):
         provider.chat(MESSAGES)
+
+
+def test_http_compatibility_retry_uses_one_shared_cumulative_budget(monkeypatch):
+    from novel_ai.token_budget import ModelCallBudget, TokenCounter
+    calls = []
+
+    def handler(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        if len(calls) == 1:
+            return httpx.Response(400, json={"error": {"param": "response_format", "code": "unsupported_parameter"}})
+        return httpx.Response(200, json=response('{"ok":true}'))
+
+    provider = provider_with_transport(monkeypatch, handler)
+    budget = ModelCallBudget(token_counter=TokenCounter(None, fallback_chars_per_token=1),
+                             max_input_tokens=10_000, total_output_tokens=1500, max_attempts=2)
+    assert provider.chat(MESSAGES, max_tokens=1000, response_format=FORMAT, budget=budget) == '{"ok":true}'
+    assert [call["max_tokens"] for call in calls] == [1000, 500]
+    assert budget.attempts == 2 and budget.reserved_output_tokens == 1500
+
+
+def test_http_retry_is_refused_before_second_request_when_attempt_budget_is_exhausted(monkeypatch):
+    from novel_ai.token_budget import ModelBudgetExceeded, ModelCallBudget, TokenCounter
+    calls = []
+    provider = provider_with_transport(
+        monkeypatch,
+        lambda req: calls.append(req) or httpx.Response(
+            400, json={"error": {"param": "response_format", "code": "unsupported_parameter"}}
+        ),
+    )
+    budget = ModelCallBudget(token_counter=TokenCounter(None, fallback_chars_per_token=1),
+                             max_input_tokens=10_000, total_output_tokens=1000, max_attempts=1)
+    with pytest.raises(ModelBudgetExceeded, match="attempt count"):
+        provider.chat(MESSAGES, max_tokens=1000, response_format=FORMAT, budget=budget)
+    assert len(calls) == 1
+
+
+def test_structured_fallback_shares_total_output_allowance_and_stops_before_third_backend():
+    from novel_ai.token_budget import ModelCallBudget, TokenCounter
+    calls = []
+
+    class Broken:
+        name = "broken"
+        def extract(self, **kwargs):
+            calls.append((self.name, kwargs["max_tokens"]))
+            raise RuntimeError("synthetic")
+
+    class Working:
+        name = "working"
+        def extract(self, *, response_model, **kwargs):
+            calls.append((self.name, kwargs["max_tokens"]))
+            return response_model(title="ok")
+
+    class Never:
+        name = "never"
+        def extract(self, **kwargs):
+            calls.append((self.name, kwargs["max_tokens"]))
+            raise AssertionError("third backend must not run")
+
+    class BudgetItem(BaseModel):
+        title: str
+
+    budget = ModelCallBudget(token_counter=TokenCounter(None, fallback_chars_per_token=1),
+                             max_input_tokens=10_000, total_output_tokens=500, max_attempts=2)
+    chain = FallbackStructuredExtractor([Broken(), Working(), Never()])
+    value = chain.extract(response_model=BudgetItem, messages=MESSAGES, temperature=0.1,
+                          max_tokens=321, max_output_bytes=1000, budget=budget)
+    assert value.title == "ok"
+    assert calls == [("broken", 321), ("working", 179)]
+    assert budget.reserved_output_tokens == 500
+
+
+def test_engine_input_budget_fails_before_custom_provider_call_and_keeps_required_prompt_intact():
+    from novel_ai.engine import NovelEngine
+    from novel_ai.models import ChapterPlan, StoryBible
+    from novel_ai.token_budget import ModelBudgetExceeded, TokenCounter
+
+    class ExactEncoding:
+        def encode(self, text):
+            return list(text)
+        def decode(self, ids):
+            return "".join(ids)
+
+    class Provider:
+        def __init__(self):
+            self.calls = []
+        def chat(self, messages, **kwargs):
+            self.calls.append((messages, kwargs))
+            return "should-not-run"
+
+    provider = Provider()
+    engine = NovelEngine(provider, output_policy=OutputPolicy(max_input_tokens=10),
+                         token_counter=TokenCounter(ExactEncoding()))
+    with pytest.raises(ModelBudgetExceeded, match="required context was not clipped"):
+        engine.draft(StoryBible(), ChapterPlan(), [], extra_context="REQUIRED-CANON-SENTINEL")
+    assert provider.calls == []
+
+
+def test_litellm_engine_budget_expands_fallbacks_into_visible_bounded_attempts():
+    from novel_ai.token_budget import ModelCallBudget, TokenCounter
+    calls = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        if kwargs["model"] == "model-a":
+            raise RuntimeError("synthetic primary failure")
+        return response("ok")
+
+    lite = LiteLLMProvider(LiteLLMConfig(("model-a", "model-b", "model-c")), completion_func=completion)
+    budget = ModelCallBudget(token_counter=TokenCounter(None, fallback_chars_per_token=1),
+                             max_input_tokens=10_000, total_output_tokens=1200, max_attempts=2)
+    assert lite.chat(MESSAGES, max_tokens=700, budget=budget) == "ok"
+    assert [call["model"] for call in calls] == ["model-a", "model-b"]
+    assert [call["max_tokens"] for call in calls] == [700, 500]
+    assert all("fallbacks" not in call and call["num_retries"] == 0 for call in calls)
+
+
+def test_output_policy_exposes_input_and_cumulative_stage_allowances():
+    policy = OutputPolicy(plan_tokens=100, max_input_tokens=5000, max_attempts_per_stage=3)
+    assert policy.max_input_tokens == 5000
+    assert policy.total_output_tokens_for("plan") == 300
+    for field in ("max_input_tokens", "max_attempts_per_stage"):
+        with pytest.raises(ValueError, match="positive integer"):
+            OutputPolicy(**{field: 0})
