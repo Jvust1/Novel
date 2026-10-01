@@ -766,5 +766,6 @@ def test_encoder_callback_cannot_change_this_calls_budgets_project_or_health(tmp
     assert reads == ['audit']
     assert context.recall_block == ''
     assert context.recall_report['omitted_sources'][0]['chapter_id'] == 'old-a'
-    assert context.longform_block.endswith('本书的原始长篇一致性约束。')
+    # Explicit history now omits every unbound cached guard, including this snapshot.
+    assert context.longform_block == ''
     assert '另一本书' not in context.prompt_sections() and '注入' not in context.prompt_sections()

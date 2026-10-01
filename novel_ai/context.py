@@ -22,6 +22,7 @@ class WritingContext:
     recent_summaries: list[dict[str, Any]] = field(default_factory=list)
     open_foreshadowing: list[dict[str, Any]] = field(default_factory=list)
     recall_report: dict[str, Any] | None = None
+    longform_report: dict[str, Any] = field(default_factory=dict)
 
     def prompt_sections(self) -> str:
         parts = [block for block in (self.canon_block, self.active_block, self.recall_block, self.longform_block) if block]
@@ -172,8 +173,30 @@ class ContextAssembler:
         context.active_block = "\n\n".join(active_lines)
 
         guard = str(health.get("guard_context", "") or "").strip()
-        if guard:
-            context.longform_block = "【Longform 长篇一致性】\n" + _clip(guard, 1400)
+        if history_chapter_ids is not None:
+            # Existing derived health has no authenticated chapter/state source
+            # binding. A current-project file may still describe future chapters
+            # or an obsolete state. Do not let it bypass explicit history scope.
+            # Rebuilding/versioning this optional cache is a separate workflow;
+            # inventing a provenance tag here would not validate its contents.
+            context.longform_report = {
+                "status": "omitted_unverified_scope" if guard else "absent",
+                "reason": "cached longform guard has no verified history/state provenance" if guard else "no cached guard",
+                "history_chapter_ids": list(history_chapter_ids),
+            }
+        elif guard and len(guard) > 1400:
+            context.longform_report = {
+                "status": "omitted_legacy_budget",
+                "reason": "unverified legacy guard exceeds its whole-text budget; do not truncate qualifiers",
+            }
+        elif guard:
+            context.longform_block = "【Longform 长篇一致性】\n" + guard
+            context.longform_report = {
+                "status": "legacy_unscoped",
+                "reason": "legacy caller supplied no history scope; cached guard provenance is not verified",
+            }
+        else:
+            context.longform_report = {"status": "absent", "reason": "no cached guard"}
 
         if older:
             if context.recall_report is not None:

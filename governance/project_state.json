@@ -335,11 +335,11 @@
     "docs": "docs/RECALL_INTEGRITY.md",
     "validation": {
       "python_3_11_16": {
-        "passed": 838,
+        "passed": 879,
         "skipped": 1
       },
       "python_3_12_14": {
-        "passed": 838,
+        "passed": 879,
         "skipped": 1
       },
       "new_backend_integrity_tests": 107,
@@ -349,9 +349,11 @@
       "compileall": "passed",
       "diff_check": "passed",
       "real_embedding_and_native_faiss": "not_run; packages absent; synthetic stubs only",
-      "human_quality": "not_established"
+      "human_quality": "not_established",
+      "independent_scoped_guard_tests": 41
     },
     "native_faiss_and_real_embedding": "not_run; packages absent; synthetic stubs only",
-    "authoritative_story_storage": false
+    "authoritative_story_storage": false,
+    "unbound_longform_cache": "omitted for every explicit history scope; legacy unscoped use remains disclosed; whole overlong legacy guards omitted"
   }
 }
