@@ -1,3 +1,8 @@
+# 2026-10-01 — 当前质量门禁与公开入口
+
+当前分支 `chore/quality-gates-integrated-20261001` 叠加已验证 #61。当前工程指针为 [current_candidate.json](../governance/current_candidate.json)，其指定的候选记录与 README、AGENTS 顶部、GPT 写作入口共同核对；旧 project_state / artifact_manifest 保留为历史，不作为当前分支或私有交付权限。
+本轮只移入 #60 已验证的 CI 门禁与脚本启动修复，沿用本分支全部历史/日志/记忆/导出功能。见 [质量门禁说明](QUALITY_GATES.md)。下方记录保留历史。
+
 # 2026-10-01 — 当前已接受稿审阅包候选
 
 当前分支 `feat/accepted-review-export-20261001` 叠加已验证 [#56](https://github.com/Jvust1/Novel/pull/56)，尚未合入 main。实际读回 v1 接受档案或归属明确且已完成影响复审的作者日志后，将明确选择的 3/20 章原字节交给已有审阅打包器；保存、重复保存与竞争复用均重新核对来源。
