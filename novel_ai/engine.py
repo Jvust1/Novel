@@ -252,10 +252,11 @@ class NovelEngine:
         plan: ChapterPlan,
         characters: list[Character],
         draft: str,
+        extra_context: str = "",
     ) -> ChapterReview:
         return self._structured(
             ChapterReview,
-            review_messages(bible, plan.model_dump(), characters, draft),
+            review_messages(bible, plan.model_dump(), characters, draft, extra_context),
             temperature=0.25,
         )
 
@@ -264,9 +265,10 @@ class NovelEngine:
         draft: str,
         review: ChapterReview,
         style: StyleFingerprint | None = None,
+        extra_context: str = "",
     ) -> str:
         return self.provider.chat(
-            repair_messages(draft, review.model_dump(), style),
+            repair_messages(draft, review.model_dump(), style, extra_context),
             temperature=0.72,
         ).strip()
 
@@ -337,7 +339,7 @@ class NovelEngine:
         similarity_payload = similarity_review_payload(
             analyze_reference_similarity(draft, reference_hashes=reference_hashes)
         )
-        review_result = self.review(bible, plan, characters, draft) if review else None
+        review_result = self.review(bible, plan, characters, draft, draft_context) if review else None
         review_result = merge_quality_issues(review_result, quality_payload)
         review_result = merge_quality_issues(review_result, similarity_payload)
         review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
@@ -354,7 +356,7 @@ class NovelEngine:
         revised = None
         review_after_repair = None
         if auto_repair and review_result and review_result.verdict == "revise":
-            revised = self.repair(draft, review_result, style)
+            revised = self.repair(draft, review_result, style, draft_context)
             revised_quality = analyze_prose_quality(revised)
             revised_similarity = similarity_review_payload(
                 analyze_reference_similarity(revised, reference_hashes=reference_hashes)
@@ -363,7 +365,7 @@ class NovelEngine:
             revised_voice_alerts = voice_drift(revised_voice, voice_baseline)
             voice_report["revised"] = revised_voice
             voice_report["revised_alerts"] = revised_voice_alerts
-            review_after_repair = self.review(bible, plan, characters, revised)
+            review_after_repair = self.review(bible, plan, characters, revised, draft_context)
             review_after_repair = merge_quality_issues(review_after_repair, quality_review_payload(revised_quality))
             review_after_repair = merge_quality_issues(review_after_repair, revised_similarity)
             review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))

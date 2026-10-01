@@ -1,3 +1,55 @@
+# 2026-10-01 — Author workflow connected (local candidate)
+
+- Added actual licensed LangChain Markdown header-stack/fence source reuse to import an author's explicit five-level outline without fabricating missing scene fields
+- Connected selected hierarchy context to the existing writer, persisted plan/text identity, chapter-specific overwrite approval and revision-bound memory extraction
+- Connected explicit 3/20 saved-chapter selection to existing human market scoring and local deterministic review-candidate ZIP; stale text/audience/genre scores are rejected
+- Saved outline/release workspaces survive restart; unsaved changes remain project-scoped within the session; export retries reuse byte-identical immutable files
+- Local synthetic/provider-mocked validation only; no remote publication, real model call, manuscript import, platform submission or story-quality conclusion
+- [Usage, schema compatibility and limits](AUTHOR_WORKFLOW.md)
+
+# 2026-09-30 — Canon field reconciliation (local only)
+
+- Reused PR16's separate locked-facts editor and current_bible mapping; distinct stored locked facts no longer get replaced by world rules in the workbench
+- Verified original synthetic facts through load/edit/save/fresh restart and the actual captured planning prompt, plus project-scoped unsaved fact restoration
+- No migration, automatic value deletion, model call, new dependency or remote publication
+- [Exact source and verification scope](CANON_FIELD_RECONCILIATION.md)
+
+# 2026-09-30 — Existing workflow reconciliation (local only)
+
+- Reused PR13's stable summary updates: editing an old chapter no longer moves it into the recent-memory window; duplicate same-ID rows collapse in place and nonpositive recent limits return empty
+- Reused/adapted PR16's project-session cache so characters, plans, results, styles and MMR controls stay with their book while unsaved work survives A→B→A switching
+- Added failed-target-load recovery after reproducing Streamlit widget cleanup losing an unsaved chapter goal on return; blank project names and unsubmitted character-form drafts are also covered
+- This is reconciliation of existing Novel code, not another qualifying external upstream integration. The original PRs and reviewed combined snapshot remain intact
+- [Source pins, tests and limits](WORKFLOW_RECONCILIATION.md)
+
+# 2026-09-30 — Combined continuity pilot (local review only)
+
+- Combined the LangChain MMR and spaCy speaker-span ports in a separate local test branch; original source branches remain intact
+- The same-project synthetic pilot exercises recall → draft → consistency review → local repair/re-review → simulated acceptance → memory application/persistence → fresh character reload and next-chapter recall
+- Fixed a reproduced workbench gap: extraction updated only session-state character cards, losing learned knowledge on restart. Writeback now also saves `memory/characters.json`; locked cards remain protected
+- Brought the confirmed-plan UI's review/repair checks to engine parity: reference overlap, revised voice metrics/drift, Story DNA and behavior checks re-enter the review contract
+- Regression tests reproduced the prior failures before the fixes: disk knowledge remained empty, repaired wrong-speaker dialogue received pass, and reference overlap stayed outside review
+- This is provider-mocked, same-project engineering verification. It does not assert transactional multi-file saves, general project-switch correctness or real-model story quality
+- [Combined test and review boundaries](upstream/combined-continuity-pilot-2026-09-30.md)
+
+# 2026-09-30 — spaCy speaker-span pilot (local draft branch)
+
+- Fixed a demonstrated Voice DNA error: `林舟明` speaking was also credited to `林舟`
+- Reused spaCy's MIT `filter_spans` loop at the exact existing pin `26b4d1dc04a812f426e4bef3e8a1b6f159d6f048`; GitHub verified 33,931 stars
+- Longest registered name spans feed conservative explicit speaker attribution and the existing voice-drift review/repair path in both engines and the workbench
+- New metrics carry `attribution_version=2`; legacy history is retained but excluded from the new aggregate baseline until compatible evidence accumulates
+- No spaCy runtime/model dependency, network call, manuscript copy or frozen benchmark change. Synthetic engineering tests do not prove real-story quality
+- [Source, compatibility and limitations](upstream/spacy-speaker-spans-2026-09-30.md)
+
+# 2026-09-30 — LangChain MMR continuity pilot (draft branch)
+
+- Ported the MIT-licensed LangChain `maximal_marginal_relevance` selection loop from the existing pinned upstream `a9780cd3dd73135d21d7130b08711685f2700d51`; 147,315 stars verified through GitHub on this date
+- Added an explicit, default-off “多样化历史召回（实验）” workbench control. It scores accepted historical summaries against the chapter goal, diversifies the top 64 candidates, and includes at most eight bounded rows. Canon and Active retain their priority and content
+- Selected context now reaches planning, drafting, continuity review, one local repair and re-review. The role-routed engine also performs its previously missing post-repair review with the same reviewer role and deterministic checks
+- No LangChain install, NumPy requirement for the port, vector service, model download, or external call is introduced by retrieval. Routed auto-repair now adds one reviewer-provider call for post-repair checking, matching the normal engine. Existing chronological recall remains the default
+- Synthetic offline/provider-mocked tests establish routing, budget and selection behavior only. They do not establish better prose, semantic recall, or publishability. Frozen benchmark cases and past run evidence are unchanged
+- Exact provenance, runtime entry points and limitations: [LangChain recall pilot](upstream/langchain-mmr-continuity-2026-09-30.md)
+
 # 2026-09-30 — 长篇小说工程融合分支
 
 本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。

@@ -302,3 +302,27 @@ def test_cli_requires_aggregate_for_output_path(tmp_path):
     assert "--out" in result.stderr and "--aggregate" in result.stderr
     assert not sheet.exists()
     assert not summary.exists()
+
+
+@pytest.mark.parametrize("field,value", [
+    ("audience", "另一类读者"), ("genre", "另一题材"),
+    ("review_note", "更改后的审阅要求"), ("project", "other-book"),
+])
+def test_v2_scores_reject_changed_review_context(tmp_path, field, value):
+    sample = corpus()
+    sheet = make_market_scoring_sheet(sample, tmp_path / "context.csv")
+    fill_sheet(sheet)
+    changed = sample.model_copy(deep=True)
+    setattr(changed, field, value)
+    assert changed.fingerprint() != sample.fingerprint()
+    with pytest.raises(ValueError, match="语料不匹配"):
+        load_market_scores(sheet, changed)
+
+
+def test_memory_csv_parser_and_file_parser_share_contract(tmp_path):
+    from novel_ai.market_eval import market_scoring_csv, parse_market_scores
+    sample = corpus()
+    path = make_market_scoring_sheet(sample, tmp_path / "scores.csv")
+    assert path.read_text(encoding="utf-8-sig").replace("\n", "\r\n") == market_scoring_csv(sample)
+    fill_sheet(path)
+    assert parse_market_scores(path.read_text(encoding="utf-8-sig"), sample) == load_market_scores(path, sample)

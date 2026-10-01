@@ -1,3 +1,9 @@
+# Current local handoff — 2026-10-01
+
+Current local candidate joins hierarchical outline → existing writer → explicit saved chapter corpus → human market review → local release candidate. Read [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md) and the latest CURRENT_STATE/EVALUATION_LEDGER entries first. The older recovery checklist below is historical context; do not revive retired global startup requirements.
+
+Source starts from the preserved validated continuity snapshot tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`, on remote main `bf37f1906636791f03c6a6ce1eecd3cc81a6a803` plus prior local work. No new public PR/push/merge or deployment has been performed for this candidate. Remote PR #33 conflicts; it is not this candidate's acceptance record.
+
 # Handoff
 
 ## Novel v0.1-dev

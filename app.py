@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+import hashlib
 
 import streamlit as st
 
+from novel_ai.author_ui import outline_digest, render_outline_editor, render_release_workbench
+from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter
+from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
+from novel_ai.project_session import switch_project
 from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
 from novel_ai.memory import apply_extraction
 from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
@@ -77,7 +82,7 @@ with st.sidebar:
     with st.expander("长篇分析后端", expanded=False):
         st.json(analytics_backend_capabilities())
     st.divider()
-    project_name = st.text_input("当前项目", value="MyNovel")
+    project_name = st.text_input("当前项目", value="MyNovel", key="project_name")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
 
 
@@ -106,61 +111,21 @@ def current_bible() -> StoryBible:
         premise=premise,
         themes=[x.strip() for x in themes_text.splitlines() if x.strip()],
         world_rules=[x.strip() for x in rules_text.splitlines() if x.strip()],
-        locked_facts=[x.strip() for x in rules_text.splitlines() if x.strip()],
+        locked_facts=[x.strip() for x in locked_text.splitlines() if x.strip()],
         forbidden_moves=[x.strip() for x in forbidden_text.splitlines() if x.strip()],
     )
 
 
 def seed_project_state() -> None:
-    """Reload persisted project state once per project so restarts keep working data.
-
-    Non-destructive: values are only filled from saved files; when a project
-    has nothing saved yet, whatever is currently in the session stays.
-    """
-    if st.session_state.get("seeded_project") == project_name:
-        return
-    st.session_state.seeded_project = project_name
-
-    bible = store.read_json(project_name, "memory/story_bible.json", default=None)
-    if bible:
-        st.session_state["title"] = bible.get("title") or project_name
-        st.session_state["genre"] = bible.get("genre", "")
-        st.session_state["tone"] = bible.get("tone", "")
-        st.session_state["premise"] = bible.get("premise", "")
-        st.session_state["themes_text"] = "\n".join(bible.get("themes", []))
-        st.session_state["rules_text"] = "\n".join(bible.get("world_rules", []))
-        st.session_state["forbidden_text"] = "\n".join(bible.get("forbidden_moves", ""))
-    elif "title" not in st.session_state:
-        st.session_state["title"] = project_name
-
-    outline = store.read_json(project_name, "memory/outline.json", default=None)
-    if outline and outline.get("outline"):
-        st.session_state["outline"] = outline["outline"]
-
-    if not st.session_state.characters:
-        saved_chars = store.read_json(project_name, "memory/characters.json", default=None)
-        if saved_chars:
-            st.session_state.characters = saved_chars
-
-    if not st.session_state.style_profiles:
-        profiles = store.read_json(project_name, "styles/style_profiles.json", default=None)
-        if profiles:
-            st.session_state.style_profiles = profiles
-    if st.session_state.style is None:
-        dna = store.read_json(project_name, "styles/style_dna.json", default=None)
-        if dna:
-            st.session_state.style = dna
-    if not st.session_state.reference_hashes:
-        sig = store.read_json(project_name, "styles/reference_signature.json", default=None)
-        if sig:
-            st.session_state.reference_hashes = set(sig.get("hashes", []))
+    """Restore this project's persisted/cached state without crossing books."""
+    switch_project(st.session_state, store, project_name)
 
 
 seed_project_state()
 
 
-story_tab, char_tab, style_tab, write_tab, review_tab = st.tabs(
-    ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "✍️ 章节写作", "🔎 审校"]
+story_tab, char_tab, style_tab, write_tab, review_tab, release_tab = st.tabs(
+    ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "✍️ 章节写作", "🔎 审校", "📦 市场审阅与发布"]
 )
 
 with story_tab:
@@ -173,7 +138,8 @@ with story_tab:
         premise = st.text_area("核心设定 / Premise", height=130, key="premise")
     with col2:
         themes_text = st.text_area("主题（每行一个）", height=100, key="themes_text")
-        rules_text = st.text_area("世界规则 / 锁定事实（每行一个）", height=130, key="rules_text")
+        rules_text = st.text_area("世界规则（每行一个）", height=130, key="rules_text")
+        locked_text = st.text_area("锁定事实（每行一个，不与世界规则混写）", height=100, key="locked_text")
         forbidden_text = st.text_area("明确禁止的剧情处理（每行一个）", height=100, key="forbidden_text")
 
     outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280, key="outline")
@@ -182,6 +148,7 @@ with story_tab:
         store.write_json(project_name, "memory/story_bible.json", bible.model_dump())
         store.write_json(project_name, "memory/outline.json", {"outline": outline})
         st.success("已保存到本地 data/projects 目录。")
+    render_outline_editor(store, project_name, title, premise)
 
 with char_tab:
     st.subheader("人物动态状态")
@@ -313,18 +280,28 @@ with style_tab:
 
 with write_tab:
     st.subheader("章纲 → 场景计划 → 正文")
-    chapter_id = st.text_input("章节编号 / 名称", value="001")
+    chapter_id = st.text_input("章节编号 / 名称", value="001", key="chapter_id")
+    if st.session_state.get("overwrite_chapter_binding") != chapter_id:
+        st.session_state.allow_chapter_overwrite = False
+        st.session_state.overwrite_chapter_binding = chapter_id
+    allow_overwrite = st.checkbox("允许覆盖此编号已有正文（请先保留备份）", key="allow_chapter_overwrite")
     chapter_goal = st.text_area(
         "本章章纲 / 目标",
+        key="chapter_goal",
         placeholder="可以只有几句话。系统会先拆成场景，不会直接机械拉长。",
         height=180,
     )
-    user_notes = st.text_area("本章额外要求", placeholder="例如：本章不要揭晓真相；减少环境；最后停在门被推开……", height=100)
+    user_notes = st.text_area("本章额外要求", key="chapter_notes", placeholder="例如：本章不要揭晓真相；减少环境；最后停在门被推开……", height=100)
     mode = st.radio("生成模式", ["快速草稿", "标准审校", "精修"], horizontal=True, index=1)
     confirm_plan = st.checkbox(
         "写正文前确认/编辑场景计划（推荐）",
         value=True,
         help="North Star 原则：AI 先给结构化建议，作者可编辑后再生成正文，不被全自动流水线绑架。",
+    )
+
+    diverse_recall = st.checkbox(
+        "多样化历史召回（实验）", value=False, key="diverse_recall",
+        help="用本章目标匹配历史摘要，再减少重复线索；仅本地字符匹配，不下载模型。尚未证明提升写作质量。",
     )
 
     if "pending_plan_json" not in st.session_state:
@@ -333,6 +310,17 @@ with write_tab:
         st.session_state.pending_plan_meta = {}
     if "plan_new" not in st.session_state:
         st.session_state.plan_new = False
+
+    def _validate_chapter_target():
+        validate_chapter_target(store, project_name, chapter_id, allow_overwrite=allow_overwrite)
+
+    def _plan_binding():
+        meta = st.session_state.pending_plan_meta
+        if meta.get("project", project_name) != project_name or meta.get("chapter_id", chapter_id) != chapter_id:
+            raise ValueError("待确认计划属于另一章，请重新载入或生成本章计划。")
+        if meta.get("outline_sha256") and meta["outline_sha256"] != outline_digest(st.session_state.get("hierarchy_data") or {}):
+            raise ValueError("层级大纲已变化，请重新载入章节并确认计划。")
+        return meta
 
     def _engine_and_inputs():
         engine = NovelEngine(make_provider())
@@ -354,17 +342,42 @@ with write_tab:
     with col3:
         one_shot = st.button("一步生成", use_container_width=True, help="跳过计划确认：计划→正文→审校一次完成", key="btn_oneshot")
 
+    if st.button("清空待写计划，开始新章", key="btn_clear_plan"):
+        st.session_state.pending_plan_json = ""
+        st.session_state.pending_plan_meta = {}
+        st.session_state.plan_editor = ""
+        st.session_state.plan_new = False
+        st.session_state.last_result = None
+        st.session_state.last_result_meta = {}
+        st.session_state.last_extraction = None
+        st.session_state.last_self_similarity = []
+        st.session_state.last_overlap = 0.0
+        st.rerun()
+
     if make_plan:
         try:
+            meta = _plan_binding()
             engine, bible, characters = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble()
+            context = ContextAssembler(store, project_name).assemble(
+                recall_query=chapter_goal if diverse_recall else ""
+            )
+            planning_context = (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()
+            if meta.get("outline_node_id"):
+                seed_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
+                seed = ChapterPlan.model_validate_json(seed_json)
+                seed_json = seed.model_dump_json(indent=2)
+                if len(seed_json) > 16000:
+                    raise ValueError("作者场景计划超过本次规划上下文上限，请缩短本章计划后重试；未截断或丢弃场景。")
+                planning_context += "\n\n作者当前可编辑场景计划（保留已明确的目标与选择，只补充缺失字段）：\n" + seed_json
             plan = engine.plan(
-                bible, outline, chapter_goal, characters, context.recent_summaries, context.prompt_sections()
+                bible, outline, chapter_goal, characters, context.recent_summaries, planning_context
             )
             st.session_state.pending_plan_json = plan.model_dump_json(indent=2)
             st.session_state.pending_plan_meta = {
+                **meta, "project": project_name, "chapter_id": chapter_id,
                 "recent": context.recent_summaries,
                 "extra": context.prompt_sections(),
+                "recall_report": context.recall_report,
             }
             st.session_state.plan_new = True
             st.rerun()
@@ -373,10 +386,18 @@ with write_tab:
 
     if write_draft:
         try:
-            engine, bible, characters = _engine_and_inputs()
+            _validate_chapter_target()
+            meta = _plan_binding()
             plan_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
             plan = ChapterPlan.model_validate(json.loads(plan_json))
-            meta = st.session_state.pending_plan_meta
+            if meta.get("outline_node_id"):
+                check = validate_plan_stage(plan)
+                if not check.ok:
+                    raise ValueError("请先补全场景计划：" + "；".join(check.issues))
+            engine, bible, characters = _engine_and_inputs()
+            context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
+            meta = {**meta, "recent": context.recent_summaries,
+                    "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
             story_dna_obj = story_dna_from_plan(plan)
             dna_history = [
                 row for row in store.load_story_dna_history(project_name)
@@ -401,6 +422,9 @@ with write_tab:
             )
             quality = analyze_prose_quality(draft)
             quality_payload = quality_review_payload(quality)
+            similarity_payload = similarity_review_payload(
+                analyze_reference_similarity(draft, reference_hashes=st.session_state.reference_hashes)
+            )
             voice_current = character_voice_dna(draft, [c.name for c in characters])
             voice_baseline = aggregate_voice_baseline([
                 row for row in store.load_voice_dna_history(project_name)
@@ -412,22 +436,35 @@ with write_tab:
             revised = None
             review_after_repair = None
             if mode != "快速草稿":
-                review_result = engine.review(bible, plan, characters, draft)
+                review_result = engine.review(bible, plan, characters, draft, draft_context)
                 review_result = merge_quality_issues(review_result, quality_payload)
+                review_result = merge_quality_issues(review_result, similarity_payload)
                 review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
                 review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
                 review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
                 if mode == "精修" and review_result.verdict == "revise":
-                    revised = engine.repair(draft, review_result, style_from_state())
+                    revised = engine.repair(draft, review_result, style_from_state(), draft_context)
                     revised_quality = quality_review_payload(analyze_prose_quality(revised))
-                    review_after_repair = engine.review(bible, plan, characters, revised)
+                    revised_similarity = similarity_review_payload(
+                        analyze_reference_similarity(revised, reference_hashes=st.session_state.reference_hashes)
+                    )
+                    revised_voice = character_voice_dna(revised, [c.name for c in characters])
+                    revised_voice_alerts = voice_drift(revised_voice, voice_baseline)
+                    voice_report["revised"] = revised_voice
+                    voice_report["revised_alerts"] = revised_voice_alerts
+                    review_after_repair = engine.review(bible, plan, characters, revised, draft_context)
                     review_after_repair = merge_quality_issues(review_after_repair, revised_quality)
-            st.session_state.last_result = ChapterResult(
+                    review_after_repair = merge_quality_issues(review_after_repair, revised_similarity)
+                    review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
+                    review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
+                    review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
+            result = ChapterResult(
                 plan=plan,
                 draft=draft,
                 review=review_result,
                 ai_flavor=detect_ai_flavor(draft),
                 quality_report=quality_payload,
+                similarity_report=similarity_payload,
                 story_dna=story_dna_obj.to_dict(),
                 story_dna_similarity_report=dna_similarity.to_dict(),
                 voice_dna_report=voice_report,
@@ -435,17 +472,30 @@ with write_tab:
                 revised=revised,
                 review_after_repair=review_after_repair,
             )
-            final_text = st.session_state.last_result.final_text
-            st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
-            store.write_chapter(project_name, chapter_id, final_text)
+            final_text = result.final_text
+            overlap = reference_overlap(final_text, st.session_state.reference_hashes)
+            write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
+            save_chapter_plan(store, project_name, chapter_id, plan, final_text)
+            st.session_state.last_result = result
+            st.session_state.last_overlap = overlap
+            st.session_state.last_self_similarity = []
+            st.session_state.last_result_meta = {
+                "project": project_name, "chapter_id": chapter_id,
+                "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
+            }
+            st.session_state.last_extraction = None
             st.success("章节已按确认的计划生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
 
     if one_shot:
         try:
+            _validate_chapter_target()
+            meta = _plan_binding()
             engine, bible, characters = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble()
+            context = ContextAssembler(store, project_name).assemble(
+                recall_query=chapter_goal if diverse_recall else ""
+            )
             result = engine.run(
                 bible=bible,
                 outline=outline,
@@ -457,22 +507,30 @@ with write_tab:
                 user_notes=user_notes,
                 review=mode != "快速草稿",
                 auto_repair=mode == "精修",
-                extra_context=context.prompt_sections(),
+                extra_context=(context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip(),
                 reference_hashes=st.session_state.reference_hashes,
                 historical_story_dna=[row for row in store.load_story_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
                 historical_voice_dna=[row for row in store.load_voice_dna_history(project_name) if str(row.get("chapter_id")) != chapter_id],
             )
-            st.session_state.last_result = result
             final_text = result.final_text
-            st.session_state.last_overlap = reference_overlap(final_text, st.session_state.reference_hashes)
+            overlap = reference_overlap(final_text, st.session_state.reference_hashes)
             previous_chapters = [
                 row for row in store.all_chapter_texts(project_name)
                 if row[0] != store.slugify(chapter_id)
             ]
-            st.session_state.last_self_similarity = [
+            self_similarity = [
                 item.__dict__ for item in near_duplicate_chapters(final_text, previous_chapters)
             ]
-            store.write_chapter(project_name, chapter_id, final_text)
+            write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
+            save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
+            st.session_state.last_result = result
+            st.session_state.last_overlap = overlap
+            st.session_state.last_self_similarity = self_similarity
+            st.session_state.last_result_meta = {
+                "project": project_name, "chapter_id": chapter_id,
+                "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
+            }
+            st.session_state.last_extraction = None
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
@@ -521,7 +579,7 @@ with write_tab:
             with st.expander("Story DNA", expanded=False):
                 st.json(result.story_dna)
         if result.voice_dna_report:
-            alerts = result.voice_dna_report.get("revised_alerts") or result.voice_dna_report.get("alerts") or []
+            alerts = result.voice_dna_report.get("revised_alerts", result.voice_dna_report.get("alerts", []))
             if alerts:
                 st.warning("人物口吻 DNA 漂移：" + "；".join(
                     f"{row['character']}={row['score']:.1%}" for row in alerts[:3]
@@ -543,17 +601,29 @@ with write_tab:
             with st.expander("写作流程阶段检查", expanded=False):
                 st.json(result.workflow_report)
         with st.expander("发布前综合质量快照", expanded=False):
-            previous_for_eval = [row for row in store.all_chapter_texts(project_name) if row[0] != store.slugify(chapter_id)]
-            st.json(build_release_quality_snapshot(
-                result.final_text,
-                reference_hashes=st.session_state.reference_hashes,
-                previous_chapters=previous_for_eval,
-            ).to_dict())
+            try:
+                previous_for_eval = [row for row in store.all_chapter_texts(project_name) if row[0] != store.slugify(chapter_id)]
+                st.json(build_release_quality_snapshot(
+                    result.final_text,
+                    reference_hashes=st.session_state.reference_hashes,
+                    previous_chapters=previous_for_eval,
+                ).to_dict())
+            except (OSError, UnicodeError, ValueError) as exc:
+                st.warning("综合质量快照未完成；请检查已有章节文件。其他审阅入口仍可使用：" + str(exc))
 
         st.divider()
         st.subheader("章节后处理 · 记忆抽取")
         st.caption("章节定稿后抽取摘要、新事实、人物状态/知识变化、时间线与伏笔，并回写本地长期记忆。")
-        if st.button("抽取本章记忆并回写", use_container_width=True):
+        result_meta = st.session_state.get("last_result_meta", {})
+        result_matches = (result_meta.get("project", project_name) == project_name
+                          and result_meta.get("chapter_id", chapter_id) == chapter_id)
+        if result_meta.get("text_sha256"):
+            result_matches = result_matches and chapter_revision_matches(
+                store, project_name, chapter_id, result_meta["text_sha256"],
+            )
+        if not result_matches:
+            st.warning("当前显示的是另一章的生成结果，或已保存正文发生变化。请核对原章节与文本版本后再抽取记忆。")
+        if st.button("抽取本章记忆并回写", use_container_width=True, disabled=not result_matches):
             try:
                 engine = NovelEngine(make_provider())
                 final_text = result.final_text
@@ -569,6 +639,7 @@ with write_tab:
                     extraction,
                 )
                 st.session_state.characters = [c.model_dump() for c in new_characters]
+                store.write_json(project_name, "memory/characters.json", st.session_state.characters)
                 store.save_story_state(project_name, new_state)
                 store.save_extraction(project_name, extraction.model_dump())
                 graph = build_story_graph(st.session_state.characters, new_state)
@@ -691,3 +762,7 @@ with review_tab:
 
 st.divider()
 st.caption("v0.2：长篇记忆内核（章节后处理回写 + Canon/Active/Recall 组装）。下一阶段：冻结多题材 A/B benchmark 与真实评测。")
+
+
+with release_tab:
+    render_release_workbench(store, project_name)

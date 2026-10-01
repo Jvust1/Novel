@@ -201,9 +201,30 @@
       "repo": "langchain-ai/langchain",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P2",
-      "use": "外部工具和 retriever 接入模式"
+      "use": "Opt-in local MMR continuity selection plus source-adapted Markdown author-outline import wired into actual writer/review/release workflow; no LangChain runtime dependency",
+      "source_port": {
+        "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+        "path": "libs/core/langchain_core/vectorstores/utils.py",
+        "symbol": "maximal_marginal_relevance",
+        "local_path": "novel_ai/_vendor/langchain_mmr.py",
+        "license_path": "third_party/langchain/LICENSE",
+        "stars_checked": 147315,
+        "checked_at_utc": "2026-09-30T18:11:00Z"
+      },
+      "additional_source_ports": [
+        {
+          "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+          "path": "libs/text-splitters/langchain_text_splitters/markdown.py",
+          "symbol": "MarkdownHeaderTextSplitter.split_text",
+          "local_path": "novel_ai/_vendor/langchain_markdown.py",
+          "license_path": "third_party/langchain/LICENSE",
+          "stars_checked": 147336,
+          "checked_at_utc": "2026-10-01",
+          "provenance": "third_party/langchain/markdown-outline-provenance.json"
+        }
+      ]
     },
     {
       "key": "haystack",
@@ -408,9 +429,18 @@
       "repo": "explosion/spaCy",
       "category": "nlp_pipeline",
       "license": "MIT",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P1",
-      "use": "成熟NLP流水线与句法/实体分析框架，用于可选的结构、重复与角色语言特征分析"
+      "use": "成熟NLP流水线与句法/实体分析框架，用于可选的结构、重复与角色语言特征分析",
+      "source_port": {
+        "upstream_commit": "26b4d1dc04a812f426e4bef3e8a1b6f159d6f048",
+        "path": "spacy/util.py",
+        "symbol": "filter_spans",
+        "local_path": "novel_ai/_vendor/spacy_spans.py",
+        "license_path": "third_party/spacy/LICENSE",
+        "stars_checked": 33931,
+        "checked_at_utc": "2026-09-30T18:34:00Z"
+      }
     },
     {
       "key": "pycorrector",

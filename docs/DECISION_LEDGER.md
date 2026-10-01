@@ -95,3 +95,50 @@ Product Spec §4 定义精修 = "计划 → 正文 → 双审校 → 局部修�
 
 LocalSemanticRecall 与 Qdrant 使用共享 RecallDocument / RecallHit / RecallBackend 契约。旧 add/search 保持兼容，新 upsert/query 供统一上层调用。Qdrant 默认关闭，需经冻结评测后才考虑改变默认路径。
 
+
+## D-015｜Opt-in LangChain MMR history and continuity evidence
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_DRAFT_BRANCH
+
+The existing ContextAssembler clipped chronological history from the oldest summaries and the editor/repair prompts did not receive its history. Reuse the small MIT LangChain MMR selection loop, adapted to deterministic character-bigram scores, to prioritize relevant but less redundant accepted summaries. Keep the existing upstream commit pin and include the full MIT license. Do not import the heavyweight framework or silently select a semantic/vector backend.
+
+The workbench experiment is default-off. Canon and Active stay authoritative; recalled summaries remain evidence, not character knowledge or instructions. Carry the assembled evidence through review and local repair, and keep one repair/re-review maximum. Expose source hashes and selected chapter IDs without storing manuscript text in provenance. Real long-form A/B evidence remains required before changing the default or claiming quality gains.
+
+## D-016｜Canonical speaker spans and versioned Voice DNA
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_LOCAL_DRAFT_BRANCH
+
+Use a small licensed spaCy longest-span source port before matching explicit speech tags. This prevents overlapping registered character names from receiving each other's dialogue. Prefer omission to guessing on multi-name tags. Keep deterministic local operation and the existing author/review boundaries.
+
+Tag new Voice DNA as attribution version 2. Old or mismatched attribution metrics remain stored but are excluded from new aggregate baselines; otherwise the fixed current measurements would be compared with contaminated history. Preserve numeric dimensions and the existing minimum-sample drift thresholds. No automatic data migration or quality claim is made.
+
+## D-017｜Close the combined same-project author workflow
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_LOCAL_COMBINED_PILOT
+
+Combine the two bounded source ports and verify the information path through memory persistence. Fix the discovered missing characters.json write on accepted extraction, preserving locked-card rules. Align the confirmed-plan UI with the existing engines' initial and post-repair reference, voice, Story DNA and behavior checks, rather than allowing author confirmation to bypass deterministic review gates.
+
+Retain the one-repair limit. Provider-mocked tests cannot demonstrate real-model quality. Persistence is the existing local multi-file mechanism, not a new transaction or a broad project-session migration.
+
+## D-018｜Reuse stable history order and project-session isolation
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_LOCAL_RECONCILIATION_PILOT
+
+Port only the relevant stable summary methods from PR13 and adapt the project-state cache from PR16. Do not merge the old branches wholesale, because newer long-form code must remain intact. Preserve per-book unsaved session data during switches without caching provider credentials or automatically writing draft files. A failed target load retains a recoverable snapshot, including widget-bound values.
+
+Do not automatically repair previously reordered history or claim session caching is persistent autosave. Existing folder naming and multi-file storage remain unchanged.
+
+## D-019｜Preserve separate locked facts at the UI boundary
+**Date:** 2026-09-30
+**Status:** IMPLEMENTED_IN_LOCAL_CANON_PILOT
+
+Port the separate locked-facts editor and current_bible mapping from PR16. Both world_rules and locked_facts retain their stored meanings; the workbench must not replace one list with the other merely because its earlier UI had a combined label. Preserve existing values, including duplicates, and do not auto-migrate story state.
+
+
+## D-020｜Explicit author workflow and revision-bound review
+**Date:** 2026-10-01
+**Status:** IMPLEMENTED_IN_LOCAL_CANDIDATE
+
+Reuse LangChain's MIT Markdown heading stack/fence source at the existing pin, adapting it to preserve individual authored nodes rather than lossy retrieval chunks. Keep Markdown notes as notes; require author/model completion of scene causality. Selected chapter and ancestor context enter the existing planning/drafting/review path, with no new provider dependency.
+
+Build review corpora from explicit, safe, author-ordered saved chapter IDs. Version the corpus fingerprint to include project/stage/genre/audience/review assumptions as well as titles/text. Preserve old score files, but reject stale bindings rather than relabeling them. Human scores remain human records; a local ZIP is a review candidate with no automatic publishability verdict. Use atomic no-clobber/content-addressed exports, preserve prior result identity on failed persistence, and check exact saved chapter revision before memory extraction. Multi-file transactional saves remain outside this slice.

@@ -143,3 +143,68 @@ Novel 的最终评测从“单章质量”扩展为四级：
 
 评测完成前，当前结论仅限于工程闭环已建立。
 
+
+## E-004｜LangChain MMR continuity pilot
+**Date:** 2026-09-30
+**Status:** OFFLINE_ENGINEERING_PILOT_ONLY
+
+Synthetic Chinese summaries cover a key-holder thread, a near-duplicate key thread, a separate ledger thread and irrelevant weather. The MMR port selects both relevant plot threads ahead of the duplicate. Tests verify deterministic selection, non-finite score rejection, bounded candidate memory, character/token budgets including labels, no match, zero recent count, unchanged Canon/Active, and an explicit default-off UI control.
+
+Mocked five-stage tests exercise both NovelEngine and RoutedNovelEngine: plan → draft → continuity review → repair → re-review, asserting that selected historical facts reach every request. Streamlit AppTest exercises plan confirmation → draft → repair → re-review without network/model access. These tests validate engineering propagation, not an LLM's factual compliance or story quality. The original frozen `novel-ab-v1` inputs and first-real evidence are not changed or rerun.
+
+Known limits: lexical bigrams miss synonyms and implications; at most 2,000 query/summary characters are scored; complete query-relevant sentence excerpts preserve matching late facts and negations when they fit; overlong sentences are omitted; similarity is not truth and does not override Canon, character knowledge, or human acceptance. Real long-form A/B, calibrated thresholds and human blind scores are not run.
+
+## E-005｜spaCy speaker-span engineering pilot
+**Date:** 2026-09-30
+**Status:** SYNTHETIC_OFFLINE_ONLY
+
+Reproduced the old false assignment of 林舟明's dialogue to 林舟. Added deterministic tests for longest-name order invariance, duplicate spans, leading/trailing speech tags, ambiguous multi-name tags, distant/unknown-actor addressees, negation/non-speaking fragments, adjacent pre-tags, newlines, escaped names, names mentioned inside dialogue, versioned/mixed baselines and actual NovelEngine voice-review consumption. Model responses are mocked and source sentences are original synthetic test data.
+
+No real-model run, human blind evaluation, semantic-speaker accuracy study or manuscript benchmark is performed. False negatives remain possible with indirect speech, unknown aliases, complex clauses and nested quotations. Legacy baseline data is preserved but does not contribute to version-2 drift evaluation.
+
+## E-006｜Combined same-project continuity and persistence pilot
+**Date:** 2026-09-30
+**Status:** SYNTHETIC_PROVIDER_MOCKED_ONLY
+
+Two end-to-end tests combine MMR recall and distinct overlapping speaker names through both normal/routed engines, deterministic review, one repair/re-review, synthetic acceptance, memory extraction/application, metric-only voice storage, fresh character reload and subsequent recall. The same accepted-memory delta remains idempotent and preserves the unrelated character's unknown knowledge.
+
+Additional Streamlit AppTests reproduced and then verified the fixes for missing character persistence and skipped revised-voice checks. Standard/refine-mode tests verify reference-overlap issues enter both review and re-review; unresolved overlap stays revise without starting a second repair. The initial separate combined baseline was 244 passed, 1 skipped before these extra regressions; final exact local counts are recorded in the review report.
+
+No original novel/reference corpus or real provider call is used. The single skipped integration requires optional qdrant-client. Manual cloud-browser inspection was blocked by ERR_BLOCKED_BY_CLIENT on the local preview URL; headless AppTest coverage is not a visual-browser pass.
+
+## E-007｜Existing workflow reconciliation checks
+**Date:** 2026-09-30
+**Status:** LOCAL_OFFLINE_ONLY
+
+Reproduced edited chapter001 moving to the newest slot and changing Active/Recall membership. The in-place update port preserves001–006 order and updates only the existing row while removing same-ID duplicates. Added zero/negative budget tests.
+
+Project-session tests cover separate characters/plans/styles/reference signatures and MMR flags, preserving unsaved A drafts through B and back, independent nested cache objects, no provider-credential caching and no on-switch file writes. A corrupt target JSON caused Streamlit to drop the unrendered chapter-goal widget; an AppTest reproduced the loss and verifies restoration after the recovery guard. Review also caught the valid empty-project-name cache edge and unsubmitted character-form carryover; regression tests cover their fixes.
+
+No real model, remote CI or migration of previously corrupted chronology is claimed. The original combined source-port pilot remains separately preserved.
+
+## E-008｜Canon field propagation
+**Date:** 2026-09-30
+**Status:** LOCAL_PROVIDER_MOCKED_ONLY
+
+AppTests verify different world-rule and locked-fact values through stored load, editing, saving, new app session and the captured planning request. Another test confirms unsaved locked-fact edits remain with their book during switching. Only synthetic facts and a scripted provider are used; no claim is made about LLM adherence or real-story quality.
+
+## E-LOCAL-20261001｜Author workflow and private review-candidate delivery
+**Date:** 2026-10-01 UTC
+**Status:** OFFLINE_ENGINEERING_VERIFIED; HUMAN_STORY_EVALUATION_PENDING
+
+Preserved input baseline: full previous continuity/Canon/session snapshot tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`; baseline rerun Python 3.11: **261 passed, 1 skipped**.
+
+Final local candidate checks:
+
+- Linux Python **3.11.16**: full `python -m pytest -q -rs`, **413 passed, 1 skipped**
+- Linux Python **3.12.14**: full `python -m pytest -q -rs`, **413 passed, 1 skipped**
+- Both runtimes: `compileall` for app, package and scripts passed; `git diff --check` passed
+- The single skip is the existing optional Qdrant integration test because `qdrant-client` is not installed, not an executed integration pass
+- Core author-workflow tests: 94 synthetic tests covering safe explicit chapter selection/order, plan/text binding, stale review/context rejection, deterministic bundle/hash identity, symlink/path rejection, atomic no-clobber writes, interrupted persistence and race simulations
+- Streamlit AppTest uses actual widgets and reruns with a mocked provider. It exercises Markdown import/save, scene-only notes and current editable seed plan into planning, three chapter saves, score import, candidate ZIP, repeated-save reuse, restart, A→B→A, malformed-target-load recovery, per-chapter overwrite consent, save failure/result identity, external draft changes and unreadable unrelated files
+- Original synthetic pilot CLI created and reopened an 8-member ZIP: three original short chapters, outline, blank ten-dimension CSV, metadata, manifest and README. Every chapter SHA and ZIP CRC matched; `human_review_status=awaiting_human_review`, `publishability_verdict=null`. There are no filled human scores in the delivered sample
+- Four-page editable Chinese running/limits guide was rendered and every page visually inspected
+
+Independent code review found and the candidate fixed: unsafe inventory reads, chapter-ID normalization aliases, overwrite permission leaking to the next chapter, pre-provider-only overwrite checks, failed plan save retaining the wrong result identity, old manuscript memory writeback, invalid saved workspace types, and loss of scene-only author notes during planning.
+
+Not run / not established: real provider/model quality, frozen unseen A/B, independent reader scoring, Windows device/UI, live platform rules or submission, and remote exact-head CI. Supported cloud-browser preview was attempted but blocked with `ERR_BLOCKED_BY_CLIENT`; no alternate route was used, so browser visual acceptance remains unverified. No public push, PR, merge or deployment was performed for this candidate. No cross-file transaction/concurrent-explicit-overwrite lock is claimed.
