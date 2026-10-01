@@ -13,7 +13,8 @@ from .storage_guard import project_lock, reject_links
 
 _INTENT = ".extraction-transaction.json"
 _MEMORY_COMMIT_INTENT = ".memory-commit-transaction.json"
-_RESERVED = {".store.lock", _INTENT, _MEMORY_COMMIT_INTENT}
+_STYLE_COMMIT_INTENT = ".style-commit-transaction.json"
+_RESERVED = {".store.lock", _INTENT, _MEMORY_COMMIT_INTENT, _STYLE_COMMIT_INTENT}
 _MAX_INTENT_BYTES = 64 * 1024 * 1024
 
 
@@ -102,6 +103,9 @@ class ProjectStore:
     def _guard(self, project: str):
         lock = self._path(project, ".store.lock", internal=True)
         with project_lock(lock):
+            if self._path(project, _STYLE_COMMIT_INTENT, internal=True).exists():
+                from .style_commit import recover_style_commit
+                recover_style_commit(self, self.slugify(project))
             if self._path(project, _MEMORY_COMMIT_INTENT, internal=True).exists():
                 from .memory_commit import recover_memory_commit
                 recover_memory_commit(self, self.slugify(project))

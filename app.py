@@ -25,9 +25,13 @@ from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
 from novel_ai.story_dna import story_structure_capabilities
 from novel_ai.storage import ProjectStore
+from novel_ai.style_commit import prepare_style_addition, prepare_style_clear
+from novel_ai.style_ui import (
+    style_input_binding, require_current_style, freeze_style_request,
+    commit_pending_style, refresh_saved_styles,
+)
 from novel_ai.style_engine import (
     analyze_style,
-    blend_styles,
     build_reference_signature,
     detect_ai_flavor,
     reference_overlap,
@@ -231,10 +235,34 @@ with style_tab:
         height=100,
     )
 
-    if st.button("分析并加入风格库", use_container_width=True):
+    source_binding = ([uploaded.name, hashlib.sha256(uploaded_data).hexdigest()] if uploaded is not None
+                      else ["pasted", hashlib.sha256(pasted_reference.encode("utf-8")).hexdigest()])
+    style_binding = style_input_binding(project=project_name, source=source_binding,
+                                        name=reference_name, weight=float(weight), encoding=reference_encoding_label,
+                                        semantic=use_semantic, notes=semantic_notes)
+    pending_style = st.session_state.get("style_pending")
+    if pending_style:
+        st.warning("上一项风格保存尚未核对成功。重试只保存此前已分析的结果，不再次调用模型。")
+        if st.button("重试上一项风格保存", key="retry_style_save"):
+            try:
+                retry_binding = "clear" if pending_style.get("kind") == "clear" else style_binding
+                result = commit_pending_style(st.session_state, store, project_name, binding=retry_binding)
+                st.success("旧操作已完成，已读回当前风格资料。" if result["historical"] else "风格资料已完整保存并读回。")
+                st.rerun()
+            except (OSError, ValueError) as exc:
+                st.error(str(exc))
+    if st.button("重新读取已保存的风格", key="reload_saved_style"):
+        try:
+            refresh_saved_styles(st.session_state, store, project_name)
+            st.rerun()
+        except (OSError, ValueError) as exc:
+            st.error(str(exc))
+
+    if st.button("分析并加入风格库", use_container_width=True, disabled=bool(pending_style)):
         text = pasted_reference
         reading_info = None
         try:
+            style_snapshot = require_current_style(st.session_state, store, project_name)
             if uploaded is not None:
                 choice = reference_encoding_labels[reference_encoding_label]
                 if not uploaded.name.lower().endswith((".txt", ".md")):
@@ -258,29 +286,15 @@ with style_tab:
                     fp.custom_notes.extend([x.strip() for x in semantic_notes.splitlines() if x.strip()])
 
                 signature = build_reference_signature(text)
-                st.session_state.style_profiles.append(
-                    {"name": reference_name, "weight": float(weight), "fingerprint": fp.model_dump(),
-                     "decoding": reading_info}
-                )
-                st.session_state.reference_hashes |= signature
-
-                weighted = [
-                    (StyleFingerprint.model_validate(item["fingerprint"]), float(item["weight"]))
-                    for item in st.session_state.style_profiles
-                ]
-                composite = blend_styles(weighted, name="Novel-Composite")
-                st.session_state.style = composite.model_dump()
-
-                store.write_json(project_name, "styles/style_profiles.json", st.session_state.style_profiles)
-                store.write_json(project_name, "styles/style_dna.json", composite.model_dump())
-                store.write_json(
-                    project_name,
-                    "styles/reference_signature.json",
-                    {"hashes": sorted(st.session_state.reference_hashes), "shingle_chars": 18},
-                )
+                files = prepare_style_addition(style_snapshot,
+                    {"name": reference_name, "weight": float(weight), "fingerprint": fp.model_dump(), "decoding": reading_info},
+                    signature)
+                freeze_style_request(st.session_state, store, project_name, files=files,
+                                     expected_before=style_snapshot["sha256"], binding=style_binding, kind="add")
+                commit_pending_style(st.session_state, store, project_name, binding=style_binding)
                 st.success("已加入风格库并重新计算综合 Style DNA；参考正文未写入风格文件。")
             except Exception as exc:
-                st.exception(exc)
+                st.error(str(exc))
 
     if st.session_state.style_profiles:
         st.markdown("#### 已加入的风格来源")
@@ -288,16 +302,29 @@ with style_tab:
             [{"name": p["name"], "weight": p["weight"]} for p in st.session_state.style_profiles],
             use_container_width=True,
         )
-        if st.button("清空风格库"):
-            st.session_state.style_profiles = []
-            st.session_state.style = None
-            st.session_state.reference_hashes = set()
-            st.rerun()
+        if st.button("清空并保存当前项目风格库", disabled=bool(pending_style)):
+            try:
+                snapshot = require_current_style(st.session_state, store, project_name)
+                freeze_style_request(st.session_state, store, project_name, files=prepare_style_clear(snapshot),
+                                     expected_before=snapshot["sha256"], binding="clear", kind="clear")
+                commit_pending_style(st.session_state, store, project_name, binding="clear")
+                st.rerun()
+            except (OSError, ValueError) as exc:
+                st.error(str(exc))
 
     fp = style_from_state()
     if fp:
         st.markdown("#### 当前综合 Style DNA")
         st.json(fp.model_dump())
+
+if st.session_state.get("style_pending"):
+    st.info("请先在 Style Lab 核对待保存结果。写作、审校和发布入口暂不使用未完成的风格资料。")
+    st.stop()
+try:
+    require_current_style(st.session_state, store, project_name)
+except (OSError, ValueError) as exc:
+    st.error(str(exc))
+    st.stop()
 
 with write_tab:
     st.subheader("章纲 → 场景计划 → 正文")
@@ -344,6 +371,7 @@ with write_tab:
         return meta
 
     def _engine_and_inputs():
+        require_current_style(st.session_state, store, project_name)
         engine = NovelEngine(make_provider())
         bible = current_bible()
         characters = [Character.model_validate(c) for c in st.session_state.characters]
@@ -434,8 +462,10 @@ with write_tab:
             )
             final_text = result.final_text
             overlap = reference_overlap(final_text, st.session_state.reference_hashes)
-            write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
-            save_chapter_plan(store, project_name, chapter_id, plan, final_text)
+            with store._guard(project_name):
+                require_current_style(st.session_state, store, project_name)
+                write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
+                save_chapter_plan(store, project_name, chapter_id, plan, final_text)
             st.session_state.last_result = result
             st.session_state.last_overlap = overlap
             st.session_state.last_self_similarity = []
@@ -483,8 +513,10 @@ with write_tab:
             self_similarity = [
                 item.__dict__ for item in near_duplicate_chapters(final_text, previous_chapters)
             ]
-            write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
-            save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
+            with store._guard(project_name):
+                require_current_style(st.session_state, store, project_name)
+                write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
+                save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
             st.session_state.last_result = result
             st.session_state.last_overlap = overlap
             st.session_state.last_self_similarity = self_similarity
