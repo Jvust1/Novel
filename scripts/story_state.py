@@ -12,8 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from pydantic import ValidationError
 from novel_ai.gpt_story_state import (
-    Command, StateError, artifact, create_state, load_state, preflight_context,
-    save_state, state_fingerprint, transition, validate_state,
+    Command, StateError, accepted_history_snapshot, artifact, create_state, load_state,
+    preflight_context, save_state, state_fingerprint, transition, validate_state,
 )
 
 
@@ -45,6 +45,14 @@ def main(argv=None):
     context.add_argument("--required")
     context.add_argument("--budget-bytes", type=int, required=True)
     context.add_argument("--reserve-bytes", type=int, default=0)
+    context.add_argument("--accepted-chapter", action="append", default=[],
+                         help="include this exact author-accepted chapter plan/draft as required context; repeatable")
+    history = sub.add_parser("accepted-history", help="rebuild only author-accepted chapter versions from a saved story")
+    history.add_argument("path")
+    history.add_argument("--story-id", required=True)
+    history.add_argument("--revision", type=int)
+    history.add_argument("--sha256")
+    history.add_argument("--manifest-only", action="store_true")
     src = sub.add_parser("artifact", help="read explicit UTF-8 file, hash its actual bytes, emit artifact JSON")
     src.add_argument("path")
     src.add_argument("--source-id", required=True)
@@ -88,7 +96,12 @@ def main(argv=None):
         elif args.command == "preflight":
             output = preflight_context(validate_state(Path(args.path).read_bytes()), read_json(args.sources),
                                        args.budget_bytes, reserve_bytes=args.reserve_bytes,
-                                       required_sources=read_json(args.required) if args.required else None)
+                                       required_sources=read_json(args.required) if args.required else None,
+                                       accepted_history_chapter_ids=args.accepted_chapter)
+        elif args.command == "accepted-history":
+            state = load_state(args.path, expected_story_id=args.story_id,
+                               expected_revision=args.revision, expected_sha256=args.sha256)
+            output = accepted_history_snapshot(state, include_text=not args.manifest_only)
         else:
             path = Path(args.path).absolute()
             # No universal-newline translation: SHA-256 covers the actual UTF-8 file bytes.

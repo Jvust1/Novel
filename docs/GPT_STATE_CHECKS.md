@@ -11,6 +11,8 @@
 - 计划、正文、审校、接受和记忆候选是否绑定同一本书、章节、故事基础版本和实际文本来源
 - 未接受计划不能起草，未接受正文不能提出正式记忆，未确认具体记忆候选不能应用
 - 改计划、改正文、改记忆候选后旧确认失效；正文仍可作为未接受候选保留，不能沿用旧审校结论
+- 从追加式 `accepted_chapters` 重建只含作者已接受版本的历史清单/全文快照；当前候选、未来章和其他故事状态不进入该快照
+- 重做计划后保留的旧正文不会重新进入起草上下文；只有重新绑定当前已接受计划的正文才可进入提示
 - 同一故事版本中的并行候选编辑是否过期；同一操作 ID 重试是否完全相同
 - Canon、人物知识、来源版本和必需材料是否完整放入指定字节预算；缺失时阻塞，不静默裁掉
 - 单个私有 JSON 文件的实际写入、另一次真实读取、源字节哈希和恢复一致性
@@ -42,10 +44,12 @@
 - `artifact(text, source_id=..., location=..., revision=..., file_id=None)`：为实际提供的 UTF-8 文本字节计算 SHA-256
 - `source_fingerprint(artifact)`：绑定来源 ID、位置、文件 ID、版本、文本字节哈希等来源字段
 - `state_fingerprint(state)`：生成编辑前状态指纹；读写回执的时间变化不会使它失效
+- `accepted_history_snapshot(state, include_text=True)`：从已验证的接受记录重建本书历史；`include_text=False` 只隐藏文本但保留同一个完整历史指纹
+- `accepted_history_fingerprint(state)`：绑定已接受版本和已接受 Canon/Style/Active/Recall；当前未接受计划/正文变化不使它漂移
 - `transition(state, command)`：固定动作、严格版本绑定、复制后更新，失败不改变输入
 - `save_state(path, state, expected_disk_revision=None, expected_disk_sha256=None)`：保存单个调用者明确指定的私有 JSON
 - `load_state(path, expected_story_id=..., expected_revision=None, expected_sha256=None)`：实际读取并核对，返回恢复副本
-- `preflight_context(state, sources, budget_bytes, required_sources=None, reserve_bytes=0)`：返回实际组装上下文、来源、预算及阻塞原因
+- `preflight_context(state, sources, budget_bytes, required_sources=None, reserve_bytes=0, accepted_history_chapter_ids=None)`：返回实际组装上下文、来源、预算及阻塞原因；显式点名的已接受章节以完整原件加入，预算不足时阻塞而不是截断
 
 所有新动作使用以下共同结构。`expected_state_sha256` 必须来自作决定时实际读取的状态，不能在提交旧命令前偷偷替换成最新值：
 
@@ -109,11 +113,22 @@ plan_source_fingerprint: 当前计划实际来源指纹
 
 `preflight_context` 以**完整 UTF-8 字节数**计算实际包装、字段和正文，不是假装知道当前所选 GPT 模型的 tokenizer。`reserve_bytes` 为调用者保留的空间；只有当前执行环境确实提供对应模型的计数工具时，才可另报精确 token 数。字节检查不能单独证明总对话一定装得下。
 
-必需部分：Canon、当前文风、Active（包括人物约束和禁揭信息）、当前计划/正文，以及明确必需的历史来源。必需内容不适合预算就返回 `blocked=true`，不能截断关键约束后继续。可选 Recall 可以整项省略，结果明确列出被省略的 ID、版本和原因。
+必需部分：Canon、当前文风、Active（包括人物约束和禁揭信息）、当前计划、**确实绑定当前已接受计划的正文**，以及明确必需的历史来源。每次预检还带一个紧凑的 `accepted_history` 来源清单与完整历史指纹；它本身不把整本小说正文塞入提示。改计划后遗留的旧正文即使仍保存在私有状态中，也不会进入这里。
+
+需要历史原件时，用 `accepted_history_chapter_ids` 显式点名本书已经接受的章节；不存在、未来或其他书的 ID 会拒绝。被点名的完整计划/正文属于必需内容，预算不足就返回 `blocked=true`，不能截断关键约束或已点名历史后继续。可选 Recall 可以整项省略，结果明确列出被省略的 ID、版本和原因。
 
 来源输入为 `{"artifact": ..., "required": true/false, "priority": 整数}`。每个 artifact 都含实际读取的完整文本及来源。必需引用至少绑定 `source_id + revision`；已有的 `location / file_id / sha256 / sha256_method` 都会逐项核对。不能用同 ID/版本的另一文件或另一段文字冒充必需来源。`source_availability.status = source_unavailable` 会阻塞预检，不能只因残留字典很短就宣告资料齐全。
 
 所有检索文本都标为材料，不是工具命令或作者确认。检查器不会根据档案里的路径、URL、来源 ID 自动读文件、联网或执行任何内容；要读取什么由调用者明确决定。
+
+### 已接受历史恢复命令
+
+```bash
+python scripts/story_state.py accepted-history /private/story.json --story-id stable-book-id --manifest-only
+python scripts/story_state.py preflight /private/story.json --sources /private/sources.json --budget-bytes 60000 --accepted-chapter chapter-017
+```
+
+前者实际读取保存文件并核对故事身份；后者只允许把该故事 `accepted_chapters` 中存在的版本加入提示。完整行为和边界见 [已接受历史重建](ACCEPTED_HISTORY_REBUILD.md)。
 
 ### 读者已知和完整真相
 
