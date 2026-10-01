@@ -41,6 +41,18 @@ FIELDS = (
 )
 
 
+def preserve_project_fields(state):
+    """Retain existing project edits when a later gate hides their widgets.
+
+    Assigning under the public user key keeps values through Streamlit's
+    stale-widget cleanup. No extra draft cache, file write or acceptance.
+    Call before rendering project widgets, including on repeated blocked runs.
+    """
+    for key in FIELDS:
+        if key in state:
+            state[key] = state[key]
+
+
 def _load_project(store, project):
     bible = store.read_json(project, 'memory/story_bible.json', {})
     loaded = {key: bible.get(key, '') for key in ('genre', 'tone', 'premise')}

@@ -1,20 +1,20 @@
 {
   "schema": "novel-public-current-candidate-v1",
   "repository": "Jvust1/Novel",
-  "branch": "fix/history-source-identity-20261001",
+  "branch": "fix/workbench-source-bindings-20261001",
   "status": "unmerged_draft_candidate",
   "entry_files": [
     "README.md",
     "AGENTS.md",
     "docs/GPT_WRITING_ENTRY.md"
   ],
-  "candidate_record": "governance/history_source_identity_candidate.json",
+  "candidate_record": "governance/workbench_binding_candidate.json",
   "verified_base": {
-    "pr": 65,
-    "head": "aee038310960de3a88da7022316afa66f1cba81a",
-    "ci_run": 36919197824,
+    "pr": 66,
+    "head": "fbc509a89dbcd42feb38c01b926f5730d267494f",
+    "ci_run": 36921625952,
     "tests_each_python": {
-      "passed": 1983,
+      "passed": 2011,
       "skipped": 1
     }
   },

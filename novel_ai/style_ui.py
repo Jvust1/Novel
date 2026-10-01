@@ -25,7 +25,7 @@ def require_current_style(state, store, project):
     actual = load_style_bundle(store, project)
     expected = state.get("style_snapshot")
     if not isinstance(expected, dict) or actual["sha256"] != expected.get("sha256"):
-        raise StyleCommitError("风格资料已更新，请先重新读取；本次尚未分析或请求模型")
+        raise StyleCommitError("风格资料已更新，当前动作停止；请先重新读取并核对后再继续")
     return deepcopy(expected)
 
 

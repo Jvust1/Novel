@@ -5,23 +5,16 @@ models; importing outlines, scoring and packaging never create remote requests.
 """
 from __future__ import annotations
 
-import hashlib
-import json
-
 import streamlit as st
 
 from .author_workflow import (
     chapter_plan_from_outline, load_author_corpus, list_author_chapter_ids, outline_chapter_context,
-    release_bundle_bytes, save_release_bundle,
+    release_bundle_bytes, save_release_bundle, outline_digest, load_saved_outline, require_saved_outline,
 )
 from .market_eval import aggregate_market_scores, market_scoring_csv, parse_market_scores
 from .outline import HierarchicalOutline, validate_outline
 from .outline_markdown import parse_markdown_outline
 from .release_pack import MarketProfile, build_release_pack
-
-
-def outline_digest(data: dict) -> str:
-    return hashlib.sha256(json.dumps(data, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
 
 def render_outline_editor(store, project: str, title: str, premise: str) -> None:
@@ -30,6 +23,14 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
         return
     with st.expander("层级大纲 · 全书 / 卷 / 情节线 / 章 / 场景", expanded=False):
         st.caption("已有总纲保留。Markdown 按 # 到 ##### 连续分层；先预览并保存，再载入某章。不会调用模型。")
+        if st.button("重新读取已保存层级大纲", key="btn_reload_hierarchy"):
+            try:
+                current = load_saved_outline(store, project)
+                st.session_state.hierarchy_data = current
+                st.session_state.hierarchy_previous_node = None
+                st.info("已读取当前已保存大纲；未保存 JSON 和待写计划仍保留。请重新载入章节并确认计划。")
+            except (ValueError, TypeError, OSError) as exc:
+                st.error(str(exc))
         st.text_area("Markdown 层级大纲", key="hierarchy_markdown", height=220,
                      placeholder="# 全书\n## 第一卷\n### 主线\n#### 第一章\n本章承诺\n##### 场景一\n场景目标与作者备注")
         if st.button("解析 Markdown 为可编辑大纲", key="btn_parse_hierarchy"):
@@ -43,7 +44,13 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
         if st.button("保存层级大纲", key="btn_save_hierarchy"):
             try:
                 parsed = validate_outline(HierarchicalOutline.model_validate_json(st.session_state.hierarchy_editor))
-                store.write_json(project, "memory/hierarchical_outline.json", parsed.model_dump())
+                with store._guard(project):
+                    actual = store.read_json(project, "memory/hierarchical_outline.json")
+                    expected = st.session_state.get("hierarchy_data")
+                    if ((actual is None) != (expected is None)
+                            or (actual is not None and outline_digest(actual) != outline_digest(expected))):
+                        raise ValueError("层级大纲已被其他会话更新；未保存编辑已保留，请先重新读取并核对，原文件未覆盖。")
+                    store.write_json(project, "memory/hierarchical_outline.json", parsed.model_dump())
                 st.session_state.hierarchy_data = parsed.model_dump()
                 st.success("层级大纲已保存；重新启动仍可选择章节。")
             except (ValueError, TypeError, OSError) as exc:
@@ -66,6 +73,7 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
                 st.session_state.hierarchy_previous_node = selected
             st.text_input("本章保存编号（可改为 001、002 等）", key="hierarchy_target_id")
             if st.button("载入本章到写作工作台", key="btn_load_hierarchy"):
+                require_saved_outline(store, project, outline_digest(data))
                 plan = chapter_plan_from_outline(outline, selected)
                 node = chapters[selected]
                 chapter_id = st.session_state.hierarchy_target_id

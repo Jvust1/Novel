@@ -1,5 +1,7 @@
 # 作者工作流：大纲、章节、人工审阅与候选包
 
+当前补丁：[保留未保存编辑、真实大纲绑定与明确刷新](WORKBENCH_SOURCE_BINDINGS.md)。
+
 当前写作入口是 [GPT + GitHub 插件](GPT_WRITING_ENTRY.md)：在 GPT 对话中按仓库规则写作，真实作品和状态保存在私有 Drive，不要求用户本地安装。本文保留现有本地作者工作台的使用说明。
 
 工程发布状态（2026-10-01 核验）：本地作者工作流已发布为 [Draft PR #45](https://github.com/Jvust1/Novel/pull/45)，head 为 `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`；该提交的 [CI](https://github.com/Jvust1/Novel/actions/runs/36826620415) 成功，413 passed / 1 skipped。尚未合入 main；该工程结果不证明小说质量。此变更复用此前 LangChain MMR、spaCy 声线和 Canon/会话对账成果，不替换它们。
