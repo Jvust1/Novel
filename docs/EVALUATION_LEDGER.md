@@ -1,5 +1,11 @@
 # Evaluation Ledger
 
+## 当前证据边界 2026年10月1日
+
+下列 E-000、E-001 等条目分别记录当时的阶段，不互相覆盖。E-001 留存了历史真实运行记录，但本轮未读取新的人工评分原件，也未完成新的独立真人盲评，因此不把任何工程回归称为文学质量提升。
+
+本轮只验证合成资料的文件完整性、抽取/摘要中断恢复、评测目录独占与人工评分不被覆盖。当前工程入口见 [HANDOFF](HANDOFF.md) 和 `governance/project_state.json`；历史 Drive 快照清单不是当前源代码 HEAD。冻结 benchmark 用例、既有运行和待人工评分状态保持不变。
+
 ## E-000｜Foundation baseline
 **Date:** 2026-08-19  
 **Status:** NOT_YET_RUN
