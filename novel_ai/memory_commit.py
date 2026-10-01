@@ -243,6 +243,8 @@ def _internal(store, project, relative):
 def _no_legacy(store, project):
     if _read(_internal(store, project, LEGACY_INTENT_PATH)) is not None:
         raise MemoryCommitError("pending legacy extraction recovery must be resolved separately")
+    if _read(_internal(store, project, ".style-commit-transaction.json")) is not None:
+        raise MemoryCommitError("pending style recovery must be resolved before memory publication")
 
 
 def _receipt_path(store, project, proposal_id):

@@ -7,6 +7,8 @@ Unused desktop workflow binding omitted. Provider credentials are not cached.
 import copy
 import json
 
+from .style_commit import load_style_bundle
+
 _CHARACTER_FORM_FIELDS = (
     'new_char_name', 'new_char_identity', 'new_char_desire', 'new_char_goal',
     'new_char_fear', 'new_char_secret', 'new_char_speech', 'new_char_knows',
@@ -31,6 +33,7 @@ FIELDS = (
     'title', 'genre', 'tone', 'premise', 'themes_text', 'rules_text', 'locked_text',
     'forbidden_text', 'outline', 'characters', 'style', 'style_profiles',
     'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
+    'style_snapshot', 'style_pending',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
     'chapter_id', 'chapter_goal', 'chapter_notes', 'last_self_similarity',
     'diverse_recall', 'memory_candidate_json', 'last_memory_commit', 'memory_source_bible', 'memory_ui_readback_pending',
@@ -51,9 +54,8 @@ def _load_project(store, project):
         loaded[key] = '\n'.join(value) if isinstance(value, list) else str(value)
     loaded['outline'] = store.read_json(project, 'memory/outline.json', {}).get('outline', '')
     loaded['characters'] = store.read_json(project, 'memory/characters.json', [])
-    loaded['style_profiles'] = store.read_json(project, 'styles/style_profiles.json', [])
-    loaded['style'] = store.read_json(project, 'styles/style_dna.json')
-    loaded['reference_hashes'] = set(store.read_json(project, 'styles/reference_signature.json', {}).get('hashes', []))
+    loaded.update(_style_fields(load_style_bundle(store, project)))
+    loaded['style_pending'] = None
     loaded.update(last_result=None, last_overlap=0.0, last_extraction=None,
                   pending_plan_json='', pending_plan_meta={}, plan_new=False,
                   last_self_similarity=[], diverse_recall=False,
@@ -78,6 +80,13 @@ def _load_project(store, project):
     return loaded
 
 
+def _style_fields(snapshot):
+    return {'style_profiles': copy.deepcopy(snapshot['profiles']),
+            'style': copy.deepcopy(snapshot['style']),
+            'reference_hashes': set(snapshot['signature']['hashes']),
+            'style_snapshot': copy.deepcopy(snapshot)}
+
+
 def switch_project(state, store, project):
     restore_needed = state.get('_project_restore_needed', False)
     if state.get('seeded_project') == project and not restore_needed:
@@ -89,7 +98,11 @@ def switch_project(state, store, project):
     # Streamlit may clean up widget keys after a failed run. Keep a complete
     # cached draft first, without replacing it with partial state on retry.
     try:
-        loaded = copy.deepcopy(cache[project]) if project in cache else _load_project(store, project)
+        if project in cache:
+            loaded = copy.deepcopy(cache[project])
+            loaded.update(_style_fields(load_style_bundle(store, project)))
+        else:
+            loaded = _load_project(store, project)
     except Exception:
         state['_project_restore_needed'] = True
         raise

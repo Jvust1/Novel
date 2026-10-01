@@ -27,7 +27,7 @@ from .storage_guard import project_lock, reject_links
 from .story_dna import story_dna_from_plan
 
 MAX_BYTES = 64 * 1024 * 1024
-PENDING_INTENTS = (".extraction-transaction.json", ".memory-commit-transaction.json")
+PENDING_INTENTS = (".extraction-transaction.json", ".memory-commit-transaction.json", ".style-commit-transaction.json")
 CONFIG_PATHS = (
     "memory/story_bible.json", "memory/outline.json", "memory/hierarchical_outline.json",
     "styles/style_dna.json", "styles/style_profiles.json", "styles/reference_signature.json",

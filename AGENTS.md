@@ -1,4 +1,4 @@
-当前候选：`fix/reference-text-decoding-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+当前候选：`fix/style-save-consistency-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
 
 # 当前入口：GPT + GitHub 插件写作（2026-10-01）
 
@@ -6,7 +6,7 @@
 
 ## 当前执行顺序
 
-1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/reference-text-decoding-20261001`，尚未合入 `main`；不要假定默认分支已有它。
+1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/style-save-consistency-20261001`，尚未合入 `main`；不要假定默认分支已有它。
 2. 通过当前可用工具，读取作者指定的私有 Drive 故事档案及其中引用的当前计划、正文、审校和接受记录。只有链接不等于读到内容；缺少来源时标记 `source_unavailable` / `awaiting_source`，问最小补充问题。
 3. 按 Canon → Active → 与本章有关的 Recall 组装资料。当前作者明确决定与已确认版本优先，冲突先列出；候选与无来源推断不得写成既定事实。
    - 已有接受章节且有实际执行器时，优先按 `docs/ACCEPTED_HISTORY_REBUILD.md` 从本次真实读回的接受档案重建历史；不要把旧候选或跨书缓存当作历史。
@@ -21,6 +21,8 @@
 作者要求打包已接受稿时，先读 [接受档案导出](docs/ACCEPTED_REVIEW_EXPORT.md)。明确选择 3 或 20 章及顺序，实际恢复 v1 档案或作者日志；仅导出接受版本，未接受稿、私有设定和规划原文不自动进入审阅包。导出不改变作者确认，不构成投稿批准。
 
 参考 TXT/MD 编码不确定时，先按 [完整读取协议](docs/REFERENCE_DECODING.md) 核对。不能把丢字或乱码当作参考正文做风格/原创性分析；统计候选不等于作者确认。只有取得原字节并实际执行时才声明程序校验已通过。
+
+风格保存、重启或切换会话时，先核对 [风格资料一致保存与恢复](docs/STYLE_SAVE_INTEGRITY.md)。失败或旧会话不继续使用半套资料，不把保存回执当作作者接受。
 
 ## 当前边界
 
