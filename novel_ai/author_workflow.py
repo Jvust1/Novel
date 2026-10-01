@@ -14,7 +14,7 @@ import re
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .market_eval import (
     MarketChapter, MarketCorpus, MarketScore, Stage, STAGE_SIZES,
@@ -24,6 +24,7 @@ from .models import ChapterPlan, SceneBeat
 from .outline import HierarchicalOutline, OutlineNode, validate_outline
 from .release_pack import ReleasePack
 from .storage import ProjectStore
+from .storage_guard import reject_links
 
 
 def _digest(data: bytes) -> str:
@@ -184,6 +185,9 @@ def _chapter_ids(chapter_ids: list[str]) -> list[str]:
 
 
 def _safe_project_path(store: ProjectStore, project: str, *parts: str) -> Path:
+    # Validate the retained root ancestry before resolving it: a store may have
+    # been constructed before a persistent directory/link replacement occurred.
+    reject_links(Path(store.root))
     root = Path(store.root).resolve()
     target = root / "projects" / store.slugify(project)
     target = target.joinpath(*parts)
@@ -466,12 +470,19 @@ def release_bundle_bytes(
     return output.getvalue()
 
 
-def save_release_bundle(store: ProjectStore, project: str, bundle: bytes) -> Path:
+def save_release_bundle(store: ProjectStore, project: str, bundle: bytes, *,
+                        source_guard: Callable[[], None] | None = None) -> Path:
     """Publish complete bytes once; identical retries reuse the verified artifact.
 
     A same-directory hard link provides atomic exclusive publication. Failure
-    leaves no partial target and never replaces an existing release candidate.
+    never replaces an existing release candidate. A failure after publication
+    can leave a complete new file; it is not a rollback or directory-fsync promise.
+    The optional trusted caller guard also runs on identical/racing reuse paths.
     """
+    if source_guard is not None and not callable(source_guard):
+        raise TypeError("source_guard must be callable")
+    if source_guard is not None:
+        source_guard()
     if not isinstance(bundle, bytes) or not bundle:
         raise ValueError("发布包必须是非空 bytes")
     try:
@@ -483,27 +494,62 @@ def save_release_bundle(store: ProjectStore, project: str, bundle: bytes) -> Pat
         raise ValueError("发布包缺少有效的项目清单") from exc
     path = _safe_project_path(store, project, "exports", f"release-{_digest(bundle)}.zip")
 
+    def check_destination() -> None:
+        if _safe_project_path(store, project, "exports", path.name) != path:
+            raise ValueError("发布目标在操作过程中发生变化")
+
     def reuse_existing() -> Path:
+        if source_guard is not None:
+            source_guard()
+        check_destination()
         existing = _safe_project_path(store, project, "exports", path.name)
         if _read_bytes(existing) != bundle:
             raise ValueError("同名发布包内容不匹配；保留原文件，请检查存储完整性")
+        if source_guard is not None:
+            source_guard()
+        check_destination()
         return existing
 
     if path.exists():
         return reuse_existing()
+    check_destination()
     path.parent.mkdir(parents=True, exist_ok=True)
+    check_destination()
     temporary: Path | None = None
+    temporary_identity: tuple[int, int] | None = None
     try:
         with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".release-", delete=False) as handle:
             temporary = Path(handle.name)
+            info = os.fstat(handle.fileno())
+            temporary_identity = (info.st_dev, info.st_ino)
             handle.write(bundle)
             handle.flush()
             os.fsync(handle.fileno())
+        if source_guard is not None:
+            source_guard()
+        check_destination()
+        # The staged pathname may have changed since its descriptor was closed.
+        # Refuse observed replacements or changed bytes before publication; this
+        # is a boundary check, not a lock against arbitrary hostile filesystem races.
+        reject_links(temporary)
+        info = temporary.lstat()
+        if (info.st_dev, info.st_ino) != temporary_identity or _read_bytes(temporary) != bundle:
+            raise ValueError("暂存发布包在保存过程中发生变化")
+        check_destination()
         try:
             os.link(temporary, path)
         except FileExistsError:
             return reuse_existing()
-        return path
+        return reuse_existing()
     finally:
         if temporary is not None:
-            temporary.unlink(missing_ok=True)
+            # A detected root redirect must not turn cleanup into deletion in
+            # another directory. Preserve an unreachable orphan rather than
+            # following links or deleting a replacement temporary file.
+            try:
+                reject_links(temporary)
+                info = temporary.lstat()
+                if (info.st_dev, info.st_ino) == temporary_identity:
+                    temporary.unlink()
+            except (FileNotFoundError, ValueError):
+                pass
