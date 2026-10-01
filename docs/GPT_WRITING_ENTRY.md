@@ -1,4 +1,6 @@
-当前候选：`fix/workbench-source-bindings-20261001`。公开工程入口以 [当前候选记录](../governance/current_candidate.json) 为准。
+当前候选：`fix/pdf-reader-security-20261001`。公开工程入口以 [当前候选记录](../governance/current_candidate.json) 为准。
+
+PDF 参考读取依赖已升级：[修复已知解析资源风险与验证范围](PDF_READER_SECURITY.md)。
 
 工作台恢复时保留作者编辑，旧大纲不能继续写作：[真实来源绑定与明确刷新](WORKBENCH_SOURCE_BINDINGS.md)。
 
@@ -16,7 +18,7 @@
 
 ## 1. 先读哪些来源
 
-1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/workbench-source-bindings-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
+1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/pdf-reader-security-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
 2. **私有故事档案**：读作者指定 Drive 文件的实际内容，核对 `story_id / revision`、当前阶段、接受记录和保存回执。工程文件 `governance/project_state.json` 不是小说档案。
 3. **Canon**：已确认的世界规则、锁定事实、人物身份与知识边界、总纲。只有实际读到且与本章相关的约束才能进入本次上下文；关键约束缺失时先补齐。
 4. **Active**：本章目标、出场人物当前状态、时间地点、近章摘要、开放伏笔、当前作品文风，以及当前计划/草稿/审校候选的原件。

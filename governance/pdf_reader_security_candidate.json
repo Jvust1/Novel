@@ -1,0 +1,47 @@
+{
+  "schema": "novel-pdf-reader-security-candidate-v1",
+  "branch": "fix/pdf-reader-security-20261001",
+  "base_pr": 67,
+  "base_head": "5f6d7fe19a014c2ed92327fb545db89043bb985f",
+  "base_tree": "bf226565c2c9c3a90c36cbf3cb4f255676401731",
+  "docs": "docs/PDF_READER_SECURITY.md",
+  "scope": "update existing PDF text reader to official pypdf 6.19.0; retain all production APIs, optional readers, author acceptance, budgets and saves",
+  "dependency": {
+    "old_constraint": "pypdf>=4,<6",
+    "old_installed": "5.9.0",
+    "new_pin": "6.19.0",
+    "source_commit": "d62cb58d3988b291b0435eddfd118c4f8f6b6a46",
+    "license": "BSD-3-Clause"
+  },
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "resource_reproduction": "original 650-byte PDF, 5.9.0 CPU-limit exit -24; 6.19.0 complete expected text, 0.152 seconds",
+    "external_ai_review": "not completed; cloud browser connection unavailable",
+    "python_3_11": {
+      "passed": 2063,
+      "skipped": 1,
+      "seconds": 201.92
+    },
+    "python_3_12": {
+      "passed": 2063,
+      "skipped": 1,
+      "seconds": 195.09
+    },
+    "new_cases": 9,
+    "independent_review_cases": 7,
+    "pip_check": "passed both installed environments",
+    "fatal_ruff": "passed",
+    "new_tests_ruff": "passed",
+    "default_ruff_advisory_count": 446,
+    "compileall": "passed both interpreters",
+    "document_links_checked": 71,
+    "skip": "optional qdrant-client absent",
+    "dependency_wheel_sha256": "7e5d6e730e7dae87d560a2cee218b852f6498c8be61966f3cd02ead971e48d14",
+    "pdf_compatibility": "compressed multipage ordering, blank pages, uppercase extension and wrappers; malformed/encrypted failures preserve all data and send no model call"
+  },
+  "boundaries": [
+    "test-only subprocess resource limits do not add an application-wide sandbox",
+    "pip check is dependency consistency, not a full vulnerability audit",
+    "no main merge, deployment, private manuscript publication or paid model"
+  ]
+}
