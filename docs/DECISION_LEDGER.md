@@ -151,3 +151,8 @@ Build review corpora from explicit, safe, author-ordered saved chapter IDs. Vers
 Follow the author's clarified usage: GPT reads repository instructions through the GitHub plugin and writes in conversation; existing local tools are optional. File access does not imply Python execution, persistent private storage, or autonomous approval. Keep private actual novels and state in authorized private storage. The original public demonstration is explicitly bounded and does not establish standing publication permission.
 
 Derive a Style Profile from the novel's primary genre, optional secondary genre, readers and scene needs. Reuse pinned MIT source guidance on voice calibration, context-sensitive style patterns and meaning-preserving local edits; add Novel's knowledge/timeline/item/foreshadowing locks. Preserve working prose and all existing software. Neither a fixed cold/colloquial voice nor detector-evasion scoring becomes a global goal. Original North Star remains unchanged.
+
+
+## 2026-10-01 — Shared final-text evidence and bounded model output
+
+Consolidate the existing post-plan writer path instead of adding another orchestrator. Bind current reports to exact text/plan/stage; preserve initial evidence and explicit author acceptance. Use existing HTTPX streaming, Python JSON and Pydantic runtime validation; reject malformed/incomplete output rather than adopting permissive partial-JSON repair. Optional backends stay opt-in and their stop/transport/cumulative-budget limits stay explicit. See [FINAL_OUTPUT_GATES.md](FINAL_OUTPUT_GATES.md).

@@ -1,3 +1,10 @@
+# 2026-10-01 — Final-text reports and bounded model output (candidate)
+
+- Share existing post-plan execution across single/routed/confirmed-plan writers; retain initial evidence and bind final diagnostics to delivered text
+- Reject blank/incomplete repair, contradictory verdicts, malformed hooks, mutable report rebinding and unbounded/ambiguous model output
+- Reuse installed HTTPX streaming and existing JSON/Pydantic validation; no new workflow framework or paid call
+- [Actual behavior, source pins and limits](FINAL_OUTPUT_GATES.md)
+
 # 2026-10-01 — Local semantic Recall integrity (candidate)
 
 - Reuse existing Pydantic strict finite validation and Novel Qdrant metadata contract; no new framework, model download or remote client

@@ -10,29 +10,22 @@ from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target,
 from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
 from novel_ai.project_session import switch_project
-from novel_ai.engine import ChapterResult, NovelEngine, merge_quality_issues
+from novel_ai.engine import NovelEngine
 from novel_ai.memory import apply_extraction
 from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
 from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
 from novel_ai.longform_consistency import (
-    aggregate_voice_baseline,
-    behavior_repetition,
-    behavior_review_payload,
     build_longform_health,
-    character_voice_dna,
-    voice_drift,
-    voice_review_payload,
 )
 from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
-from novel_ai.quality_gate import analyze_prose_quality, quality_review_payload
-from novel_ai.reference_similarity import analyze_reference_similarity, similarity_review_payload
+from novel_ai.quality_gate import analyze_prose_quality
+from novel_ai.reference_similarity import analyze_reference_similarity
 from novel_ai.release_eval import build_release_quality_snapshot
 from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
-from novel_ai.story_dna import story_structure_capabilities, story_dna_from_plan
-from novel_ai.story_dna_memory import compare_story_dna, story_dna_review_payload
+from novel_ai.story_dna import story_structure_capabilities
 from novel_ai.storage import ProjectStore
 from novel_ai.style_engine import (
     analyze_style,
@@ -398,79 +391,16 @@ with write_tab:
             context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
-            story_dna_obj = story_dna_from_plan(plan)
-            dna_history = [
-                row for row in store.load_story_dna_history(project_name)
-                if str(row.get("chapter_id")) != chapter_id
-            ]
-            dna_similarity = compare_story_dna(story_dna_obj.to_dict(), dna_history)
-            behavior_report = behavior_repetition(story_dna_obj.to_dict(), dna_history)
-            draft_context = meta.get("extra", "")
-            if dna_similarity.should_avoid:
-                draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
-            if behavior_report.get("should_avoid"):
-                draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
-            draft = engine.draft(
-                bible,
-                plan,
-                characters,
-                meta.get("recent", []),
-                style_from_state(),
-                int(target_chars),
-                user_notes,
-                draft_context,
-            )
-            quality = analyze_prose_quality(draft)
-            quality_payload = quality_review_payload(quality)
-            similarity_payload = similarity_review_payload(
-                analyze_reference_similarity(draft, reference_hashes=st.session_state.reference_hashes)
-            )
-            voice_current = character_voice_dna(draft, [c.name for c in characters])
-            voice_baseline = aggregate_voice_baseline([
-                row for row in store.load_voice_dna_history(project_name)
-                if str(row.get("chapter_id")) != chapter_id
-            ])
-            voice_alerts = voice_drift(voice_current, voice_baseline)
-            voice_report = {"current": voice_current, "baseline": voice_baseline, "alerts": voice_alerts}
-            review_result = None
-            revised = None
-            review_after_repair = None
-            if mode != "快速草稿":
-                review_result = engine.review(bible, plan, characters, draft, draft_context)
-                review_result = merge_quality_issues(review_result, quality_payload)
-                review_result = merge_quality_issues(review_result, similarity_payload)
-                review_result = merge_quality_issues(review_result, story_dna_review_payload(dna_similarity))
-                review_result = merge_quality_issues(review_result, behavior_review_payload(behavior_report))
-                review_result = merge_quality_issues(review_result, voice_review_payload(voice_alerts))
-                if mode == "精修" and review_result.verdict == "revise":
-                    revised = engine.repair(draft, review_result, style_from_state(), draft_context)
-                    revised_quality = quality_review_payload(analyze_prose_quality(revised))
-                    revised_similarity = similarity_review_payload(
-                        analyze_reference_similarity(revised, reference_hashes=st.session_state.reference_hashes)
-                    )
-                    revised_voice = character_voice_dna(revised, [c.name for c in characters])
-                    revised_voice_alerts = voice_drift(revised_voice, voice_baseline)
-                    voice_report["revised"] = revised_voice
-                    voice_report["revised_alerts"] = revised_voice_alerts
-                    review_after_repair = engine.review(bible, plan, characters, revised, draft_context)
-                    review_after_repair = merge_quality_issues(review_after_repair, revised_quality)
-                    review_after_repair = merge_quality_issues(review_after_repair, revised_similarity)
-                    review_after_repair = merge_quality_issues(review_after_repair, story_dna_review_payload(dna_similarity))
-                    review_after_repair = merge_quality_issues(review_after_repair, behavior_review_payload(behavior_report))
-                    review_after_repair = merge_quality_issues(review_after_repair, voice_review_payload(revised_voice_alerts))
-            result = ChapterResult(
-                plan=plan,
-                draft=draft,
-                review=review_result,
-                ai_flavor=detect_ai_flavor(draft),
-                quality_report=quality_payload,
-                similarity_report=similarity_payload,
-                story_dna=story_dna_obj.to_dict(),
-                story_dna_similarity_report=dna_similarity.to_dict(),
-                voice_dna_report=voice_report,
-                behavior_repetition_report=behavior_report,
-                revised=revised,
-                review_after_repair=review_after_repair,
+            result = engine.run_from_plan(
+                bible=bible, plan=plan, characters=characters,
+                recent_summaries=meta.get("recent", []), style=style_from_state(),
+                target_chars=int(target_chars), user_notes=user_notes,
+                review=mode != "快速草稿", auto_repair=mode == "精修",
+                extra_context=meta.get("extra", ""), reference_hashes=st.session_state.reference_hashes,
+                historical_story_dna=[row for row in store.load_story_dna_history(project_name)
+                                      if str(row.get("chapter_id")) != chapter_id],
+                historical_voice_dna=[row for row in store.load_voice_dna_history(project_name)
+                                      if str(row.get("chapter_id")) != chapter_id],
             )
             final_text = result.final_text
             overlap = reference_overlap(final_text, st.session_state.reference_hashes)
@@ -550,6 +480,13 @@ with write_tab:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
         st.text_area("正文", value=result.final_text, height=720)
+        if result.final_report:
+            st.caption("下列文本诊断绑定当前显示正文；模型审校不等于作者接受。Story DNA/行为结构仍来自场景计划。")
+            with st.expander("当前正文审校来源与范围", expanded=False):
+                st.json({key: result.final_report[key] for key in (
+                    "stage", "text_sha256", "plan_sha256", "review_status", "external_hooks", "author_acceptance")})
+            with st.expander("初稿诊断记录（修订前）", expanded=False):
+                st.json(result.initial_report)
         if st.session_state.last_self_similarity:
             top = st.session_state.last_self_similarity[:3]
             st.warning("跨章近似重复风险：" + "；".join(
@@ -560,7 +497,7 @@ with write_tab:
                 f"参考文本 18 字符片段哈希重合率 {st.session_state.last_overlap:.2%}，建议检查是否出现不必要的近似复用。"
             )
         if result.review:
-            with st.expander("编辑审校", expanded=False):
+            with st.expander("初稿编辑审校", expanded=False):
                 st.json(result.review.model_dump())
         if result.review_after_repair:
             verdict = result.review_after_repair.verdict
@@ -576,7 +513,7 @@ with write_tab:
             with st.expander("参考相似度保护门", expanded=False):
                 st.json(result.similarity_report)
         if result.story_dna:
-            with st.expander("Story DNA", expanded=False):
+            with st.expander("Story DNA（场景计划派生，非正文事件抽取）", expanded=False):
                 st.json(result.story_dna)
         if result.voice_dna_report:
             alerts = result.voice_dna_report.get("revised_alerts", result.voice_dna_report.get("alerts", []))
@@ -584,8 +521,8 @@ with write_tab:
                 st.warning("人物口吻 DNA 漂移：" + "；".join(
                     f"{row['character']}={row['score']:.1%}" for row in alerts[:3]
                 ))
-            with st.expander("人物口吻 DNA", expanded=False):
-                st.json(result.voice_dna_report)
+            with st.expander("人物口吻 DNA（当前正文）", expanded=False):
+                st.json(result.final_report["voice"] if result.final_report else result.voice_dna_report)
         if result.behavior_repetition_report:
             if result.behavior_repetition_report.get("should_avoid"):
                 st.warning(f"人物行为模式重复：最高 {result.behavior_repetition_report.get('max_score',0):.1%}")
