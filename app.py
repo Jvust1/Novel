@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import json
 import hashlib
+from copy import deepcopy
 
 import streamlit as st
 
 from novel_ai.author_ui import outline_digest, render_outline_editor, render_release_workbench
-from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter
+from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter, require_saved_outline
 from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
-from novel_ai.project_session import switch_project
+from novel_ai.project_session import switch_project, preserve_project_fields
 from novel_ai.engine import NovelEngine
 from novel_ai.memory_ui import render_memory_proposals
 from novel_ai.longform_tools import near_duplicate_chapters
@@ -81,12 +82,13 @@ with st.sidebar:
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
 
 
-def make_provider(*, request_budget: RequestBudget | None = None) -> OpenAICompatibleProvider:
+def make_provider(*, request_budget: RequestBudget | None = None, request_guard=None) -> OpenAICompatibleProvider:
     if not base_url.strip() or not model.strip():
         raise ValueError("请先填写 Base URL 和 Model")
     return OpenAICompatibleProvider(
         ProviderConfig(base_url=base_url.strip(), model=model.strip(), api_key=api_key.strip()),
         request_budget=request_budget,
+        request_guard=request_guard,
     )
 
 
@@ -119,6 +121,7 @@ def seed_project_state() -> None:
 
 
 seed_project_state()
+preserve_project_fields(st.session_state)
 
 
 story_tab, char_tab, style_tab, write_tab, review_tab, release_tab = st.tabs(
@@ -363,19 +366,28 @@ with write_tab:
         validate_chapter_target(store, project_name, chapter_id, allow_overwrite=allow_overwrite)
 
     def _plan_binding():
-        meta = st.session_state.pending_plan_meta
+        meta = deepcopy(st.session_state.pending_plan_meta)
         if meta.get("project", project_name) != project_name or meta.get("chapter_id", chapter_id) != chapter_id:
             raise ValueError("待确认计划属于另一章，请重新载入或生成本章计划。")
         if meta.get("outline_sha256") and meta["outline_sha256"] != outline_digest(st.session_state.get("hierarchy_data") or {}):
             raise ValueError("层级大纲已变化，请重新载入章节并确认计划。")
+        if meta.get("outline_sha256") or meta.get("outline_node_id"):
+            require_saved_outline(store, project_name, meta.get("outline_sha256"))
         return meta
 
     def _engine_and_inputs():
-        require_current_style(st.session_state, store, project_name)
-        engine = NovelEngine(make_provider())
+        style_snapshot = require_current_style(st.session_state, store, project_name)
+        bound_meta = _plan_binding()
+
+        def current_sources():
+            require_current_style({"style_snapshot": style_snapshot}, store, project_name)
+            if bound_meta.get("outline_sha256") or bound_meta.get("outline_node_id"):
+                require_saved_outline(store, project_name, bound_meta.get("outline_sha256"))
+
+        engine = NovelEngine(make_provider(request_guard=current_sources))
         bible = current_bible()
         characters = [Character.model_validate(c) for c in st.session_state.characters]
-        return engine, bible, characters
+        return engine, bible, characters, current_sources
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -408,7 +420,7 @@ with write_tab:
     if make_plan:
         try:
             meta = _plan_binding()
-            engine, bible, characters = _engine_and_inputs()
+            engine, bible, characters, current_sources = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )
@@ -423,6 +435,8 @@ with write_tab:
             plan = engine.plan(
                 bible, outline, chapter_goal, characters, context.recent_summaries, planning_context
             )
+            _plan_binding()
+            current_sources()
             st.session_state.pending_plan_json = plan.model_dump_json(indent=2)
             st.session_state.pending_plan_meta = {
                 **meta, "project": project_name, "chapter_id": chapter_id,
@@ -445,7 +459,7 @@ with write_tab:
                 check = validate_plan_stage(plan)
                 if not check.ok:
                     raise ValueError("请先补全场景计划：" + "；".join(check.issues))
-            engine, bible, characters = _engine_and_inputs()
+            engine, bible, characters, current_sources = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
@@ -463,7 +477,8 @@ with write_tab:
             final_text = result.final_text
             overlap = reference_overlap(final_text, st.session_state.reference_hashes)
             with store._guard(project_name):
-                require_current_style(st.session_state, store, project_name)
+                current_sources()
+                _plan_binding()
                 write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
                 save_chapter_plan(store, project_name, chapter_id, plan, final_text)
             st.session_state.last_result = result
@@ -484,7 +499,7 @@ with write_tab:
         try:
             _validate_chapter_target()
             meta = _plan_binding()
-            engine, bible, characters = _engine_and_inputs()
+            engine, bible, characters, current_sources = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )
@@ -514,7 +529,8 @@ with write_tab:
                 item.__dict__ for item in near_duplicate_chapters(final_text, previous_chapters)
             ]
             with store._guard(project_name):
-                require_current_style(st.session_state, store, project_name)
+                current_sources()
+                _plan_binding()
                 write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
                 save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
             st.session_state.last_result = result

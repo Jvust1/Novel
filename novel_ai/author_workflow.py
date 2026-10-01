@@ -35,6 +35,27 @@ def _json_bytes(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
+def outline_digest(data: dict) -> str:
+    """Keep the existing author-workbench outline identity unchanged."""
+    return hashlib.sha256(json.dumps(data, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+
+def load_saved_outline(store: ProjectStore, project: str) -> dict:
+    data = store.read_json(project, "memory/hierarchical_outline.json")
+    if data is None:
+        raise ValueError("已保存层级大纲不可用，请保留当前编辑并核对来源。")
+    validate_outline(HierarchicalOutline.model_validate(data))
+    return data
+
+
+def require_saved_outline(store: ProjectStore, project: str, expected_sha256: str) -> None:
+    """Check the actual saved source, never just a second session cache."""
+    if (not isinstance(expected_sha256, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256)
+            or outline_digest(load_saved_outline(store, project)) != expected_sha256):
+        raise ValueError("层级大纲已变化，请重新读取已保存大纲，再载入章节并确认计划。")
+
+
 def _outline_path(outline: HierarchicalOutline, node_id: str) -> tuple[HierarchicalOutline, list[OutlineNode]]:
     # Revalidate a copy: Pydantic models may have been mutated after construction.
     checked = validate_outline(HierarchicalOutline.model_validate(outline.model_dump()))
