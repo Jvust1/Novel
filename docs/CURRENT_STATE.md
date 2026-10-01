@@ -1,3 +1,12 @@
+# 2026-10-02 — Quality gates and remaining audit boundary (candidate)
+
+- Add clean-CI dependency consistency with pip check and pin Ruff 0.16.9 in development requirements
+- Add hard static gate E9/F63/F7/F82 across app.py, novel_ai, scripts and tests, while retaining compileall and full pytest on Python 3.11/3.12
+- Report the full default Ruff diagnostic count/rule distribution as a non-blocking maintenance baseline instead of conflating legacy style debt with runtime correctness
+- Run optional integration capability reporting in CI without installing every optional heavy dependency
+- Add governance-alignment tests so documented current branch/gates cannot silently diverge from the actual workflow
+- [Scope, hard gates and open audit limits](QUALITY_GATES_AUDIT.md)
+
 # 2026-10-02 — Memory candidate / author acceptance isolation (candidate)
 
 - Split model extraction from formal memory writeback: extraction first saves a pending candidate; characters, story_state, summaries and long-form derived memory stay unchanged until explicit author confirmation

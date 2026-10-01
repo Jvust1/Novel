@@ -16,6 +16,8 @@
 
 记忆抽取与正式故事事实分离：[候选 → 作者确认 → 幂等回写](docs/MEMORY_ACCEPTANCE_GATES.md)。
 
+工程回归与审计边界：[依赖一致性、致命 Ruff 硬门与默认 Ruff 维护性基线](docs/QUALITY_GATES_AUDIT.md)。
+
 ## 从这里开始
 
 1. 读取 [AGENTS.md](AGENTS.md) 和 [GPT 写作入口](docs/GPT_WRITING_ENTRY.md)，核对实际读取的分支或提交
@@ -25,7 +27,7 @@
 
 可直接告诉 GPT：
 
-> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/memory-acceptance-gates-20261002 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
+> 通过 GitHub 插件读取 Jvust1/Novel 的 chore/quality-gates-audit-20261002 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
 
 如果插件没有读到该分支或 Drive 文件，GPT 应说明缺少哪个来源，请作者提供可访问的位置；不能假装已加载。上述分支入口尚未合入 `main`，默认分支内容未必相同。
 

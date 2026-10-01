@@ -4,7 +4,7 @@
 
 ## 当前执行顺序
 
-1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/memory-acceptance-gates-20261002`，尚未合入 `main`；不要假定默认分支已有它。
+1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `chore/quality-gates-audit-20261002`，尚未合入 `main`；不要假定默认分支已有它。
 2. 通过当前可用工具，读取作者指定的私有 Drive 故事档案及其中引用的当前计划、正文、审校和接受记录。只有链接不等于读到内容；缺少来源时标记 `source_unavailable` / `awaiting_source`，问最小补充问题。
    有执行器时先用 `accepted-history`/`accepted_history_snapshot()` 重建只含作者已接受版本的来源清单；当前未接受候选、未来章节和其他书不得混入恢复历史。
    最终发送给模型的完整 messages 还必须通过输入 token 门和同阶段 retry/fallback 累计预算；预算不足时阻塞，不能为了通过预算静默删 Canon、人物知识边界、已接受历史或当前必要计划。见 `docs/MODEL_CALL_BUDGETS.md`。
@@ -14,6 +14,7 @@
 6. 按计划 → 作者确认计划 → 正文 → 审校 → 必要的局部修订/复审 → 作者接受正文 → 记忆候选 → 作者确认记忆 → 私有保存/读回推进。确认绑定故事、章节及具体版本，换稿后旧确认不得沿用。执行器的本地工作台也必须走 `docs/MEMORY_ACCEPTANCE_GATES.md` 的候选/确认两步；模型抽取成功本身不允许修改正式人物卡、story_state 或摘要。
 7. 作者中途改设定/文风，先读 `docs/GPT_AUTHOR_AMENDMENTS.md`；保留旧状态、明确确认变更、逐章及派生记忆复审、实际保存读回后继续。不绕过未决历史修订。
 8. 只有真实读写回执可支持“已保存/已恢复”；无写工具时提供待保存内容与状态，不伪造成功。每次交付给出当前阶段、版本、阻塞项和最小下一步。
+9. 工程候选必须通过 `docs/QUALITY_GATES_AUDIT.md` 的核心依赖一致性、致命静态错误、compileall 与全量 pytest 门；默认 Ruff 维护性诊断单独报告，不用格式债务冒充运行风险。
 
 ## 当前边界
 

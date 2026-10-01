@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "memory-acceptance-gate-candidate",
-  "version": "0.16.0-dev",
+  "stage": "quality-gates-audit-candidate",
+  "version": "0.17.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Turn clean-environment dependency consistency and high-risk static analysis into CI hard gates while tracking legacy default-Ruff maintenance debt separately",
     "Isolate model-derived memory candidates from formal story facts until explicit version-bound author acceptance, including stale-confirmation and interrupted-write recovery",
     "Complete full-message input accounting and cumulative visible retry/fallback budgets without silently deleting required story context",
     "Rebuild next-chapter context only from author-accepted history; exclude stale retained drafts and bind explicit historical source versions across restart/readback",
@@ -180,7 +181,12 @@
     "version-bound pending memory candidate envelope for local workbench extraction",
     "two-step local workbench memory flow: extract candidate then explicit author-confirmed writeback",
     "candidate-specific acceptance receipt written after successful formal memory writeback",
-    "stale/tampered/cross-project/cross-chapter memory candidate rejection and idempotent confirmation retry"
+    "stale/tampered/cross-project/cross-chapter memory candidate rejection and idempotent confirmation retry",
+    "clean-CI pip check dependency consistency gate on Linux Python 3.11/3.12",
+    "pinned Ruff 0.16.9 high-risk E9/F63/F7/F82 CI gate",
+    "non-blocking full default Ruff JSON diagnostic baseline in CI",
+    "CI optional-integration capability report without forcing all extras into core",
+    "governance alignment test for current candidate branch and actual CI gate configuration"
   ],
   "frozen": false,
   "blocking_issues": [
@@ -335,13 +341,13 @@
     ]
   },
   "latest_verified_candidate": {
-    "pr": 58,
-    "url": "https://github.com/Jvust1/Novel/pull/58",
-    "head": "9924537af68a5a74e982d3f12f6167a3c57d3d6d",
-    "ci": "https://github.com/Jvust1/Novel/actions/runs/36898331405",
+    "pr": 59,
+    "url": "https://github.com/Jvust1/Novel/pull/59",
+    "head": "410f7cf3a46fe8f358f51866c32de78234b37b1c",
+    "ci": "https://github.com/Jvust1/Novel/actions/runs/36899511324",
     "status": "success",
-    "tests": "1217 passed, 1 skipped on each Linux Python 3.11/3.12 job",
-    "scope": "full-input and cumulative model-call budgets predecessor; current memory-acceptance candidate is stacked on this exact head"
+    "tests": "1225 passed, 1 skipped on each Linux Python 3.11/3.12 job",
+    "scope": "memory candidate/author acceptance isolation predecessor; current quality-gate candidate is stacked on this exact head"
   },
   "recall_integrity_candidate": {
     "branch": "fix/recall-integrity-20261001",
@@ -466,14 +472,62 @@
       "local_python": "3.13.5",
       "logic_and_storage": "97 passed",
       "py_compile": "passed",
-      "streamlit_ui": "pending GitHub CI",
-      "live_provider_calls": "not run"
+      "streamlit_ui": "GitHub Actions full suite success: 1225 passed, 1 skipped on both Linux Python 3.11/3.12",
+      "live_provider_calls": "not run",
+      "ci_run": "https://github.com/Jvust1/Novel/actions/runs/36899511324"
     },
     "boundaries": [
       "acceptance receipt is workflow evidence, not cryptographic human identity authentication",
       "candidate correctness still requires author review",
       "no cross-device Drive transaction or multi-file global rollback",
       "unaccepted candidates may persist privately but are not formal story facts"
+    ]
+  },
+  "quality_gate_candidate": {
+    "branch": "chore/quality-gates-audit-20261002",
+    "base_pr": 59,
+    "base_head": "410f7cf3a46fe8f358f51866c32de78234b37b1c",
+    "docs": "docs/QUALITY_GATES_AUDIT.md",
+    "hard_gates": [
+      "pip check in clean CI",
+      "Ruff 0.16.9 E9/F63/F7/F82",
+      "compileall app.py novel_ai scripts",
+      "full pytest"
+    ],
+    "advisory": [
+      "default Ruff JSON diagnostic count and top rules",
+      "optional integration availability report"
+    ],
+    "validation": {
+      "local_python": "3.13.5",
+      "local_ruff": "unavailable; package download blocked",
+      "local_pip_check": "shared-environment MoviePy/Pillow conflict not attributable to Novel requirements",
+      "github_ci": "rerun pending after integration CLI fix",
+      "first_ci_run": "https://github.com/Jvust1/Novel/actions/runs/36900218281",
+      "pip_check": "passed on Python 3.11/3.12",
+      "high_risk_ruff": "passed: E9/F63/F7/F82 = 0",
+      "default_ruff_diagnostics": 329,
+      "default_ruff_top_rules": {
+        "I001": 93,
+        "BLE001": 32,
+        "UP035": 26,
+        "F401": 23,
+        "TRY004": 20,
+        "UP031": 16,
+        "C408": 15,
+        "SIM117": 15,
+        "PLW1510": 12,
+        "S110": 10,
+        "UP037": 7,
+        "FURB167": 7
+      },
+      "first_ci_blocker": "scripts/check_integrations.py direct execution could not import novel_ai; fixed by repository-root bootstrap"
+    },
+    "boundaries": [
+      "default Ruff maintenance diagnostics are not yet a blocking gate",
+      "all optional dependency extras are not installed in the core CI matrix",
+      "no generic CVE/SBOM scanner is added in this slice",
+      "conditional shared-deployment risks still require a real deployment environment"
     ]
   }
 }

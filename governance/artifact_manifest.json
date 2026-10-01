@@ -25,10 +25,10 @@
   ],
   "scope": "Historical archive inventory; not an assertion of current branch HEAD or latest private delivery",
   "current_candidate": {
-    "branch": "fix/memory-acceptance-gates-20261002",
-    "base_verified_pr": 58,
-    "base_verified_head": "9924537af68a5a74e982d3f12f6167a3c57d3d6d",
-    "source_of_truth": "Resolve current candidate branch/PR head and CI through GitHub; private story candidates remain local/private and are not published by this code slice",
+    "branch": "chore/quality-gates-audit-20261002",
+    "base_verified_pr": 59,
+    "base_verified_head": "410f7cf3a46fe8f358f51866c32de78234b37b1c",
+    "source_of_truth": "Resolve current candidate branch/PR head and CI through GitHub; quality reports are CI evidence, not a new private Drive artifact",
     "guide": "docs/HANDOFF.md"
   }
 }
