@@ -20,6 +20,8 @@ from novel_ai.longform_consistency import (
 from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
+from novel_ai.quality_gate import analyze_prose_quality
+from novel_ai.reference_similarity import analyze_reference_similarity
 from novel_ai.release_eval import build_release_quality_snapshot
 from novel_ai.recall_backends import recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
@@ -29,6 +31,7 @@ from novel_ai.style_engine import (
     analyze_style,
     blend_styles,
     build_reference_signature,
+    detect_ai_flavor,
     reference_overlap,
 )
 

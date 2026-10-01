@@ -365,11 +365,11 @@
     "reuse": "existing HTTPX 0.28.1 runtime APIs, Python JSON and Pydantic; no new framework/source port",
     "validation": {
       "python_3_11_16": {
-        "passed": 1196,
+        "passed": 1201,
         "skipped": 1
       },
       "python_3_12_14": {
-        "passed": 1196,
+        "passed": 1201,
         "skipped": 1
       },
       "independent_final_text_tests": 100,
@@ -377,7 +377,19 @@
       "compileall": "passed",
       "diff_check": "passed",
       "live_models_optional_sdks": "not_run; MockTransport and stubs only",
-      "literary_quality": "not_established"
+      "literary_quality": "not_established",
+      "ruff": {
+        "version": "0.16.9",
+        "undefined_names": "passed; app.py novel_ai scripts; F821",
+        "isolated_default_scope": [
+          "app.py",
+          "novel_ai",
+          "scripts",
+          "tests"
+        ],
+        "isolated_default_diagnostics": 320,
+        "status": "full static gate not passed; copied upstream sources excluded"
+      }
     },
     "remaining_boundaries": [
       "input context/tokenizer/cumulative cost not unified",

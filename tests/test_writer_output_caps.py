@@ -89,3 +89,40 @@ def test_configured_hook_response_cannot_escape_output_byte_allowance():
     class Hook:
         def review_payload(self,**kwargs):return {'issues':[], 'unused':'x'*101}
     with pytest.raises(ValueError):apply_external_review_hooks(ChapterReview(),[Hook()],draft='正文',plan=ChapterPlan(),bible=StoryBible(),characters=[],max_output_bytes=100)
+
+
+def test_standalone_workbench_review_still_uses_existing_analyzers(monkeypatch,tmp_path):
+    from pathlib import Path
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.chdir(tmp_path)
+    app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py'),default_timeout=30).run()
+    next(x for x in app.text_area if x.label=='粘贴需要检查的正文').set_value('门外的脚步停了。他把钥匙藏回靴底。')
+    next(x for x in app.button if x.label=='本地质量门 + AI 味扫描').click().run()
+    assert not app.exception
+    assert any('文本质量门' in x.value for x in app.markdown)
+
+
+@pytest.mark.parametrize('bad',['{"summary":"partial"', '{"summary":"a","summary":"b"}', '[{"summary":"array"}]', '{"summary":"value","new_facts":[NaN]}'])
+def test_invalid_memory_json_leaves_actual_workbench_state_untouched(monkeypatch,tmp_path,bad):
+    from pathlib import Path
+    from streamlit.testing.v1 import AppTest
+    from novel_ai.engine import ChapterResult
+    from novel_ai.provider import OpenAICompatibleProvider
+    from novel_ai.storage import ProjectStore
+    store=ProjectStore(tmp_path/'data')
+    original=[{'name':'沈青','knows':[],'does_not_know':['证人的姓名']}]
+    store.write_json('MyNovel','memory/characters.json',original)
+    store.save_story_state('MyNovel',{'facts':['钥匙未交出'],'open_threads':[]})
+    before={p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(OpenAICompatibleProvider,'chat',lambda *a,**kw:bad)
+    app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py'),default_timeout=30).run()
+    app.session_state['last_result']=ChapterResult(plan=ChapterPlan(),draft='他把钥匙藏回靴底。',review=ChapterReview(verdict='pass'),ai_flavor={})
+    app.run()
+    for x in app.text_input:
+        if x.label=='Base URL':x.set_value('http://never-called.invalid')
+        if x.label=='Model':x.set_value('synthetic')
+    next(x for x in app.button if x.label=='抽取本章记忆并回写').click().run()
+    assert app.exception and app.session_state['last_extraction'] is None
+    assert app.session_state['characters'][0]['knows']==[]
+    assert {p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}==before
