@@ -1,3 +1,10 @@
+# 2026-10-01 — Local semantic Recall integrity (candidate)
+
+- Reuse existing Pydantic strict finite validation and Novel Qdrant metadata contract; no new framework, model download or remote client
+- Coherent detached snapshots preserve old corpus/index after failed updates; scaled cosine handles huge/subnormal values and rejects invalid data
+- Explicit ContextAssembler option replaces the current-project historical corpus, verifies returned source identity, and carries bounded history through actual writing/review stages
+- [API, source pins and verification limits](RECALL_INTEGRITY.md)
+
 # 2026-10-01 — Project storage and benchmark evidence (candidate)
 
 - Reconcile existing Novel PR16 confinement with a licensed boltons atomic-write source port used by actual ProjectStore and benchmark writers

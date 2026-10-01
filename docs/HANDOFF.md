@@ -2,7 +2,8 @@
 
 当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
 
-- 当前存稿/评测证据保护候选入口为 `fix/storage-evidence-20261001`，叠在已验证 [Draft PR #47](https://github.com/Jvust1/Novel/pull/47) 上；#47 head `601c2f71b003425481552aec5554aee5945b19a8` 保留不动，精确提交 CI 成功且 534 passed / 1 skipped。各候选均未合入 `main`。
+- 当前本地 Recall 完整性候选入口为 `fix/recall-integrity-20261001`，叠在已验证 [Draft PR #48](https://github.com/Jvust1/Novel/pull/48) 上；#48 head `78cb607a8b4ae9cade68a62b7065a8f08e85ace0` 保留不动，精确提交双版本 CI 成功且各 632 passed / 1 skipped。各候选均未合入 `main`。
+- [本地语义 Recall 完整性](RECALL_INTEGRITY.md) 修复失败更新的文本/向量错配，并作为显式本地选项接入实际写作上下文；默认召回保持不变，真实模型/加速器质量未验证。
 - [存稿与评测证据保护](STORAGE_INTEGRITY.md) 接入实际 ProjectStore 和 benchmark：保留旧文件、固定两文件恢复意图、合作进程锁、独占评测目录及人工评分不覆盖。
 - 新增 [作者设定/文风变更日志](GPT_AUTHOR_AMENDMENTS.md)：保留旧稿与接受历史，明确确认、影响复审、保存读回后继续；历史正文替换与记忆重算仍未实现。
 - 现有本地作者工作流已发布为 [Draft PR #45](https://github.com/Jvust1/Novel/pull/45)，head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`。[该提交 CI](https://github.com/Jvust1/Novel/actions/runs/36826620415) 成功，413 passed / 1 skipped；未合并。用法见 [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md)。
