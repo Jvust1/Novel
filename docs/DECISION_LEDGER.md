@@ -142,3 +142,12 @@ Port the separate locked-facts editor and current_bible mapping from PR16. Both 
 Reuse LangChain's MIT Markdown heading stack/fence source at the existing pin, adapting it to preserve individual authored nodes rather than lossy retrieval chunks. Keep Markdown notes as notes; require author/model completion of scene causality. Selected chapter and ancestor context enter the existing planning/drafting/review path, with no new provider dependency.
 
 Build review corpora from explicit, safe, author-ordered saved chapter IDs. Version the corpus fingerprint to include project/stage/genre/audience/review assumptions as well as titles/text. Preserve old score files, but reject stale bindings rather than relabeling them. Human scores remain human records; a local ZIP is a review candidate with no automatic publishability verdict. Use atomic no-clobber/content-addressed exports, preserve prior result identity on failed persistence, and check exact saved chapter revision before memory extraction. Multi-file transactional saves remain outside this slice.
+
+
+## D-021｜GPT repository entry and genre-derived voice
+**Date:** 2026-10-01
+**Status:** IMPLEMENTED_IN_DRAFT_ENTRY_BRANCH
+
+Follow the author's clarified usage: GPT reads repository instructions through the GitHub plugin and writes in conversation; existing local tools are optional. File access does not imply Python execution, persistent private storage, or autonomous approval. Keep private actual novels and state in authorized private storage. The original public demonstration is explicitly bounded and does not establish standing publication permission.
+
+Derive a Style Profile from the novel's primary genre, optional secondary genre, readers and scene needs. Reuse pinned MIT source guidance on voice calibration, context-sensitive style patterns and meaning-preserving local edits; add Novel's knowledge/timeline/item/foreshadowing locks. Preserve working prose and all existing software. Neither a fixed cold/colloquial voice nor detector-evasion scoring becomes a global goal. Original North Star remains unchanged.

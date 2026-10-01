@@ -224,7 +224,7 @@
       "constraint": "直接口述证据，未获独立核验；不能据此确定提包人是孟川"
     }
   ],
-  "scene_plan_file": "scene_plan.before_draft.json",
+  "scene_plan_file": "scene_plan.json",
   "chapter_payoff": "通过被扣留工具包中的实际线索找到并救出韩平，物主身份得以确认。",
   "open_questions": [
     {

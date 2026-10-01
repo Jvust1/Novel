@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-30",
+  "updated_at": "2026-10-01",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 58,
+    "total": 61,
     "p0": 15,
-    "p1": 28,
+    "p1": 31,
     "no_license": 2,
     "agpl": 2
   },
@@ -48,9 +48,13 @@
       "repo": "PenglongHuang/chinese-novelist-skill",
       "category": "story_generation",
       "license": "MIT",
-      "mode": "git-submodule+research-port",
+      "mode": "git-submodule+licensed-template-adaptation",
       "priority": "P1",
-      "use": "中文小说问答、偏好记忆、断点续写与校验流程"
+      "use": "Actual term/reader-known/full-truth/planned-reveal ledger connected to GPT prewrite/review and state-context projection; no upstream automatic-approval bypass",
+      "upstream_commit": "cb6c3e7d0563c6a685e6539ea642642ab98855d7",
+      "stars_observed": 3258,
+      "checked_at_utc": "2026-10-01",
+      "provenance": "third_party/chinese-novelist-skill/provenance.json"
     },
     {
       "key": "booknlp",
@@ -567,6 +571,45 @@
       "mode": "git-submodule+optional",
       "priority": "P1",
       "use": "Story DNA 低维投影"
+    },
+    {
+      "key": "pytransitions",
+      "repo": "pytransitions/transitions",
+      "category": "workflow",
+      "license": "MIT",
+      "mode": "vendored-unmodified-core",
+      "priority": "P1",
+      "use": "Actual fixed-state Machine used by optional GPT writing state commands; author/source/version guards and save/restore tests",
+      "upstream_commit": "bd42b38f3627e6bca7274fb4d9af2e105f75da7c",
+      "stars_observed": 6595,
+      "provenance": "third_party/transitions/provenance.json",
+      "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "humanizer_zh",
+      "repo": "op7418/Humanizer-zh",
+      "category": "writing_prompts",
+      "license": "MIT",
+      "mode": "licensed-prompt-adaptation",
+      "priority": "P1",
+      "use": "Voice calibration and meaning-preserving local-edit rules connected to GPT writing/review/repair, not detector-evasion rules",
+      "upstream_commit": "f4518a8eab97b8bfebc66a89d34320a89bef6930",
+      "stars_observed": 18786,
+      "provenance": "docs/prompts/natural-fiction/source-lock.json",
+      "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "humanizer",
+      "repo": "blader/humanizer",
+      "category": "writing_prompts",
+      "license": "MIT",
+      "mode": "licensed-prompt-adaptation",
+      "priority": "P1",
+      "use": "Actual sample-voice calibration and added/dropped meaning check translated into bounded Chinese-fiction prompts",
+      "upstream_commit": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8",
+      "stars_observed": 53203,
+      "provenance": "docs/prompts/natural-fiction/source-lock.json",
+      "checked_at_utc": "2026-10-01"
     }
   ]
 }
