@@ -6,3 +6,6 @@ pypdf>=4,<6
 
 # Vendored pytransitions core dependency (MIT); see third_party/transitions
 six>=1.16,<2
+
+# Local reference-encoding candidates only; strict full-byte decoding is enforced by Novel.
+chardet==7.6.0

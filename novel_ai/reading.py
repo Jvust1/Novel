@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import io
-from pathlib import Path
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+
+from .text_decoding import decode_reference_text
 
 SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf", ".epub")
 
@@ -41,12 +44,9 @@ def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
     return None
 
 
-def extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[str, str]:
+def _extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[str, str]:
     """Extract reference text and report the backend actually used."""
     name = (filename or "").lower()
-    if name.endswith((".txt", ".md")):
-        return data.decode("utf-8", errors="ignore"), "utf8"
-
     # Complex formats prefer high-fidelity optional readers when installed.
     if name.endswith((".pdf", ".docx", ".html", ".htm", ".rtf", ".epub")):
         advanced = _advanced_extract(filename, data)
@@ -84,5 +84,28 @@ def extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[str
     )
 
 
-def extract_reference_text(filename: str, data: bytes) -> str:
-    return extract_reference_text_with_backend(filename, data)[0]
+@dataclass(frozen=True)
+class ReferenceExtraction:
+    text: str
+    backend: str
+    decoding: dict | None = None
+
+
+def extract_reference(filename: str, data: bytes, *, encoding: str | None = None) -> ReferenceExtraction:
+    if (filename or "").lower().endswith((".txt", ".md")):
+        decoded = decode_reference_text(data, encoding=encoding)
+        backend = "utf8" if decoded.encoding == "utf-8" and not decoded.had_bom else "text:" + decoded.encoding
+        return ReferenceExtraction(decoded.text, backend, decoded.report())
+    if encoding is not None:
+        raise ValueError("显式文本编码仅适用于 TXT/MD 文件")
+    text, backend = _extract_reference_text_with_backend(filename, data)
+    return ReferenceExtraction(text, backend)
+
+
+def extract_reference_text_with_backend(filename: str, data: bytes, *, encoding: str | None = None) -> tuple[str, str]:
+    result = extract_reference(filename, data, encoding=encoding)
+    return result.text, result.backend
+
+
+def extract_reference_text(filename: str, data: bytes, *, encoding: str | None = None) -> str:
+    return extract_reference(filename, data, encoding=encoding).text

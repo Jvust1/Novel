@@ -1,3 +1,7 @@
+# 2026-10-01 — 当前参考文本完整读取候选
+
+当前分支 `fix/reference-text-decoding-20261001` 叠加已验证 #62。TXT/MD 不再忽略坏字节；BOM/UTF-8 严格读取，其他编码先提出候选并要求明确选择，全部字节可逆后才进入风格和原创性检查。当前工程入口以 [公开指针](../governance/current_candidate.json) 为准。见 [能力与边界](REFERENCE_DECODING.md) 和 [本轮记录](../governance/reference_decoding_candidate.json)。下方保留历史。
+
 # 2026-10-01 — 当前质量门禁与公开入口
 
 当前分支 `chore/quality-gates-integrated-20261001` 叠加已验证 #61。当前工程指针为 [current_candidate.json](../governance/current_candidate.json)，其指定的候选记录与 README、AGENTS 顶部、GPT 写作入口共同核对；旧 project_state / artifact_manifest 保留为历史，不作为当前分支或私有交付权限。
