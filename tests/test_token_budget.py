@@ -19,3 +19,38 @@ def test_token_counter_has_dependency_free_fallback():
     counter = TokenCounter(None, fallback_chars_per_token=2)
     assert counter.count("abcd") == 2
     assert counter.clip("abcdef", 2) == "abcd……"
+
+
+import pytest
+from novel_ai.token_budget import ModelBudgetExceeded, ModelCallBudget
+
+
+def test_message_counter_includes_full_normalized_payload_without_clipping():
+    counter = TokenCounter(FakeEncoding())
+    messages = [{"role": "system", "content": "A"}, {"role": "user", "content": "中文"}]
+    assert counter.count_messages(messages) == len('[{"content":"A","role":"system"},{"content":"中文","role":"user"}]')
+
+
+def test_model_call_budget_reserves_failed_attempt_allowance_and_shrinks_next_grant():
+    counter = TokenCounter(FakeEncoding())
+    budget = ModelCallBudget(token_counter=counter, max_input_tokens=1000,
+                             total_output_tokens=15, max_attempts=2)
+    messages = [{"role": "user", "content": "x"}]
+    assert budget.claim(messages, 10) == 10
+    assert budget.claim(messages, 10) == 5
+    assert budget.snapshot()["reserved_output_tokens"] == 15
+    with pytest.raises(ModelBudgetExceeded, match="attempt count|exhausted"):
+        budget.claim(messages, 10)
+
+
+def test_model_call_budget_rejects_full_input_without_trimming_or_attempt_reservation():
+    counter = TokenCounter(FakeEncoding())
+    messages = [{"role": "user", "content": "required canon sentinel"}]
+    exact = counter.count_messages(messages)
+    budget = ModelCallBudget(token_counter=counter, max_input_tokens=exact - 1,
+                             total_output_tokens=10, max_attempts=2)
+    with pytest.raises(ModelBudgetExceeded, match="required context was not clipped"):
+        budget.claim(messages, 10)
+    assert budget.attempts == 0
+    assert budget.reserved_output_tokens == 0
+    assert budget.last_input_tokens == exact

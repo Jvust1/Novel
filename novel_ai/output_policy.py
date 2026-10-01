@@ -1,7 +1,8 @@
-"""Bounded model outputs, shared by providers and the writing stages.
+"""Bounded model calls, shared by providers and writing stages.
 
-Limits are output allowances, not context-window estimates or literary goals.
-No tokenizer, truncation repair, partial-JSON parser or new framework is needed.
+Per-attempt output caps remain separate from a full-input guard and the
+cumulative retry/fallback allowance. The input counter is an engineering guard,
+not a claim about a provider's proprietary chat template or billed tokens.
 Strict serialization follows ProjectStore's existing ``allow_nan=False`` and
 UTF-8 round-trip contract, additionally refusing duplicate object keys.
 """
@@ -37,6 +38,8 @@ class OutputPolicy:
     repair_tokens: int = 16384
     style_tokens: int = 4096
     memory_tokens: int = 8192
+    max_input_tokens: int = 65536
+    max_attempts_per_stage: int = 3
     max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES
 
     def __post_init__(self) -> None:
@@ -47,6 +50,10 @@ class OutputPolicy:
         if stage not in {"plan", "draft", "review", "repair", "style", "memory"}:
             raise ValueError("unknown model-output stage")
         return getattr(self, f"{stage}_tokens")
+
+    def total_output_tokens_for(self, stage: str) -> int:
+        """Cumulative reservation ceiling across retries/fallbacks for one stage."""
+        return self.tokens_for(stage) * self.max_attempts_per_stage
 
 
 def validate_output_text(value: Any, *, max_bytes: int = DEFAULT_MAX_OUTPUT_BYTES) -> str:

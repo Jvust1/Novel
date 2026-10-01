@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 from dataclasses import dataclass, field
 from copy import deepcopy
 import hashlib
@@ -24,6 +25,7 @@ from .prompts import (
     semantic_style_messages,
 )
 from .provider import OpenAICompatibleProvider
+from .token_budget import ModelCallBudget, TokenCounter
 from .output_policy import (
     DEFAULT_MAX_OUTPUT_BYTES, OutputPolicy, json_object_from_value,
     parse_json_object, positive_int, validate_output_text,
@@ -206,31 +208,74 @@ def apply_external_review_hooks(
 
 class NovelEngine:
     def __init__(self, provider: OpenAICompatibleProvider, structured_extractor: Any | None = None,
-                 *, output_policy: OutputPolicy | None = None, external_review_hooks: list[Any] | None = None):
+                 *, output_policy: OutputPolicy | None = None, external_review_hooks: list[Any] | None = None,
+                 token_counter: TokenCounter | None = None):
         self.provider = provider
         self.structured_extractor = structured_extractor
         if output_policy is not None and not isinstance(output_policy, OutputPolicy):
             raise TypeError("output_policy must be OutputPolicy")
         self.output_policy = output_policy or OutputPolicy()
+        if token_counter is not None and not isinstance(token_counter, TokenCounter):
+            raise TypeError("token_counter must be TokenCounter")
+        self.token_counter = token_counter or TokenCounter.from_tiktoken()
         self.external_review_hooks = list(external_review_hooks or [])
+
+    @staticmethod
+    def _explicit_keyword(function: Any, name: str) -> bool:
+        try:
+            return name in inspect.signature(function).parameters
+        except (TypeError, ValueError):
+            return False
+
+    def _stage_budget(self, stage: str) -> ModelCallBudget:
+        return ModelCallBudget(
+            token_counter=self.token_counter,
+            max_input_tokens=self.output_policy.max_input_tokens,
+            total_output_tokens=self.output_policy.total_output_tokens_for(stage),
+            max_attempts=self.output_policy.max_attempts_per_stage,
+        )
+
+    def _chat(self, messages: list[dict[str, str]], *, temperature: float, stage: str,
+              response_format: dict[str, Any] | None = None) -> str:
+        max_tokens = self.output_policy.tokens_for(stage)
+        budget = self._stage_budget(stage)
+        kwargs: dict[str, Any] = {
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if response_format is not None:
+            kwargs["response_format"] = response_format
+        if self._explicit_keyword(self.provider.chat, "budget"):
+            kwargs["budget"] = budget
+        else:
+            # Custom/legacy providers get one engine-visible attempt; input is
+            # still checked before the call and the requested allowance is reserved.
+            kwargs["max_tokens"] = budget.claim(messages, max_tokens)
+        return self.provider.chat(messages, **kwargs)
 
     def _structured(self, response_model: Any, messages: list[dict[str, str]], *, temperature: float, stage: str) -> Any:
         if self.structured_extractor is not None:
             extract = getattr(self.structured_extractor, "extract", None)
             if not callable(extract):
                 raise TypeError("structured_extractor 必须提供 extract()")
-            value = extract(response_model=response_model, messages=messages, temperature=temperature,
-                            max_tokens=self.output_policy.tokens_for(stage),
-                            max_output_bytes=self.output_policy.max_output_bytes)
+            max_tokens = self.output_policy.tokens_for(stage)
+            budget = self._stage_budget(stage)
+            kwargs: dict[str, Any] = dict(
+                response_model=response_model, messages=messages, temperature=temperature,
+                max_tokens=max_tokens, max_output_bytes=self.output_policy.max_output_bytes,
+            )
+            if self._explicit_keyword(extract, "budget"):
+                kwargs["budget"] = budget
+            else:
+                kwargs["max_tokens"] = budget.claim(messages, max_tokens)
+            value = extract(**kwargs)
             # Native model objects and schema adapters are not exempt from the
             # same byte/finite/Unicode boundary or model revalidation.
             parsed = json_object_from_value(value, max_bytes=self.output_policy.max_output_bytes)
             return response_model.model_validate(parsed)
 
-        raw = self.provider.chat(
-            messages,
-            temperature=temperature,
-            max_tokens=self.output_policy.tokens_for(stage),
+        raw = self._chat(
+            messages, temperature=temperature, stage=stage,
             response_format={"type": "json_object"},
         )
         return response_model.model_validate(parse_json_object(raw, max_bytes=self.output_policy.max_output_bytes))
@@ -238,10 +283,9 @@ class NovelEngine:
     def enrich_style(self, text: str, surface: StyleFingerprint) -> StyleFingerprint:
         """Add semantic, high-level style traits without storing or reproducing source prose."""
         sample = sample_reference_text(text)
-        raw = self.provider.chat(
+        raw = self._chat(
             semantic_style_messages(sample, surface),
-            temperature=0.2,
-            max_tokens=self.output_policy.tokens_for("style"),
+            temperature=0.2, stage="style",
             response_format={"type": "json_object"},
         )
         semantic = parse_json_object(raw, max_bytes=self.output_policy.max_output_bytes)
@@ -286,7 +330,7 @@ class NovelEngine:
         extra_context: str = "",
     ) -> str:
         positive_int(target_chars, name="target_chars")
-        raw = self.provider.chat(
+        raw = self._chat(
             draft_messages(
                 bible,
                 plan.model_dump(),
@@ -297,8 +341,7 @@ class NovelEngine:
                 user_notes,
                 extra_context,
             ),
-            temperature=0.86,
-            max_tokens=self.output_policy.tokens_for("draft"),
+            temperature=0.86, stage="draft",
         )
         return validate_output_text(raw, max_bytes=self.output_policy.max_output_bytes).strip()
 
@@ -323,10 +366,9 @@ class NovelEngine:
         style: StyleFingerprint | None = None,
         extra_context: str = "",
     ) -> str:
-        raw = self.provider.chat(
+        raw = self._chat(
             repair_messages(draft, review.model_dump(), style, extra_context),
-            temperature=0.72,
-            max_tokens=self.output_policy.tokens_for("repair"),
+            temperature=0.72, stage="repair",
         )
         return validate_output_text(raw, max_bytes=self.output_policy.max_output_bytes).strip()
 
