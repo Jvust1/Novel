@@ -1,3 +1,11 @@
+# 2026-10-01 — Author setting/style amendments (candidate)
+
+- Additive private journal preserves the complete v1 origin and accepted evidence; chapter revisions remain unchanged by amendments
+- Actual BSD-3-Clause eventsourcing source replay and identity/order guards drive restoration; no added runtime dependency
+- Explicit change approval invalidates unfinished candidates, queues every accepted chapter plus Active/Recall, and requires review/author resume/save/readback
+- Historical prose replacement and derived-memory rewriting remain blocked; exact reversal preserves all prior events
+- [Usage, source pins and limits](GPT_AUTHOR_AMENDMENTS.md)
+
 # 2026-10-01 — GPT-readable writing entry and genre-aware style prompts
 
 - Primary requested use is now GPT + GitHub file access: read this repository's instructions, load accessible private book state, plan/draft/review/repair in conversation, and save/verify private progress. No local-user installation or new service is required for the text workflow
