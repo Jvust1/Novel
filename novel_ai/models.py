@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Character(BaseModel):
@@ -91,19 +91,26 @@ class StyleFingerprint(BaseModel):
 
 
 class ReviewIssue(BaseModel):
-    category: str
-    severity: str = "medium"
+    category: str = Field(min_length=1)
+    severity: Literal["low", "medium", "high"] = "medium"
     excerpt: str = ""
-    reason: str
+    reason: str = Field(min_length=1)
     suggestion: str
 
 
 class ChapterReview(BaseModel):
-    verdict: str = "revise"
+    verdict: Literal["pass", "revise"] = "revise"
     issues: list[ReviewIssue] = Field(default_factory=list)
     continuity_updates: list[str] = Field(default_factory=list)
     character_updates: list[str] = Field(default_factory=list)
     open_threads: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def consistent_verdict(self) -> "ChapterReview":
+        # Model approval is only a review result, never author acceptance.
+        if any(issue.severity in {"medium", "high"} for issue in self.issues):
+            self.verdict = "revise"
+        return self
 
 
 class CharacterMemoryUpdate(BaseModel):

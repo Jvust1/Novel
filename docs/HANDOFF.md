@@ -1,5 +1,7 @@
 # 当前交接 — 2026-10-01
 
+当前工程候选：`fix/final-output-gates-20261001`，叠在冻结 #49（head `fe2fa274ad27a4ca9a67ea1a93ce5387ced60f39`，双版本 CI 各 879 passed / 1 skipped）之上。共享最终稿审校、输出额度与严格 JSON 的范围见 [FINAL_OUTPUT_GATES.md](FINAL_OUTPUT_GATES.md)；以下各旧候选记录继续保留。
+
 当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
 
 - 当前本地 Recall 完整性候选入口为 `fix/recall-integrity-20261001`，叠在已验证 [Draft PR #48](https://github.com/Jvust1/Novel/pull/48) 上；#48 head `78cb607a8b4ae9cade68a62b7065a8f08e85ace0` 保留不动，精确提交双版本 CI 成功且各 632 passed / 1 skipped。各候选均未合入 `main`。

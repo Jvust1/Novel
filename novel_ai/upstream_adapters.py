@@ -7,6 +7,8 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .recall import RecallDocument, RecallHit
+from .models import ReviewIssue
+from .output_policy import parse_json_object, strict_json_object
 
 _INTERNAL_PREFIX = "_novel_"
 _JSON_BLOCK = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.S | re.I)
@@ -17,15 +19,14 @@ def _json_value(value: Any) -> Any:
     if not isinstance(value, str):
         return value
     text = value.strip()
-    if not text:
-        return None
-    fenced = _JSON_BLOCK.search(text)
-    if fenced:
+    if text.startswith("```"):
+        fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```", text, re.I)
+        if not fenced:
+            raise ValueError("external review returned incomplete JSON fencing")
         text = fenced.group(1).strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return value
+    if text.startswith("["):
+        return strict_json_object('{"issues":' + text + '}')["issues"]
+    return parse_json_object(text)
 
 
 def _object_mapping(value: Any) -> dict[str, Any]:
@@ -58,29 +59,25 @@ def _object_mapping(value: Any) -> dict[str, Any]:
 
 def _normalize_issue_rows(value: Any) -> list[dict[str, str]]:
     value = _json_value(value)
-    if isinstance(value, Mapping) and "issues" in value:
-        value = value["issues"]
+    if isinstance(value, Mapping):
+        value = value.get("issues")
     if not isinstance(value, list):
-        return []
+        raise ValueError("external review must return an explicit issues list")
     rows: list[dict[str, str]] = []
     for item in value:
         if not isinstance(item, Mapping):
-            continue
-        reason = str(item.get("reason") or item.get("message") or "").strip()
-        if not reason:
-            continue
-        severity = str(item.get("severity") or "medium").lower().strip()
-        if severity not in _ALLOWED_SEVERITIES:
-            severity = "medium"
-        rows.append(
-            {
-                "category": str(item.get("category") or "外部审校").strip() or "外部审校",
-                "severity": severity,
-                "excerpt": str(item.get("excerpt") or "").strip(),
-                "reason": reason,
-                "suggestion": str(item.get("suggestion") or "人工复核后再决定是否修改。").strip(),
-            }
-        )
+            raise ValueError("external review issue must be an object")
+        # Missing/malformed findings are failed checks, never clean passes.
+        issue = ReviewIssue.model_validate({
+            "category": item.get("category", "外部审校"),
+            "severity": item.get("severity", "medium"),
+            "excerpt": item.get("excerpt", ""),
+            "reason": item.get("reason", item.get("message")),
+            "suggestion": item.get("suggestion", "人工复核后再决定是否修改。"),
+        })
+        if not issue.reason.strip() or not issue.category.strip():
+            raise ValueError("external review issue has empty evidence")
+        rows.append(issue.model_dump())
     return rows
 
 
@@ -273,7 +270,7 @@ class DSPyReviewHook:
             )
         )
         data = _object_mapping(prediction)
-        issues = data.get(self._issue_field, data.get("issues", []))
+        issues = data.get(self._issue_field, data.get("issues"))
         return {"issues": _normalize_issue_rows(issues)}
 
 
@@ -326,8 +323,8 @@ class CrewAIReviewHook:
             if isinstance(parsed, list):
                 issues = parsed
             elif isinstance(parsed, Mapping):
-                issues = parsed.get("issues", parsed.get("issues_json", []))
-        return {"issues": _normalize_issue_rows(issues or [])}
+                issues = parsed.get("issues", parsed.get("issues_json"))
+        return {"issues": _normalize_issue_rows(issues)}
 
 
 class LangGraphReviewHook:
@@ -348,7 +345,7 @@ class LangGraphReviewHook:
         else:
             result = self._graph.invoke(inputs, self._config)
         data = _object_mapping(result)
-        issues = data.get("issues", data.get("issues_json", []))
+        issues = data.get("issues", data.get("issues_json"))
         return {"issues": _normalize_issue_rows(issues)}
 
 
@@ -372,7 +369,7 @@ class PydanticAIReviewHook:
         result = self._agent.run_sync(prompt)
         output = getattr(result, "output", result)
         data = _object_mapping(output)
-        issues = data.get("issues", data.get("issues_json", []))
+        issues = data.get("issues", data.get("issues_json"))
         return {"issues": _normalize_issue_rows(issues)}
 
 
@@ -390,9 +387,10 @@ class GuardrailsReviewHook:
     def review_payload(self, *, draft: str, plan: Any, bible: Any, characters: list[Any]) -> dict[str, Any]:
         outcome = self._guard.validate(draft)
         passed = getattr(outcome, "validation_passed", None)
-        validated = getattr(outcome, "validated_output", None)
-        if passed is not False and validated is not None:
+        if passed is True:
             return {"issues": []}
+        if passed is not False:
+            raise ValueError("Guardrails result lacks an explicit validation outcome")
         error = getattr(outcome, "error", None) or getattr(outcome, "error_message", None)
         reason = str(error or "Guardrails validation failed").strip()
         return {
@@ -433,7 +431,7 @@ class AgentFrameworkReviewHook:
         raw = getattr(result, "text", None) or getattr(result, "content", None) or str(result)
         parsed = _json_value(raw)
         if isinstance(parsed, Mapping):
-            issues = parsed.get("issues", [])
+            issues = parsed.get("issues")
         else:
-            issues = []
+            raise ValueError("external review did not return an issues object")
         return {"issues": _normalize_issue_rows(issues)}
