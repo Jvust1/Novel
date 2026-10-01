@@ -931,6 +931,8 @@ def preflight_next_chapter_context(
     """
     state = validate_state(state)
     _require_unowned(state)
+    if expected_story_id is not None and state.story_id != expected_story_id:
+        raise StateError("accepted-history cache belongs to a different story")
     if not state.progress.chapter_id or state.progress.phase not in EDITABLE:
         raise StateError("next-chapter preflight requires an active chapter before memory is applied")
     if type(history_source_limit) is not int or history_source_limit < 0:
@@ -946,6 +948,11 @@ def preflight_next_chapter_context(
         "accepted_active": {key: copy.deepcopy(state.active.get(key)) for key in (
             "current_time", "current_place", "recent_chapter_summaries", "open_foreshadowing", "forbidden_revelations")},
     }
+
+    # Revision zero retains its existing empty-history identity. An explicitly
+    # supplied expectation is still a guard, never an optional hint to ignore.
+    if expected_history_sha256 is not None and history["accepted_history_sha256"] != expected_history_sha256:
+        raise StateError("accepted-history cache is stale or belongs to another source snapshot")
 
     return _preflight_history_context(
         state, history, sources, budget_bytes, required_sources=required_sources,

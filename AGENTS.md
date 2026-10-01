@@ -1,12 +1,13 @@
-当前候选：`fix/style-save-consistency-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+当前候选：`fix/initial-preflight-identity-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
 
+第一章显式身份与历史指纹也必须核对：[初始预检检查](docs/INITIAL_PREFLIGHT_IDENTITY.md)。
 # 当前入口：GPT + GitHub 插件写作（2026-10-01）
 
 本节与 [GPT_WRITING_ENTRY.md](docs/GPT_WRITING_ENTRY.md) 是当前对话写作入口；下方原文保留为历史工程参考。不得把历史全项目启动清单、本地安装步骤或旧公开存储授权当作当前写作的前置条件。保留既有有效代码、文风原则和 North Star，不自行重写项目目标。
 
 ## 当前执行顺序
 
-1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/style-save-consistency-20261001`，尚未合入 `main`；不要假定默认分支已有它。
+1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/initial-preflight-identity-20261001`，尚未合入 `main`；不要假定默认分支已有它。
 2. 通过当前可用工具，读取作者指定的私有 Drive 故事档案及其中引用的当前计划、正文、审校和接受记录。只有链接不等于读到内容；缺少来源时标记 `source_unavailable` / `awaiting_source`，问最小补充问题。
 3. 按 Canon → Active → 与本章有关的 Recall 组装资料。当前作者明确决定与已确认版本优先，冲突先列出；候选与无来源推断不得写成既定事实。
    - 已有接受章节且有实际执行器时，优先按 `docs/ACCEPTED_HISTORY_REBUILD.md` 从本次真实读回的接受档案重建历史；不要把旧候选或跨书缓存当作历史。

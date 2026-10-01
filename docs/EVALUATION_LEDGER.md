@@ -1,3 +1,7 @@
+# 2026-10-01 — 第一章预检身份保护
+
+当前候选 `fix/initial-preflight-identity-20261001` 叠加已验证 #64。仅补上 revision 0 空历史分支原先遗漏的显式故事身份/历史指纹检查，保留原默认输出和空历史指纹，不新增历史机制。真实 API/CLI 反例、来源预算与候选隔离控制见 [说明](INITIAL_PREFLIGHT_IDENTITY.md) 和 [本轮记录](../governance/initial_preflight_candidate.json)。下方保留历史。
+
 # 2026-10-01 — 风格资料一致保存候选
 
 当前分支 `fix/style-save-consistency-20261001` 叠加已验证 #63。实际复现 Style Lab 第二文件失败后会话与重启状态分歧，现通过固定三文件恢复、独立操作标识、版本检查和真实读回接入现有原子保存。人物、章纲、正文接受、记忆确认及私有来源边界保持原协议。见 [能力与边界](STYLE_SAVE_INTEGRITY.md) 和 [本轮记录](../governance/style_save_candidate.json)。下方保留历史。
