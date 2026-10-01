@@ -176,16 +176,11 @@
   ],
   "pending_sync": [],
   "next_steps": [
-    "Finish exact-head CI and delivery verification for the Recall/context candidate, preserving prior snapshots",
-    "Bound model outputs, narrow format fallback, and clarify ambiguous structured-output parsing",
-    "Recompute final repaired-text reports consistently and align supported editorial hooks",
-    "Obtain actual author/reader evaluation before claiming literary or market quality",
-    "add frozen longform benchmark cases with known voice, timeline, foreshadow and tension failures",
-    "calibrate Voice DNA thresholds per character sample size and intentional character-state shifts",
-    "upgrade timeline checks from time-order heuristics to entity/event constraints where evidence is available",
-    "add foreshadow planted/touched/resolved transition provenance and per-arc statistics",
-    "A/B local semantic recall vs Qdrant before any backend becomes default",
-    "keep originality and human-feel quality as publishability gates rather than detector-gaming targets"
+    "Add exact input-token accounting and cumulative multi-attempt budgets without silently dropping required Canon, knowledge-boundary or accepted-history context",
+    "Separate model-extracted memory candidates from formal author acceptance/application with stale/retry/failure recovery tests",
+    "Close remaining static/dependency/governance gates, prioritizing real risks before formatting-only diagnostics",
+    "Run real long-form author sessions and cross-chat recovery before making literary or market-quality claims",
+    "Prepare one unified delivery candidate after the remaining gates are verified"
   ],
   "updated_at": "2026-10-01",
   "last_sync": {
@@ -321,14 +316,13 @@
     ]
   },
   "latest_verified_candidate": {
-    "pr": 49,
-    "url": "https://github.com/Jvust1/Novel/pull/49",
-    "head": "fe2fa274ad27a4ca9a67ea1a93ce5387ced60f39",
-    "tree": "2e9486185e29d9390fc712c6ae588d3dd5209124",
-    "ci": "https://github.com/Jvust1/Novel/actions/runs/36847102986",
+    "pr": 51,
+    "url": "https://github.com/Jvust1/Novel/pull/51",
+    "head": "7f2b93367661b0038bab2885851fed607f047882",
+    "ci": "https://github.com/Jvust1/Novel/actions/runs/36856263295",
     "status": "success",
-    "tests": "879 passed, 1 skipped on each Linux Python 3.11/3.12 job",
-    "scope": "frozen predecessor; resolve current branch head from GitHub"
+    "tests": "1206 passed, 1 skipped on each Linux Python 3.11/3.12 job",
+    "scope": "accepted-history executable candidate; verification-metadata-only follow-up may move branch head without changing executable code"
   },
   "recall_integrity_candidate": {
     "branch": "fix/recall-integrity-20261001",
@@ -412,7 +406,24 @@
       "new_history_checks": "5 passed",
       "compileall_changed_python": "passed",
       "full_local_suite": "not claimed; current container lacks streamlit and differs from CI Python 3.11/3.12",
-      "exact_head_ci": "pending until candidate PR runs"
+      "exact_head_ci": {
+        "status": "success",
+        "code_head": "7f2b93367661b0038bab2885851fed607f047882",
+        "run_id": 36856263295,
+        "url": "https://github.com/Jvust1/Novel/actions/runs/36856263295",
+        "python_3_11": {
+          "passed": 1206,
+          "skipped": 1,
+          "duration": "59.20s"
+        },
+        "python_3_12": {
+          "passed": 1206,
+          "skipped": 1,
+          "duration": "62.80s"
+        },
+        "compileall": "passed",
+        "pytest": "passed"
+      }
     },
     "boundaries": [
       "UTF-8 byte budgeting remains approximate for model token limits",

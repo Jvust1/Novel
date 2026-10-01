@@ -8,13 +8,13 @@
 
 ## E-ACCEPTED-HISTORY-20261001｜Accepted-history rebuild and next-chapter recovery
 **Date:** 2026-10-01 UTC
-**Status:** LOCAL_FOCUSED_VERIFIED; EXACT_HEAD_CI_PENDING
+**Status:** EXECUTABLE_HEAD_CI_VERIFIED
 
-The candidate starts from PR #50 head `35208537aa1fb830a2325ec1dd8870bdf0564190`. Focused local execution on the extracted, Drive-readback source ZIP reports **77 passed** across `tests/test_gpt_story_state.py` and `tests/test_gpt_candidate_review.py`; the five newly added accepted-history/next-preflight checks all pass. `py_compile/compileall` for changed Python files passes.
+The candidate starts from PR #50 head `35208537aa1fb830a2325ec1dd8870bdf0564190`. Focused local execution on the extracted, Drive-readback source ZIP reports **77 passed** across `tests/test_gpt_story_state.py` and `tests/test_gpt_candidate_review.py`; the five newly added accepted-history/next-preflight checks all pass. `py_compile/compileall` for changed Python files passes. The executable candidate commit is `7f2b93367661b0038bab2885851fed607f047882`; GitHub Actions run 36856263295 reports **1206 passed / 1 skipped** on both Python 3.11 and 3.12, with compileall and pytest successful.
 
 The new cases reproduce and guard: a retained old draft leaking after plan replacement; history use before real readback; rebuilding Voice/plan structure from accepted artifacts only; cross-story and stale-history fingerprints; candidate-only saves leaving accepted-history identity stable; restart/reload producing the same accepted-history identity; history-budget blocking; and CLI readback for accepted-history/next-preflight.
 
-This local container is Python 3.13 and lacks Streamlit, so repository-wide collection cannot be claimed here. GitHub Actions on Python 3.11/3.12 must supply the exact-head full-suite result. No real manuscript, live model, human author authentication or literary-quality judgment is part of these synthetic checks.
+This local container is Python 3.13 and lacks Streamlit, so repository-wide collection is not claimed locally. The repository-wide matrix evidence instead comes from GitHub Actions run 36856263295: Python 3.11 **1206 passed / 1 skipped in 59.20s** and Python 3.12 **1206 passed / 1 skipped in 62.80s**. No real manuscript, live model, human author authentication or literary-quality judgment is part of these synthetic checks.
 
 ## E-000｜Foundation baseline
 **Date:** 2026-08-19  

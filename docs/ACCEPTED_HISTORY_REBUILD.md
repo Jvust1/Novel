@@ -66,7 +66,7 @@
 - 历史连续性块本身塞不进预算时明确 `blocked=true`；
 - CLI 的 accepted-history / next-preflight 走真实文件读回，而不是仅校验内存对象。
 
-本地当前环境的专项验证：`tests/test_gpt_story_state.py` 与 `tests/test_gpt_candidate_review.py` 合计 **77 passed**。当前容器缺少 Streamlit，不能在本地声明仓库全量通过；完整 Python 3.11/3.12 矩阵由 GitHub Actions 对候选 PR 精确 head 验证。
+本地当前环境的专项验证：`tests/test_gpt_story_state.py` 与 `tests/test_gpt_candidate_review.py` 合计 **77 passed**。当前容器缺少 Streamlit，因此没有把本地环境冒充成仓库全量验证。执行代码提交 `7f2b93367661b0038bab2885851fed607f047882` 的 [GitHub Actions run 36856263295](https://github.com/Jvust1/Novel/actions/runs/36856263295) 已实际完成：Linux Python 3.11 为 **1206 passed、1 skipped（59.20s）**，Python 3.12 为 **1206 passed、1 skipped（62.80s）**；两边 compileall 与 pytest 都成功。
 
 ## 6. 尚未解决
 
