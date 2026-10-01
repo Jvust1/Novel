@@ -1,0 +1,28 @@
+{
+  "schema": "novel-public-current-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "chore/quality-gates-integrated-20261001",
+  "status": "unmerged_draft_candidate",
+  "entry_files": [
+    "README.md",
+    "AGENTS.md",
+    "docs/GPT_WRITING_ENTRY.md"
+  ],
+  "candidate_record": "governance/quality_gates_candidate.json",
+  "verified_base": {
+    "pr": 61,
+    "head": "d2e56e7459cf8bd85637c7953c64a5d8245aad2a",
+    "ci_run": 36901977307,
+    "tests_each_python": {
+      "passed": 1766,
+      "skipped": 1
+    }
+  },
+  "authority": "current public engineering entry; resolve the actual ref and current CI through GitHub",
+  "historical_records": [
+    "governance/project_state.json",
+    "governance/artifact_manifest.json"
+  ],
+  "historical_scope": "retained archival inventories, not current branch authority or automatic access to private artifacts",
+  "private_story_state": "author-designated private storage; not represented in this engineering pointer"
+}
