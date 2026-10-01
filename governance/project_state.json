@@ -6,6 +6,7 @@
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Rebuild next-chapter continuity only from actually read author-accepted versions; reject stale/cross-story history and prevent retained old candidates from leaking after replanning",
     "Unify actual final-text diagnostics and review/hook paths; apply bounded complete model output without changing explicit author acceptance",
     "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
     "Protect manuscripts, chapter summaries and benchmark evidence through confined atomic writes and bounded recovery; then close verified provider/vector/final-report gaps",
@@ -397,6 +398,27 @@
       "historical voice/state provenance rebuild pending",
       "local memory extraction/application separation pending; GPT author confirmations remain required",
       "full lint/dependency security gates and real human quality evaluation pending"
+    ]
+  },
+  "accepted_history_rebuild_candidate": {
+    "branch": "fix/accepted-history-rebuild-20261001",
+    "base_pr": 50,
+    "base_head": "35208537aa1fb830a2325ec1dd8870bdf0564190",
+    "docs": "docs/ACCEPTED_HISTORY_REBUILD.md",
+    "scope": "actual-readback accepted_chapters -> accepted source fingerprints + rebuilt Voice/plan structure -> next-chapter preflight; current unaccepted candidates excluded from historical sources",
+    "validation": {
+      "local_python": "3.13.5",
+      "focused_state_and_candidate_review": "77 passed",
+      "new_history_checks": "5 passed",
+      "compileall_changed_python": "passed",
+      "full_local_suite": "not claimed; current container lacks streamlit and differs from CI Python 3.11/3.12",
+      "exact_head_ci": "pending until candidate PR runs"
+    },
+    "boundaries": [
+      "UTF-8 byte budgeting remains approximate for model token limits",
+      "structured Story DNA is rebuilt from accepted plans, not final-prose event extraction",
+      "author acceptance is evidence supplied by the caller, not identity authentication",
+      "real manuscript continuity and literary quality still require actual author/reader validation"
     ]
   }
 }

@@ -1,3 +1,11 @@
+# 2026-10-01 — Accepted-history rebuild for next chapter (candidate)
+
+- Rebuild continuity only from actually read, author-accepted chapter plan/draft records; recalculate Voice DNA and parseable plan structure instead of trusting stale session caches
+- Add stable accepted-history fingerprinting, explicit story/source mismatch rejection, and a next-chapter preflight that budget-selects exact accepted sources without truncating them
+- Fix a reproduced leak where a retained old draft candidate could remain in prompt context after the plan changed; it now enters only when bound to the current plan revision
+- Add `accepted-history` / `next-preflight` CLI paths with real file readback. Local focused state/review checks: 77 passed; exact-head Python 3.11/3.12 CI is required before calling the candidate fully regression-green
+- [Behavior, commands, evidence and limits](ACCEPTED_HISTORY_REBUILD.md)
+
 # 2026-10-01 — Final-text reports and bounded model output (candidate)
 
 - Share existing post-plan execution across single/routed/confirmed-plan writers; retain initial evidence and bind final diagnostics to delivered text

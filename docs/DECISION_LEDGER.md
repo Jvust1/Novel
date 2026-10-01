@@ -156,3 +156,11 @@ Derive a Style Profile from the novel's primary genre, optional secondary genre,
 ## 2026-10-01 — Shared final-text evidence and bounded model output
 
 Consolidate the existing post-plan writer path instead of adding another orchestrator. Bind current reports to exact text/plan/stage; preserve initial evidence and explicit author acceptance. Use existing HTTPX streaming, Python JSON and Pydantic runtime validation; reject malformed/incomplete output rather than adopting permissive partial-JSON repair. Optional backends stay opt-in and their stop/transport/cumulative-budget limits stay explicit. See [FINAL_OUTPUT_GATES.md](FINAL_OUTPUT_GATES.md).
+
+## D-018｜下一章连续性只从实际读回的已接受历史重建
+**Date:** 2026-10-01  
+**Status:** IMPLEMENTED_IN_CANDIDATE_BRANCH
+
+继续创作时，不把会话缓存、未接受候选或“文件较新”本身视为历史事实。revision>0 的历史重建必须先有实际 `load_state` 读回；来源只取追加保存的 `accepted_chapters`，并用故事身份、基础连续性摘要与每章计划/正文来源指纹生成稳定 `accepted_history_sha256`。整个 JSON 文件 SHA 仅作为本次读回证据，不进入历史指纹，因此保存当前未接受候选不会虚假制造“已接受历史变化”。
+
+下一章预检可把最近已接受的计划/正文作为完整、可预算省略的 Recall 来源，并附加不可静默删掉的接受历史派生区。改计划后仍保留的旧 draft 只有重新绑定到当前 `plan_revision` 才能进入当前提示。任何作者接受仍由既有确认协议完成；该门禁不认证人、不自动接受稿件、不替代文学审读。
