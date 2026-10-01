@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "final-text-evidence-and-bounded-output-candidate",
-  "version": "0.13.0-dev",
+  "stage": "accepted-history-rebuild-candidate",
+  "version": "0.14.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Rebuild next-chapter context only from author-accepted history; exclude stale retained drafts and bind explicit historical source versions across restart/readback",
     "Unify actual final-text diagnostics and review/hook paths; apply bounded complete model output without changing explicit author acceptance",
     "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
     "Protect manuscripts, chapter summaries and benchmark evidence through confined atomic writes and bounded recovery; then close verified provider/vector/final-report gaps",
@@ -165,7 +166,11 @@
     "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth",
     "Additive private author-change journal using pinned BSD-3-Clause eventsourcing immutable replay/version guards, original v1 evidence retention, conservative chapter/derived-context review and explicit author resume",
     "Pinned boltons atomic-write source port in ProjectStore and eval writers, PR16 path confinement reconciliation, cooperating-process project locks, fixed extraction-summary intent recovery, exclusive benchmark evidence and scoring no-clobber",
-    "Existing Pydantic TypeAdapter/FiniteFloat runtime reuse for validated finite vectors, coherent local Recall snapshots and explicit exact-source semantic history in ContextAssembler"
+    "Existing Pydantic TypeAdapter/FiniteFloat runtime reuse for validated finite vectors, coherent local Recall snapshots and explicit exact-source semantic history in ContextAssembler",
+    "accepted-history snapshot/fingerprint rebuilt only from validated append-only accepted chapter records",
+    "preflight excludes retained stale draft after replanning until explicitly rebound to the current accepted plan",
+    "explicit accepted-history chapter inclusion is whole-record and budget-blocking rather than silently truncated",
+    "story_state CLI accepted-history readback entry for restart/session recovery evidence"
   ],
   "frozen": false,
   "blocking_issues": [
@@ -397,6 +402,29 @@
       "historical voice/state provenance rebuild pending",
       "local memory extraction/application separation pending; GPT author confirmations remain required",
       "full lint/dependency security gates and real human quality evaluation pending"
+    ]
+  },
+  "accepted_history_candidate": {
+    "branch": "fix/accepted-history-rebuild-20261002",
+    "base_pr": 50,
+    "base_head": "35208537aa1fb830a2325ec1dd8870bdf0564190",
+    "docs": "docs/ACCEPTED_HISTORY_REBUILD.md",
+    "validation": {
+      "local_python": "3.13.5",
+      "state_and_candidate_tests": "77 passed",
+      "expanded_gpt_tests": "126 passed across five separately completed test files",
+      "py_compile": "passed",
+      "full_pytest": "collection blocked: streamlit missing for tests/test_app.py and tests/test_author_ui.py",
+      "python_3_11_ci": "pending",
+      "python_3_12_ci": "pending",
+      "streamlit_local": "not installed in current container"
+    },
+    "boundaries": [
+      "no automatic relevance choice for historical chapters",
+      "no human literary-quality conclusion",
+      "no Drive cross-file transaction or remote lock",
+      "no automatic promotion of memory/Voice/Story DNA candidates",
+      "input tokenizer and cumulative multi-call budget still pending"
     ]
   }
 }

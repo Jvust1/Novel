@@ -620,3 +620,79 @@ def test_material_changes_cannot_bypass_acceptance_before_or_after_commit(sectio
         bad[section][key] = value
         with pytest.raises((StateError, ValidationError)):
             validate_state(bad)
+
+
+def test_replanned_chapter_does_not_leak_retained_old_draft_into_preflight():
+    state = planned()
+    state = step(state, "set_draft", {"artifact": source("OLD CANDIDATE SENTINEL")})
+    assert state.progress.draft_plan_revision == 1
+    state = step(state, "set_plan", {"artifact": source("Changed goal", 2, "plan")})
+    assert state.progress.plan_revision == 2
+    assert state.progress.draft.text == "OLD CANDIDATE SENTINEL"  # retained only as an unaccepted candidate
+    result = preflight_context(state, [], 100_000)
+    assert not result["blocked"]
+    assert "OLD CANDIDATE SENTINEL" not in result["context_text"]
+    assert "Changed goal" in result["context_text"]
+
+
+def test_accepted_history_snapshot_excludes_live_candidates_and_is_stable_across_restart(tmp_path):
+    from novel_ai.gpt_story_state import accepted_history_fingerprint, accepted_history_snapshot
+
+    state, _ = committed()
+    path = tmp_path / "history-story.json"
+    saved = save_state(path, state)
+    restored = load_state(path, expected_story_id="story-A", expected_revision=1, expected_sha256=saved.sha256)
+    baseline = accepted_history_fingerprint(restored)
+    state = step(restored, "start_chapter", {"chapter_id": "ch-002"})
+    state = step(state, "set_plan", {"artifact": source("NEXT PLAN SENTINEL", 2, "plan")})
+    state = step(state, "accept_plan", {"confirmation": confirmation(state, "plan")})
+    state = step(state, "set_draft", {"artifact": source("UNACCEPTED NEXT DRAFT SENTINEL", 2, "draft")})
+    snapshot = accepted_history_snapshot(state)
+    assert accepted_history_fingerprint(state) == baseline
+    assert [row["chapter_id"] for row in snapshot["chapters"]] == ["ch-001"]
+    encoded = json.dumps(snapshot, ensure_ascii=False)
+    assert "UNACCEPTED NEXT DRAFT SENTINEL" not in encoded
+    assert "NEXT PLAN SENTINEL" not in encoded
+    assert snapshot["chapters"][0]["draft"]["text"] == "Synthetic scene"
+
+
+def test_preflight_can_require_exact_accepted_history_and_never_silently_trim_it():
+    state, _ = committed()
+    full = preflight_context(state, [], 100_000, accepted_history_chapter_ids=["ch-001"])
+    assert not full["blocked"]
+    assert full["accepted_history_chapters"] == ["ch-001"]
+    assert "ACCEPTED HISTORY ONLY" in full["context_text"]
+    assert "Goal, choice, cost" in full["context_text"]
+    assert "Synthetic scene" in full["context_text"]
+    tight = preflight_context(state, [], full["used_bytes"] - 1, accepted_history_chapter_ids=["ch-001"])
+    assert tight["blocked"]
+    assert "Synthetic scene" in tight["context_text"]
+    with pytest.raises(StateError, match="not found in this story"):
+        preflight_context(state, [], 100_000, accepted_history_chapter_ids=["future-or-other-book"])
+
+
+def test_accepted_history_manifest_contains_source_identity_not_current_candidate():
+    from novel_ai.gpt_story_state import accepted_history_snapshot
+
+    state, _ = committed()
+    manifest = accepted_history_snapshot(state, include_text=False)
+    assert manifest["story_id"] == "story-A"
+    assert manifest["story_revision"] == 1
+    assert len(manifest["accepted_history_sha256"]) == 64
+    assert set(manifest["chapters"][0]) >= {"plan_source", "draft_source", "plan_source_fingerprint", "draft_source_fingerprint"}
+    assert "plan" not in manifest["chapters"][0] and "draft" not in manifest["chapters"][0]
+
+
+def test_cli_rebuilds_accepted_history_from_actual_saved_readback(tmp_path):
+    path = tmp_path / "cli-history.json"
+    state, _ = committed()
+    saved = save_state(path, state)
+    script = str(ROOT / "scripts/story_state.py")
+    result = subprocess.run([sys.executable, script, "accepted-history", str(path), "--story-id", "story-A",
+                             "--revision", "1", "--sha256", saved.sha256, "--manifest-only"],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    output = json.loads(result.stdout)
+    assert output["story_id"] == "story-A" and output["story_revision"] == 1
+    assert [row["chapter_id"] for row in output["chapters"]] == ["ch-001"]
+    assert "plan" not in output["chapters"][0] and "draft" not in output["chapters"][0]

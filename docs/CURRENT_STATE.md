@@ -1,3 +1,12 @@
+# 2026-10-02 — Accepted-history rebuild and stale-candidate isolation (candidate)
+
+- Rebuild accepted history only from append-only author-accepted chapter records; current/future/other-story candidates are excluded
+- Replanning may retain the old draft privately, but preflight no longer exposes it unless it is explicitly rebound to the current accepted plan
+- Exact accepted chapters can be explicitly required in preflight; unknown chapter IDs are refused and insufficient byte budget blocks without trimming
+- Added accepted-history CLI readback entry and stable accepted-history fingerprint for restart/session recovery
+- Local Python 3.13 targeted evidence: 77 passed; five GPT state/journal/entry groups total 126 passed. Full pytest collection is blocked only by missing Streamlit in this container; Python 3.11/3.12 CI remains required
+- [Behavior, tests and limits](ACCEPTED_HISTORY_REBUILD.md)
+
 # 2026-10-01 — Final-text reports and bounded model output (candidate)
 
 - Share existing post-plan execution across single/routed/confirmed-plan writers; retain initial evidence and bind final diagnostics to delivered text

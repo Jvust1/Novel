@@ -10,6 +10,8 @@
 
 换稿后报告与正文一致：[共享审校、版本证据和模型输出边界](docs/FINAL_OUTPUT_GATES.md)。
 
+换会话/重做计划后的历史恢复：[只从作者已接受版本重建下一章上下文](docs/ACCEPTED_HISTORY_REBUILD.md)。
+
 ## 从这里开始
 
 1. 读取 [AGENTS.md](AGENTS.md) 和 [GPT 写作入口](docs/GPT_WRITING_ENTRY.md)，核对实际读取的分支或提交
@@ -19,7 +21,7 @@
 
 可直接告诉 GPT：
 
-> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/final-output-gates-20261001 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
+> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/accepted-history-rebuild-20261002 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
 
 如果插件没有读到该分支或 Drive 文件，GPT 应说明缺少哪个来源，请作者提供可访问的位置；不能假装已加载。上述分支入口尚未合入 `main`，默认分支内容未必相同。
 
