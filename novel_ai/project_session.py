@@ -33,7 +33,7 @@ FIELDS = (
     'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
     'chapter_id', 'chapter_goal', 'chapter_notes', 'last_self_similarity',
-    'diverse_recall',
+    'diverse_recall', 'memory_candidate_json', 'last_memory_commit', 'memory_source_bible', 'memory_ui_readback_pending',
     *_CHARACTER_FORM_FIELDS, *AUTHOR_FIELDS,
 )
 
@@ -41,6 +41,7 @@ FIELDS = (
 def _load_project(store, project):
     bible = store.read_json(project, 'memory/story_bible.json', {})
     loaded = {key: bible.get(key, '') for key in ('genre', 'tone', 'premise')}
+    loaded['memory_source_bible'] = copy.deepcopy(bible)
     loaded['title'] = bible.get('title') or project
     for key, field in (
         ('themes_text', 'themes'), ('rules_text', 'world_rules'),
@@ -55,7 +56,8 @@ def _load_project(store, project):
     loaded['reference_hashes'] = set(store.read_json(project, 'styles/reference_signature.json', {}).get('hashes', []))
     loaded.update(last_result=None, last_overlap=0.0, last_extraction=None,
                   pending_plan_json='', pending_plan_meta={}, plan_new=False,
-                  last_self_similarity=[], diverse_recall=False)
+                  last_self_similarity=[], diverse_recall=False,
+                  memory_candidate_json=None, last_memory_commit=None, memory_ui_readback_pending=None)
     hierarchy = store.read_json(project, 'memory/hierarchical_outline.json')
     loaded.update(hierarchy_markdown='', hierarchy_editor=json.dumps(hierarchy, ensure_ascii=False, indent=2) if hierarchy else '',
                   hierarchy_data=hierarchy, last_result_meta={}, allow_chapter_overwrite=False)

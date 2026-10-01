@@ -11,15 +11,13 @@ from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
 from novel_ai.project_session import switch_project
 from novel_ai.engine import NovelEngine
-from novel_ai.memory import apply_extraction
-from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
-from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
-from novel_ai.longform_consistency import (
-    build_longform_health,
-)
-from novel_ai.models import Character, ChapterPlan, MemoryExtraction, StoryBible, StyleFingerprint
+from novel_ai.memory_ui import render_memory_proposals
+from novel_ai.longform_tools import near_duplicate_chapters
+from novel_ai.longform_analytics import trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
+from novel_ai.models import Character, ChapterPlan, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference_text
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
+from novel_ai.request_budget import RequestBudget, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
 from novel_ai.reference_similarity import analyze_reference_similarity
 from novel_ai.release_eval import build_release_quality_snapshot
@@ -79,11 +77,12 @@ with st.sidebar:
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
 
 
-def make_provider() -> OpenAICompatibleProvider:
+def make_provider(*, request_budget: RequestBudget | None = None) -> OpenAICompatibleProvider:
     if not base_url.strip() or not model.strip():
         raise ValueError("请先填写 Base URL 和 Model")
     return OpenAICompatibleProvider(
-        ProviderConfig(base_url=base_url.strip(), model=model.strip(), api_key=api_key.strip())
+        ProviderConfig(base_url=base_url.strip(), model=model.strip(), api_key=api_key.strip()),
+        request_budget=request_budget,
     )
 
 
@@ -100,6 +99,7 @@ def current_bible() -> StoryBible:
     return StoryBible(
         title=title,
         genre=genre,
+        audience=st.session_state.get("memory_source_bible", {}).get("audience", ""),
         tone=tone,
         premise=premise,
         themes=[x.strip() for x in themes_text.splitlines() if x.strip()],
@@ -138,7 +138,9 @@ with story_tab:
     outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280, key="outline")
     if st.button("保存故事设定到本地", use_container_width=True):
         bible = current_bible()
-        store.write_json(project_name, "memory/story_bible.json", bible.model_dump())
+        saved_bible = {**st.session_state.get("memory_source_bible", {}), **bible.model_dump()}
+        store.write_json(project_name, "memory/story_bible.json", saved_bible)
+        st.session_state.memory_source_bible = saved_bible
         store.write_json(project_name, "memory/outline.json", {"outline": outline})
         st.success("已保存到本地 data/projects 目录。")
     render_outline_editor(store, project_name, title, premise)
@@ -343,6 +345,8 @@ with write_tab:
         st.session_state.last_result = None
         st.session_state.last_result_meta = {}
         st.session_state.last_extraction = None
+        st.session_state.memory_candidate_json = None
+        st.session_state.last_memory_commit = None
         st.session_state.last_self_similarity = []
         st.session_state.last_overlap = 0.0
         st.rerun()
@@ -414,6 +418,8 @@ with write_tab:
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
             }
             st.session_state.last_extraction = None
+            st.session_state.memory_candidate_json = None
+            st.session_state.last_memory_commit = None
             st.success("章节已按确认的计划生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
@@ -461,6 +467,8 @@ with write_tab:
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
             }
             st.session_state.last_extraction = None
+            st.session_state.memory_candidate_json = None
+            st.session_state.last_memory_commit = None
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
@@ -476,10 +484,13 @@ with write_tab:
         )
 
     result = st.session_state.last_result
+    st.session_state.memory_displayed_text_sha256 = None
     if result:
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
-        st.text_area("正文", value=result.final_text, height=720)
+        shown_text = st.text_area("正文", value=result.final_text, height=720, disabled=True)
+        st.session_state.memory_displayed_text_sha256 = hashlib.sha256((shown_text.strip() + "\n").encode("utf-8")).hexdigest()
+        st.caption("此处只读显示已绑定版本。需要调整正文时，请通过修订与保存新版本流程处理，不能把未保存的显示编辑当作已接受稿。")
         if result.final_report:
             st.caption("下列文本诊断绑定当前显示正文；模型审校不等于作者接受。Story DNA/行为结构仍来自场景计划。")
             with st.expander("当前正文审校来源与范围", expanded=False):
@@ -548,71 +559,10 @@ with write_tab:
             except (OSError, UnicodeError, ValueError) as exc:
                 st.warning("综合质量快照未完成；请检查已有章节文件。其他审阅入口仍可使用：" + str(exc))
 
-        st.divider()
-        st.subheader("章节后处理 · 记忆抽取")
-        st.caption("章节定稿后抽取摘要、新事实、人物状态/知识变化、时间线与伏笔，并回写本地长期记忆。")
-        result_meta = st.session_state.get("last_result_meta", {})
-        result_matches = (result_meta.get("project", project_name) == project_name
-                          and result_meta.get("chapter_id", chapter_id) == chapter_id)
-        if result_meta.get("text_sha256"):
-            result_matches = result_matches and chapter_revision_matches(
-                store, project_name, chapter_id, result_meta["text_sha256"],
-            )
-        if not result_matches:
-            st.warning("当前显示的是另一章的生成结果，或已保存正文发生变化。请核对原章节与文本版本后再抽取记忆。")
-        if st.button("抽取本章记忆并回写", use_container_width=True, disabled=not result_matches):
-            try:
-                engine = NovelEngine(make_provider())
-                final_text = result.final_text
-                extraction = engine.extract_memory(
-                    current_bible(),
-                    [Character.model_validate(c) for c in st.session_state.characters],
-                    chapter_id,
-                    final_text,
-                )
-                new_characters, new_state = apply_extraction(
-                    [Character.model_validate(c) for c in st.session_state.characters],
-                    store.load_story_state(project_name),
-                    extraction,
-                )
-                st.session_state.characters = [c.model_dump() for c in new_characters]
-                store.write_json(project_name, "memory/characters.json", st.session_state.characters)
-                store.save_story_state(project_name, new_state)
-                store.save_extraction(project_name, extraction.model_dump())
-                graph = build_story_graph(st.session_state.characters, new_state)
-                store.write_json(project_name, "memory/story_graph.json", graph)
-                if result.story_dna:
-                    prior_voice = [
-                        row for row in store.load_voice_dna_history(project_name)
-                        if str(row.get("chapter_id")) != chapter_id
-                    ]
-                    prior_dna = [
-                        row for row in store.load_story_dna_history(project_name)
-                        if str(row.get("chapter_id")) != chapter_id
-                    ]
-                    chapter_order = [str(row.get("chapter_id","")) for row in store.all_chapter_summaries(project_name)]
-                    health = build_longform_health(
-                        current_text=final_text,
-                        character_names=[c["name"] for c in st.session_state.characters if c.get("name")],
-                        voice_history=prior_voice,
-                        current_story_dna=result.story_dna,
-                        story_dna_history=prior_dna,
-                        story_state=new_state,
-                        chapter_order=chapter_order,
-                    )
-                    store.save_voice_dna(project_name, chapter_id, health["voice_dna"])
-                    store.save_longform_health(project_name, health)
-                    store.save_story_dna(project_name, chapter_id, result.story_dna)
-                    analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
-                    store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
-                st.session_state.last_extraction = extraction.model_dump()
-                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA、人物口吻 DNA 与长篇一致性状态均已更新。")
-            except Exception as exc:
-                st.exception(exc)
-
-        if st.session_state.last_extraction:
-            with st.expander("本次抽取结果", expanded=False):
-                st.json(st.session_state.last_extraction)
+    render_memory_proposals(st, store, project_name, chapter_id, result,
+        lambda: NovelEngine(make_provider(request_budget=RequestBudget(RequestBudgetLimits(
+            max_requests=2, max_request_bytes=512 * 1024, max_total_request_bytes=1024 * 1024,
+            max_reserved_output_tokens=16384)))))
 
     with st.expander("Story DNA 历史库", expanded=False):
         dna_history = store.load_story_dna_history(project_name)
