@@ -157,8 +157,15 @@ def test_memory_writeback_persists_character_knowledge_across_fresh_sessions(mon
             item.set_value("fake")
         if item.label == "章节编号 / 名称":
             item.set_value("007")
-    next(button for button in at.button if button.label == "抽取本章记忆并回写").click().run()
+    next(button for button in at.button if button.label == "抽取本章记忆候选").click().run()
     assert not at.exception
+    assert at.session_state["pending_memory_candidate"] is not None
+    # Model extraction is only a candidate: formal memory must still be unchanged.
+    assert store.read_json("MyNovel", "memory/characters.json") == original
+    assert store.all_chapter_summaries("MyNovel") == []
+    next(button for button in at.button if button.label == "确认并回写记忆候选").click().run()
+    assert not at.exception
+    assert at.session_state["pending_memory_candidate"] is None
     saved = store.read_json("MyNovel", "memory/characters.json")
     assert saved[0]["knows"] == ["账本由林澄保管"]
     assert saved[0]["does_not_know"] == []
@@ -381,3 +388,68 @@ def test_locked_fact_editor_is_project_scoped(monkeypatch, tmp_path):
     at.text_input(key="project_name").set_value("MyNovel").run()
     assert not at.exception
     assert at.text_area(key="locked_text").value == "甲书未保存事实"
+
+
+def test_memory_candidate_failed_confirmation_keeps_pending_and_retry_is_idempotent(monkeypatch, tmp_path):
+    from novel_ai.engine import ChapterResult
+    from novel_ai.models import ChapterPlan, ChapterReview
+    from novel_ai.provider import OpenAICompatibleProvider
+    from novel_ai.storage import ProjectStore
+
+    store = ProjectStore(tmp_path / "data")
+    original = [{"name": "沈青", "knows": [], "does_not_know": ["账本位置"]}]
+    store.write_json("MyNovel", "memory/characters.json", original)
+
+    def chat(self, messages, **kwargs):
+        assert "连续性记录员" in messages[0]["content"]
+        return json.dumps({
+            "chapter_id": "001",
+            "summary": "沈青得知账本位置。",
+            "new_facts": ["账本藏在北柜"],
+            "character_updates": [{"name": "沈青", "knowledge_gained": ["账本位置"]}],
+        }, ensure_ascii=False)
+
+    monkeypatch.setattr(OpenAICompatibleProvider, "chat", chat)
+    at = run_app(monkeypatch, tmp_path)
+    at.session_state["last_result"] = ChapterResult(
+        plan=ChapterPlan(chapter_title="记忆候选"), draft="沈青得知账本位置。",
+        review=ChapterReview(verdict="pass"), ai_flavor={},
+    )
+    at.run()
+    for item in at.text_input:
+        if item.label == "Base URL":
+            item.set_value("http://never-called.invalid")
+        if item.label == "Model":
+            item.set_value("fake")
+    next(button for button in at.button if button.label == "抽取本章记忆候选").click().run()
+    assert not at.exception
+    candidate = dict(at.session_state["pending_memory_candidate"])
+    receipt_path = f"memory/memory_acceptance/{candidate['candidate_id']}.json"
+
+    original_save = ProjectStore.save_story_state
+    calls = {"count": 0}
+
+    def fail_once(self, project, state):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise OSError("synthetic memory write interruption")
+        return original_save(self, project, state)
+
+    monkeypatch.setattr(ProjectStore, "save_story_state", fail_once)
+    next(button for button in at.button if button.label == "确认并回写记忆候选").click().run()
+    assert at.exception
+    assert at.session_state["pending_memory_candidate"]["candidate_id"] == candidate["candidate_id"]
+    assert store.read_json("MyNovel", receipt_path, default=None) is None
+
+    # The second click retries the same bound candidate. Core merges and per-chapter
+    # writes are idempotent, and the acceptance receipt is written only at the end.
+    at.run()
+    next(button for button in at.button if button.label == "确认并回写记忆候选").click().run()
+    assert not at.exception
+    assert at.session_state["pending_memory_candidate"] is None
+    assert store.read_json("MyNovel", receipt_path)["status"] == "applied"
+    saved = store.read_json("MyNovel", "memory/characters.json")
+    assert saved[0]["knows"] == ["账本位置"]
+    state = store.load_story_state("MyNovel")
+    assert state["facts"].count("账本藏在北柜") == 1
+    assert len([row for row in store.all_chapter_summaries("MyNovel") if row["chapter_id"] == "001"]) == 1

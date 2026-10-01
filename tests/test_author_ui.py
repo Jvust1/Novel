@@ -171,7 +171,7 @@ def test_saved_outline_edit_invalidates_plan_and_memory_is_bound(monkeypatch, tm
     at.button(key="btn_draft").click().run()
     assert not at.exception
     at.text_input(key="chapter_id").set_value("002").run()
-    assert button(at, "抽取本章记忆并回写").disabled
+    assert button(at, "抽取本章记忆候选").disabled
     assert any("另一章" in warning.value for warning in at.warning)
     data = at.session_state.hierarchy_data.copy()
     data["premise"] = "修改后的设定"
@@ -267,11 +267,11 @@ def test_plan_save_failure_cannot_rebind_new_text_to_previous_result(monkeypatch
     assert at.exception
     assert at.session_state.last_result == previous_result
     assert at.session_state.last_result_meta == previous_meta
-    assert button(at, "抽取本章记忆并回写").disabled
+    assert button(at, "抽取本章记忆候选").disabled
     at.text_input(key="chapter_id").set_value("001").run()
     assert not at.exception
     assert at.session_state.last_result_meta["chapter_id"] == "001"
-    assert not button(at, "抽取本章记忆并回写").disabled
+    assert not button(at, "抽取本章记忆候选").disabled
 
 
 def test_externally_changed_saved_revision_blocks_old_memory(monkeypatch, tmp_path):
@@ -283,7 +283,7 @@ def test_externally_changed_saved_revision_blocks_old_memory(monkeypatch, tmp_pa
     ProjectStore(tmp_path / "data").write_chapter("MyNovel", "001", "不同的新版本正文")
     at.run()
     assert not at.exception
-    assert button(at, "抽取本章记忆并回写").disabled
+    assert button(at, "抽取本章记忆候选").disabled
     assert any("正文发生变化" in item.value for item in at.warning)
     assert len(calls) == 2
 

@@ -162,3 +162,9 @@ Consolidate the existing post-plan writer path instead of adding another orchest
 Keep existing per-stage output caps, but add one explicit `ModelCallBudget` for the retries/fallbacks used to obtain a single stage result. Count the complete normalized messages before each visible attempt; never trim required context inside the budget layer. Track both cumulative repeated input and conservatively reserved output, and reserve before the backend call so an exception cannot be treated as proof of zero usage.
 
 Built-in HTTP response-format retry, structured fallback and budgeted LiteLLM fallback must expose each attempt to the same ledger. Legacy/custom extensions that do not implement the explicit `budget` parameter remain one engine-visible bounded call; hidden retries inside them are not claimed as covered. Token counting is an engineering bound, not provider billing evidence. See [MODEL_CALL_BUDGETS.md](MODEL_CALL_BUDGETS.md).
+
+## 2026-10-02 — Memory extraction is a candidate until explicit author acceptance
+
+The local author workbench must not treat a successful MemoryExtraction model call as permission to mutate formal story facts. Persist a version-bound candidate first, bind it to project/chapter/exact chapter-text SHA-256/full extraction, and require a separate explicit confirmation action before formal writeback.
+
+An acceptance receipt is candidate-specific and written last. It is local workflow evidence rather than cryptographic identity proof. A stale/tampered/cross-project/cross-chapter candidate, or a receipt from a previous candidate, cannot authorize the current write. Failed confirmation leaves the candidate pending and relies on existing idempotent merge/per-chapter storage for safe retry. See [MEMORY_ACCEPTANCE_GATES.md](MEMORY_ACCEPTANCE_GATES.md).

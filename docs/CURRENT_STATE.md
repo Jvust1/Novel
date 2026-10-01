@@ -1,3 +1,12 @@
+# 2026-10-02 — Memory candidate / author acceptance isolation (candidate)
+
+- Split model extraction from formal memory writeback: extraction first saves a pending candidate; characters, story_state, summaries and long-form derived memory stay unchanged until explicit author confirmation
+- Bind each candidate to project, chapter, exact chapter-text SHA-256 and complete extraction; stale/cross-project/cross-chapter/tampered candidates are refused
+- Bind the local acceptance receipt to the exact candidate/extraction; a receipt for an older candidate cannot authorize a revised candidate
+- Write the acceptance receipt last; interrupted confirmation keeps the candidate pending and retries use idempotent core merges/per-chapter writes
+- Local Python 3.13 non-Streamlit logic/storage evidence: 97 passed; app/project-session/memory-candidate modules compile. Streamlit UI tests remain for GitHub CI
+- [Behavior, failure recovery and trust boundary](MEMORY_ACCEPTANCE_GATES.md)
+
 # 2026-10-02 — Complete input and cumulative model-attempt budgets (candidate)
 
 - Count the complete normalized messages before every engine-visible model/backend attempt; over-budget required context blocks before the call rather than being silently clipped

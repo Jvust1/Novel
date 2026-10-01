@@ -253,3 +253,12 @@ Local Python 3.13 targeted verification before remote publication:
 - Streamlit is absent from the local container; no full-suite success is claimed here. GitHub Linux Python 3.11/3.12 CI is the required full regression evidence after publication.
 
 Adversarial cases include pre-call input refusal with zero provider calls, cumulative repeated-input exhaustion before the next attempt, non-refundable failed-attempt output reservation, reduced allowance on response-format retry, structured fallback stopping before a later backend, and LiteLLM fallbacks expanded into explicit zero-retry attempts. No live paid model or provider billing API was used.
+
+## 2026-10-02 — Memory acceptance gate candidate
+
+Local Python 3.13.5 evidence before remote publication:
+- 97 passed across memory-candidate, memory merge, project-session, storage-integrity and storage-recovery tests.
+- py_compile passed for memory_candidate.py, project_session.py and app.py.
+- Streamlit-dependent UI tests are not claimed locally because Streamlit is absent from this container.
+
+Remote CI must verify the real workbench surface: extraction creates a candidate without changing formal memory; explicit confirmation performs writeback; malformed extraction creates no candidate; a first confirmation interrupted before receipt remains retryable; retry produces one fact/summary; stale chapter revisions and old receipts cannot authorize the revised candidate. No live paid model call was used.
