@@ -168,3 +168,9 @@ Built-in HTTP response-format retry, structured fallback and budgeted LiteLLM fa
 The local author workbench must not treat a successful MemoryExtraction model call as permission to mutate formal story facts. Persist a version-bound candidate first, bind it to project/chapter/exact chapter-text SHA-256/full extraction, and require a separate explicit confirmation action before formal writeback.
 
 An acceptance receipt is candidate-specific and written last. It is local workflow evidence rather than cryptographic identity proof. A stale/tampered/cross-project/cross-chapter candidate, or a receipt from a previous candidate, cannot authorize the current write. Failed confirmation leaves the candidate pending and relies on existing idempotent merge/per-chapter storage for safe retry. See [MEMORY_ACCEPTANCE_GATES.md](MEMORY_ACCEPTANCE_GATES.md).
+
+## 2026-10-02 — Separate runtime-risk quality gates from maintenance debt
+
+Pin Ruff 0.16.9 for CI. Treat clean-environment `pip check`, Ruff `E9,F63,F7,F82`, compileall and full pytest as blocking engineering gates. Keep the full default Ruff scan visible but non-blocking until the existing maintenance backlog is intentionally reduced; do not rewrite stable code only to force a legacy diagnostic count to zero.
+
+Optional integrations stay optional: CI reports their availability without installing every heavyweight backend. Governance alignment is itself tested so branch/gate claims cannot drift from the actual workflow. See [QUALITY_GATES_AUDIT.md](QUALITY_GATES_AUDIT.md).

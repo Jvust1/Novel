@@ -262,3 +262,9 @@ Local Python 3.13.5 evidence before remote publication:
 - Streamlit-dependent UI tests are not claimed locally because Streamlit is absent from this container.
 
 Remote CI must verify the real workbench surface: extraction creates a candidate without changing formal memory; explicit confirmation performs writeback; malformed extraction creates no candidate; a first confirmation interrupted before receipt remains retryable; retry produces one fact/summary; stale chapter revisions and old receipts cannot authorize the revised candidate. No live paid model call was used.
+
+## 2026-10-02 — Quality-gate audit candidate
+
+The local shared Python 3.13 environment cannot produce a trustworthy Ruff or dependency verdict: Ruff is not installed and outbound package download is unavailable; `pip check` reports a MoviePy/Pillow conflict from packages not declared by Novel. Those observations are environment limitations, not Novel failures.
+
+The candidate therefore moves dependency/static verification into GitHub Actions' clean Python 3.11/3.12 jobs. Hard gates: pip check, Ruff E9/F63/F7/F82, compileall and full pytest. Default Ruff diagnostics are emitted from the same pinned Ruff 0.16.9 as a non-blocking JSON baseline. Exact current counts must come from the candidate CI logs after publication.

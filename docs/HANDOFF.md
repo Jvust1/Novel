@@ -1,6 +1,6 @@
 # 当前交接 — 2026-10-01
 
-当前工程候选：`fix/memory-acceptance-gates-20261002`，叠在已验证 Draft PR #58（head `9924537af68a5a74e982d3f12f6167a3c57d3d6d`，Linux Python 3.11/3.12 各 1217 passed / 1 skipped）之上。先保留已接受历史重建与模型调用预算，再补 [记忆候选/作者接受隔离](MEMORY_ACCEPTANCE_GATES.md)；仍不合并 main、不自动部署。
+当前工程候选：`chore/quality-gates-audit-20261002`，叠在已验证 Draft PR #59（head `410f7cf3a46fe8f358f51866c32de78234b37b1c`，Linux Python 3.11/3.12 各 1225 passed / 1 skipped）之上。保留前三层功能候选，再补 [质量门与剩余审计边界](QUALITY_GATES_AUDIT.md)；仍不合并 main、不自动部署。
 
 当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
 
