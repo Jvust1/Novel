@@ -1,5 +1,6 @@
-当前候选：`fix/initial-preflight-identity-20261001`。公开工程入口以 [当前候选记录](../governance/current_candidate.json) 为准。
+当前候选：`fix/history-source-identity-20261001`。公开工程入口以 [当前候选记录](../governance/current_candidate.json) 为准。
 
+历史同标识不代表同一原稿：[完整来源冲突检查](HISTORY_SOURCE_IDENTITY.md)。
 第一章显式身份与历史指纹也必须核对：[初始预检检查](INITIAL_PREFLIGHT_IDENTITY.md)。
 当前新增：[最终正文与审校证据一致性](FINAL_OUTPUT_GATES.md)。换稿后重新审校，必须核对当前稿来源；模型通过不等于作者接受。
 
@@ -13,7 +14,7 @@
 
 ## 1. 先读哪些来源
 
-1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/initial-preflight-identity-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
+1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/history-source-identity-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
 2. **私有故事档案**：读作者指定 Drive 文件的实际内容，核对 `story_id / revision`、当前阶段、接受记录和保存回执。工程文件 `governance/project_state.json` 不是小说档案。
 3. **Canon**：已确认的世界规则、锁定事实、人物身份与知识边界、总纲。只有实际读到且与本章相关的约束才能进入本次上下文；关键约束缺失时先补齐。
 4. **Active**：本章目标、出场人物当前状态、时间地点、近章摘要、开放伏笔、当前作品文风，以及当前计划/草稿/审校候选的原件。

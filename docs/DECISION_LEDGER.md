@@ -1,3 +1,7 @@
+# 2026-10-01 — 历史来源同标识冲突检查
+
+当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
+
 # 2026-10-01 — 第一章预检身份保护
 
 当前候选 `fix/initial-preflight-identity-20261001` 叠加已验证 #64。仅补上 revision 0 空历史分支原先遗漏的显式故事身份/历史指纹检查，保留原默认输出和空历史指纹，不新增历史机制。真实 API/CLI 反例、来源预算与候选隔离控制见 [说明](INITIAL_PREFLIGHT_IDENTITY.md) 和 [本轮记录](../governance/initial_preflight_candidate.json)。下方保留历史。
