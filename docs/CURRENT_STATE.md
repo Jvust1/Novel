@@ -1,10 +1,20 @@
-# 2026-10-01 — Author workflow connected (local candidate)
+# 2026-10-01 — GPT-readable writing entry and genre-aware style prompts
+
+- Primary requested use is now GPT + GitHub file access: read this repository's instructions, load accessible private book state, plan/draft/review/repair in conversation, and save/verify private progress. No local-user installation or new service is required for the text workflow
+- [README](../README.md) → [GPT entry](GPT_WRITING_ENTRY.md) hooks the actual [three-stage natural-fiction prompts](prompts/natural-fiction/README.md) into writing, review and repair
+- Nine common genre profiles support a primary and optional secondary genre with stable narrative/character voices. They are configurable candidates, not a fixed user voice or exhaustive subgenre taxonomy
+- Licensed small prompt adaptations from pinned MIT Humanizer-zh/humanizer sources preserve meaning and style calibration; complete source/NOTICE/license records are included
+- The original public test chapter remains unchanged. Three local candidate edits show actual before/after factual checks and are separate from the canonical draft; no reader-quality improvement or detector result is claimed
+- Existing Streamlit/Python tools remain available for supported optional execution. A file-reading plugin is not a Python runner, and prompts do not install a service
+- Real manuscripts/characters/private memory stay in authorized private storage; only blank templates, rules, code and this explicitly public original test belong in the public repository
+
+# 2026-10-01 — Author workflow connected (published draft #45)
 
 - Added actual licensed LangChain Markdown header-stack/fence source reuse to import an author's explicit five-level outline without fabricating missing scene fields
 - Connected selected hierarchy context to the existing writer, persisted plan/text identity, chapter-specific overwrite approval and revision-bound memory extraction
 - Connected explicit 3/20 saved-chapter selection to existing human market scoring and local deterministic review-candidate ZIP; stale text/audience/genre scores are rejected
 - Saved outline/release workspaces survive restart; unsaved changes remain project-scoped within the session; export retries reuse byte-identical immutable files
-- Local synthetic/provider-mocked validation only; no remote publication, real model call, manuscript import, platform submission or story-quality conclusion
+- Published as draft [PR #45](https://github.com/Jvust1/Novel/pull/45), head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`; [CI run 36826620415](https://github.com/Jvust1/Novel/actions/runs/36826620415) reports 413 passed, 1 skipped. No merge, deployment, real model call, private manuscript import, platform submission or story-quality conclusion
 - [Usage, schema compatibility and limits](AUTHOR_WORKFLOW.md)
 
 # 2026-09-30 — Canon field reconciliation (local only)

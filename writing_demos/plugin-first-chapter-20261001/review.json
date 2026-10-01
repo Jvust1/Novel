@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "kind": "AI_editorial_observation_not_human_score",
+  "draft_revision": "r1",
+  "chapter_sha256": "b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e",
+  "verdict": "candidate_awaiting_author_review",
+  "local_repairs": [
+    "明确鞋先用于敲击、救援后再穿回",
+    "补齐代领表/纸条的携带路线",
+    "坡面观察→退至坡顶让路空间一致",
+    "保留电话号码最后一笔拖出格子的前后呼应",
+    "韩平只断言自己没有把包放入水中，不断言包此后未入水",
+    "15:40只代表柜台接收时间，不推断打捞时间"
+  ],
+  "continuity_observations": [
+    "陶青只能把孟川的身份、伤脚说法和号码当作未核实陈述",
+    "韩平不知道吊包者是谁，也不知道包离开桥下后的路线",
+    "吕阿棉知道自己缝制的夹层和侄子约定，不直接知道冒领人的真身份",
+    "老邓没有听见桥边供述，不自动获得现场知识",
+    "工具包/求救纸条/代领表尚未在章末完成正式交付"
+  ],
+  "open_issues": [
+    "孟川身份与电话号码未核验",
+    "提包人、工具包入水时刻和经过未知",
+    "陶青能否赶上翌日试工待续"
+  ],
+  "human_review": null,
+  "external_reference_comparison": "not_run_no_reference_corpus",
+  "publishability_verdict": null
+}

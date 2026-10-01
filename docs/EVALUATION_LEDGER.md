@@ -208,3 +208,32 @@ Final local candidate checks:
 Independent code review found and the candidate fixed: unsafe inventory reads, chapter-ID normalization aliases, overwrite permission leaking to the next chapter, pre-provider-only overwrite checks, failed plan save retaining the wrong result identity, old manuscript memory writeback, invalid saved workspace types, and loss of scene-only author notes during planning.
 
 Not run / not established: real provider/model quality, frozen unseen A/B, independent reader scoring, Windows device/UI, live platform rules or submission, and remote exact-head CI. Supported cloud-browser preview was attempted but blocked with `ERR_BLOCKED_BY_CLIENT`; no alternate route was used, so browser visual acceptance remains unverified. No public push, PR, merge or deployment was performed for this candidate. No cross-file transaction/concurrent-explicit-overwrite lock is claimed.
+
+## E-GPT-ENTRY-20261001｜GPT-first writing, state recovery and licensed reuse
+**Date:** 2026-10-01 UTC
+**Status:** LOCAL_ENGINEERING_VERIFIED; AUTHOR_AND_READER_QUALITY_NOT_ESTABLISHED
+
+This candidate preserves the previous engineering core and the plugin-written original r1 chapter while adding a GPT-readable entry, three licensed writing/review/repair prompts, nine provisional genre profiles, a licensed reader-reveal ledger adaptation and an optional executable state helper.
+
+Actual upstream-to-entry trace:
+
+- Complete unmodified MIT pytransitions core at `bd42b38f3627e6bca7274fb4d9af2e105f75da7c` → fixed `Machine` phases in `gpt_story_state` → explicit command CLI → interruption/stale/idempotent/32-chapter synthetic tests
+- MIT op7418/Humanizer-zh and blader/humanizer selected rules at their recorded pins → GPT prewrite/editorial-review/local-repair files → three actual fact-locked local style comparisons, kept separate from the unchanged r1 chapter
+- MIT chinese-novelist-skill five-column term/reveal record → private blank ledger and phase prompts → source/acceptance-aware, whitelist-only reader-known projection
+
+Final local validation on Linux:
+
+- Python 3.11.16 full suite: **503 passed, 1 skipped**
+- Python 3.12.14 full suite: **503 passed, 1 skipped**
+- The one skip is the existing optional Qdrant integration because qdrant-client is absent
+- Compileall and final staged diff checks passed
+- 49 focused state tests include a 32-chapter synthetic plan/accept/draft/review/memory/save/restore progression; confirmations are explicitly labeled synthetic fixtures, not user approval
+- 23 separately authored adversarial review tests verify content-derived memory IDs, accepted-history preservation, stale edit fingerprints, exact plan/draft/source binding, missing-source blocks, data-only content and required-context budgets
+- 18 entry/source/template/style checks verify pinned MIT license Git blob identities, links, empty templates, immutable original r1, only-declared-patch changes, and the scope of the original only/if condition
+- Private local write plus actual reload smoke succeeded; remote Drive write/transaction behavior is not implemented or claimed by that helper
+
+Review found and corrected: same-base candidate edits could overwrite newer drafts; same numeric revision could retain an old acceptance after source substitution; memory candidate contents could change under an old derived ID; accepted history could be dropped; required context could substitute a different location/body with the same ID/revision; known unavailable sources were not blocking; reader ledger projection required verifiable applied-memory ownership and default normalization. A prose comparison's only/if scope was also corrected rather than dismissed as stylistic.
+
+The original public test chapter SHA-256 remains `b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e`; North Star and existing application code remain unchanged in this slice. Byte budgets are not the selected model's exact token counts. Source checks and legal state transitions do not authenticate author messages, prove semantic fact support, establish literary improvement, or provide Drive/multi-file/concurrent-writer transactions. Independent human reading, real long-novel quality, all-genre chapter evaluation and platform publication remain unverified.
+
+Final freeze follow-ups: the material fingerprint now covers Canon/Active/Recall/style before and after confirmed updates; four additional regressions reject direct unapproved material changes. The public test bundle's scene-plan metadata path and dependent context digest were reconciled, with a new all-reference path/hash check. The chapter r1 bytes remain unchanged.

@@ -1,0 +1,122 @@
+{
+  "template_version": "gpt-writing-entry-v1",
+  "story_id": null,
+  "revision": 0,
+  "title": null,
+  "storage": {
+    "visibility": "private",
+    "provider": "drive",
+    "folder_location": null,
+    "state_file_id": null,
+    "state_location": null
+  },
+  "genre": {
+    "primary": null,
+    "secondary": null,
+    "reader_expectation": null
+  },
+  "style_profile": {
+    "revision": null,
+    "status": "unconfirmed",
+    "derivation": null,
+    "source_locations": [],
+    "narration_person": null,
+    "viewpoint": null,
+    "narrative_distance": null,
+    "tone": null,
+    "rhythm": null,
+    "vocabulary_and_era": null,
+    "imagery": null,
+    "character_voices": [],
+    "scene_variations": [],
+    "keep": [],
+    "avoid": [],
+    "author_confirmation": null
+  },
+  "canon": {
+    "story_bible": null,
+    "world_rules": [],
+    "locked_facts": [],
+    "outline": null,
+    "characters": [],
+    "reader_reveal_ledger": []
+  },
+  "active": {
+    "chapter_goal": null,
+    "current_time": null,
+    "current_place": null,
+    "character_ids": [],
+    "recent_chapter_summaries": [],
+    "open_foreshadowing": [],
+    "forbidden_revelations": []
+  },
+  "recall": {
+    "chapter_index": [],
+    "events": [],
+    "source_index": [],
+    "selected_sources": []
+  },
+  "progress": {
+    "phase": "awaiting_story",
+    "base_story_revision": null,
+    "chapter_id": null,
+    "plan_revision": null,
+    "draft_revision": null,
+    "memory_update_id": null,
+    "plan_source": {
+      "location": null,
+      "file_id": null,
+      "revision": null,
+      "sha256": null,
+      "sha256_method": null,
+      "availability": "not_checked"
+    },
+    "draft_source": {
+      "location": null,
+      "file_id": null,
+      "revision": null,
+      "sha256": null,
+      "sha256_method": null,
+      "availability": "not_checked"
+    },
+    "review_source": {
+      "location": null,
+      "file_id": null,
+      "revision": null,
+      "availability": "not_checked"
+    },
+    "plan_acceptance": null,
+    "chapter_acceptance": null,
+    "memory_acceptance": null,
+    "unresolved_review_issues": [],
+    "next_action": null
+  },
+  "accepted_chapters": [],
+  "pending_memory_updates": [],
+  "conflicts": [],
+  "source_availability": {
+    "status": "not_checked",
+    "missing_sources": [],
+    "blocked_steps": [],
+    "checked_at": null
+  },
+  "write_receipt": {
+    "status": "pending",
+    "location": null,
+    "file_id": null,
+    "story_revision": null,
+    "provider_revision": null,
+    "written_at": null,
+    "receipt_location": null
+  },
+  "readback_receipt": {
+    "status": "pending",
+    "location": null,
+    "file_id": null,
+    "story_revision": null,
+    "provider_revision": null,
+    "read_at": null,
+    "verified_fields": [],
+    "receipt_location": null
+  }
+}

@@ -6,6 +6,7 @@
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Use GPT + GitHub repository instructions as the primary writing entry; adapt style to genre/reader/scene and preserve private version-bound book state without requiring a local UI",
     "Validate local author workflow: explicit Markdown hierarchy → confirmed chapter writing → revision-bound human review → local release candidate; real story-quality evidence still pending",
     "Validate conservative speaker attribution with overlapping registered character names and fresh version-2 Voice DNA baselines",
     "Evaluate opt-in LangChain MMR historical-summary recall with continuity evidence carried through drafting, review, local repair and re-review; engineering pilot only",
@@ -152,7 +153,12 @@
     "Local PR16 Canon-field reconciliation preserving world_rules and locked_facts independently through workbench storage, project switching and generation inputs",
     "Licensed LangChain Markdown header/fence source port used by the Streamlit hierarchical author-outline import",
     "Explicit local saved-chapter 3/20 market-review and release-candidate workflow with versioned corpus/review-context identity and restart persistence",
-    "Chapter-specific overwrite protection, saved plan/text identity and revision-bound memory writeback controls"
+    "Chapter-specific overwrite protection, saved plan/text identity and revision-bound memory writeback controls",
+    "GPT-readable README and ordered writing entry with explicit read/write/execution boundaries and private empty state template",
+    "Pinned MIT humanizer prompt adaptations actually hooked into writing-before/editorial-review/local-repair instructions; nine composable genre style profiles",
+    "Original public plugin-written chapter with verified remote readback and three fact-locked, separately saved style comparison candidates",
+    "Whole unmodified MIT pytransitions core used by optional GPT story-state Machine with Pydantic validation, exact-source confirmations, idempotent operations and private save/readback",
+    "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth"
   ],
   "frozen": false,
   "blocking_issues": [],
@@ -177,8 +183,8 @@
     "pending_sync_count": 0
   },
   "author_workflow_candidate": {
-    "status": "local_review_candidate",
-    "remote_publication": "not_attempted_pending_authorization",
+    "status": "published_draft_PR_45",
+    "remote_publication": "https://github.com/Jvust1/Novel/pull/45",
     "source_baseline_tree": "2c910626a27a3cc14393af91e6dd6aae6ee3a2b9",
     "corpus_fingerprint_schema": "market-corpus-v2",
     "browser_visual_acceptance": "blocked_ERR_BLOCKED_BY_CLIENT",
@@ -198,7 +204,52 @@
       "real_provider_calls": 0,
       "human_story_review": "not_run",
       "windows_ui": "not_run",
-      "remote_ci": "not_run"
+      "remote_ci": {
+        "status": "success",
+        "url": "https://github.com/Jvust1/Novel/actions/runs/36826620415",
+        "passed": 413,
+        "skipped": 1
+      }
+    },
+    "remote_head": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+    "remote_source_tree": "9223c7b97c5126b217eea7cff3632d318d4ff438"
+  },
+  "active_workflow": "gpt_github_readable_writing",
+  "gpt_entry": {
+    "path": "README.md",
+    "workflow": "docs/GPT_WRITING_ENTRY.md",
+    "prompts": "docs/prompts/natural-fiction/README.md",
+    "genre_profiles": "docs/prompts/natural-fiction/GENRE_PROFILES.md",
+    "private_state_template": "writing_templates/story_state.template.json",
+    "sample_only": "writing_demos/plugin-first-chapter-20261001",
+    "provider_service_required": false,
+    "repository_file_access_executes_python": false,
+    "reference_novels_supplied": false,
+    "human_style_improvement_validation": "not_run",
+    "optional_state_checks": "docs/GPT_STATE_CHECKS.md",
+    "reader_reveal_ledger": "docs/READER_REVEAL_LEDGER.md",
+    "upstream_trace": [
+      "pytransitions/transitions core → gpt_story_state Machine → state CLI → repeat/stale/interruption/multichapter tests",
+      "op7418/Humanizer-zh + blader/humanizer selected prompts → GPT entry stages → original chapter local before/after checks",
+      "PenglongHuang/chinese-novelist-skill reveal columns → private ledger + draft context projection → source/acceptance/redaction tests"
+    ],
+    "validation": {
+      "python_3_11_16": {
+        "passed": 503,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 503,
+        "skipped": 1
+      },
+      "skip_reason": "optional qdrant-client absent",
+      "focused_state_tests": 49,
+      "independent_review_tests": 23,
+      "entry_source_style_tests": 18,
+      "synthetic_long_progression_chapters": 32,
+      "first_chapter_r1_unchanged": true,
+      "north_star_unchanged": true,
+      "real_human_quality_evidence": "not_established"
     }
   }
 }

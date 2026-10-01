@@ -1,8 +1,16 @@
-# Current local handoff — 2026-10-01
+# 当前交接 — 2026-10-01
 
-Current local candidate joins hierarchical outline → existing writer → explicit saved chapter corpus → human market review → local release candidate. Read [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md) and the latest CURRENT_STATE/EVALUATION_LEDGER entries first. The older recovery checklist below is historical context; do not revive retired global startup requirements.
+当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
 
-Source starts from the preserved validated continuity snapshot tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`, on remote main `bf37f1906636791f03c6a6ce1eecd3cc81a6a803` plus prior local work. No new public PR/push/merge or deployment has been performed for this candidate. Remote PR #33 conflicts; it is not this candidate's acceptance record.
+- GPT 入口与文风提示随 `feat/gpt-writing-prompts-20261001` 分支交付，未合入 `main`；读取时指定 ref，不能将旧默认分支当作本次入口。
+- 现有本地作者工作流已发布为 [Draft PR #45](https://github.com/Jvust1/Novel/pull/45)，head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`。[该提交 CI](https://github.com/Jvust1/Novel/actions/runs/36826620415) 成功，413 passed / 1 skipped；未合并。用法见 [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md)。
+- [原创插件演示](../writing_demos/plugin-first-chapter-20261001/README.md) 已在提交 `badcfab4d925a1fbe464b4a314cf9abf004a675b` 发布并通过插件读回；它仍是待作者审阅的公开测试候选，不代表真实用户作品可公开或已被接受。
+- 文件读取不代表 Python 执行；GPT 入口是对话与归档协议，不是自动运行的新后端。真实故事质量、独立真人评测和平台结果仍需各自的证据。
+- CURRENT_STATE / EVALUATION_LEDGER 中此前的 local-only、未推送描述是对应阶段的历史快照，不能覆盖以上已发布状态。旧 PR #33 不是本轮的接受记录。
+
+本地作者候选的历史起点保留为连续性快照 tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`，源于当时 main `bf37f1906636791f03c6a6ce1eecd3cc81a6a803` 加先前本地成果；它不是当前分支 head。
+
+以下旧交接与恢复清单保留供追溯；其中全项目启动、本地 CI 优先级等不再作为当前 GPT 写作的默认要求。
 
 # Handoff
 

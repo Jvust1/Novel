@@ -1,0 +1,268 @@
+{
+  "schema_version": "1.0",
+  "project_id": "demo-retreating-tide",
+  "chapter_id": "chapter-001",
+  "revision": "r1",
+  "status": "candidate",
+  "title": "退潮前的失物招领·第一章 领取人",
+  "purpose": "原创单章插件实写演示。虚构人物、地点和事件，不属于用户真实原稿或已接受正史。",
+  "acceptance": {
+    "author_accepted": null,
+    "human_reviewed": null,
+    "memory_accepted": null
+  },
+  "viewpoint": {
+    "character_id": "char-taoqing",
+    "mode": "third_person_limited",
+    "constraint": "叙述只呈现陶青在场可见、可闻、可读的信息；他人的说法不自动升级为客观真相。"
+  },
+  "world": {
+    "world_id": "world-weigang-demo",
+    "location_id": "loc-old-ferry-terminal",
+    "name": "虚构旧港客运站（正文未给港名）",
+    "locked_facts": [],
+    "candidate_facts": [
+      {
+        "fact_id": "world-001",
+        "text": "旧站当天结束运营，翌日封门；失物转交新码头，陶青的岗位不随迁。"
+      },
+      {
+        "fact_id": "world-002",
+        "text": "旧栈桥外沿围蓝色铁皮，桥门上锁，部分护栏已经拆下；南侧卸货坡道能斜看外排墩柱。"
+      },
+      {
+        "fact_id": "world-003",
+        "text": "外二指旧栈桥外排第二根墩柱。黄雨裤和测绳在退潮过程中变得可见，桥裙遮挡岸上视线。"
+      },
+      {
+        "fact_id": "world-004",
+        "text": "陶青持有18:10班车票，翌日07:00须到县城宾馆试工。她在救援过程中目睹班车离开。"
+      },
+      {
+        "fact_id": "world-005",
+        "text": "章内年份、季节、当天精确潮高以及施工项目法律责任均未设定，不应据此补写真实地方事实。"
+      }
+    ]
+  },
+  "characters": [
+    {
+      "character_id": "char-taoqing",
+      "name": "陶青",
+      "role": "旧站临时失物招领员、视角人物",
+      "current_goal": "将有关工具包和代领人的异常如实交给值班人员，并完成交接、解决赴县城的交通。",
+      "pressure": "错过班车；翌日07:00试工；交接尚未完成。",
+      "resources": [
+        "值班手电",
+        "手机",
+        "填写过的代领表",
+        "原始求救纸条",
+        "现场照片"
+      ],
+      "relationships": [
+        {
+          "target_id": "char-lvamian",
+          "state": "认得补帆铺师傅；从互相催促转为现场合作"
+        },
+        {
+          "target_id": "char-laodeng",
+          "state": "当班同事；老邓等她回来完成交接"
+        }
+      ],
+      "known_at_start": [
+        "工具包于15:40送达柜台，物品中登记有活扳手、测绳和两只不成对的手套",
+        "自己的交接和班车安排"
+      ],
+      "known_at_end": [
+        "孟川自称工头及代领人，提供了名字和号码，未取得包",
+        "补丁实际为当天早上所缝，据吕阿棉说明并当场验证，补丁有夹层",
+        "夹层纸条写有外二底、腿卡的求救内容",
+        "韩平确实被困桥下，并已获救",
+        "韩平承认工具包为自己的",
+        "韩平称自己将包挂上岸上放下的钩子，听见上方脚步，以为对方去拿绳子"
+      ],
+      "unknowns": [
+        "孟川的真实身份与电话号码是否有效",
+        "吊走工具包的人是谁",
+        "工具包何时以及如何再入水",
+        "孟川是否知道纸条的具体内容",
+        "横撑受损与韩平被困的完整原因"
+      ],
+      "corrected_belief": "陶青询问时试图用韩平主动放包漂流来解释求救；韩平明确否认自己将包放进水里。",
+      "secrets": null,
+      "injuries_or_limits": "脚底沾砂，未写成伤病；不进入桥下，不执行专业救援。",
+      "latest_change": "从负责归还物品转为掌握异常领取线索的现场见证人。"
+    },
+    {
+      "character_id": "char-lvamian",
+      "name": "吕阿棉",
+      "role": "补帆师傅、韩平姑姑",
+      "current_goal": "陪护获救的韩平。",
+      "pressure": "原本失联的侄子受伤；急于找人。",
+      "resources": [
+        "对包袋结构、韩平习惯和旧港道路的熟悉",
+        "工具包（救援后暂时接到手中）"
+      ],
+      "known_at_start": [
+        "红补丁当天早上由自己缝制，夹层可装钱",
+        "韩平中午说要下桥检查被砸弯的铁撑",
+        "韩平没有按约于15:00到店量棚布",
+        "自己已去宿舍寻找并向港口值班室报了情况"
+      ],
+      "known_at_end": [
+        "现场取出了求救纸条",
+        "韩平被困外二底并已获救",
+        "听见韩平关于工具包被吊走的叙述",
+        "只看过孟川签名，不能凭同姓确认具体人"
+      ],
+      "unknowns": [
+        "来领包的人究竟是哪一位孟姓男子",
+        "谁提走包、谁使包入水",
+        "韩平伤情的专业结论"
+      ],
+      "secrets": null,
+      "injuries_or_limits": "无已知伤病；紧张时手电不稳，后来借护栏稳住光束。",
+      "latest_change": "已经找到侄子，但尚不清楚延误救援的过程。"
+    },
+    {
+      "character_id": "char-hanping",
+      "name": "韩平",
+      "role": "工具包物主、栈桥作业人员",
+      "current_goal": "接受救援和后续治疗。",
+      "pressure": "右腿受困后获救，手指有血迹，身体受冷。",
+      "known_at_start": [
+        "自己被卡的位置和受伤状态",
+        "自己写过求救纸条并将包挂上岸上放下的钩子",
+        "听见上方脚步"
+      ],
+      "known_at_end": [
+        "有人通过工具包找到自己，包现已归到姑姑手上",
+        "陶青说包被捞起时是湿的"
+      ],
+      "unknowns": [
+        "提包者的身份",
+        "工具包被提走以后的路线",
+        "孟川在柜台的全部言行",
+        "自己伤情的专业诊断"
+      ],
+      "belief_not_fact": "当时以为提包的人去拿绳子救自己；文本没有证实该推测。",
+      "secrets": null,
+      "injuries_or_limits": "右腿夹在铁撑与墩柱之间，现已被救出并固定；最终诊断未知。",
+      "latest_change": "从无人确认的失联者成为获救证人。"
+    },
+    {
+      "character_id": "char-mengchuan-claimed",
+      "name": "孟川（自报姓名，未核验）",
+      "role": "未完成领取的代领人",
+      "current_goal": "开篇显露的目标是取走工具包；章末所在位置与后续行动未知。",
+      "observed": [
+        "自称韩平工头，称韩平脚扭后在宿舍",
+        "先问包内的纸是否被看过，并称是票据",
+        "伸手托住包底红补丁",
+        "称补丁约为去年所补，与吕阿棉陈述冲突",
+        "留下姓名和电话号码后离开，未拿走包"
+      ],
+      "knowledge_boundary": "只能确认他主动提及纸张和韩平伤脚；不能确认他看过求救纸条、在桥上放过钩子、是实际工头或参与了事故。",
+      "unknowns": [
+        "真实身份、动机、是否有同伙、是否知道韩平仍被困"
+      ],
+      "secrets": null
+    },
+    {
+      "character_id": "char-laodeng",
+      "name": "老邓",
+      "role": "售票与交接同事",
+      "known_at_end": [
+        "陶青为现场救援错过班车",
+        "交接须等待补签"
+      ],
+      "unknowns": [
+        "未在现场，不自动知道韩平关于吊包的叙述"
+      ]
+    },
+    {
+      "character_id": "char-zhoufu",
+      "name": "周福",
+      "role": "登记中的工具包拾得人",
+      "status": "仅见登记，未出场、未核验",
+      "known_to_pov": [
+        "登记记有姓名、联系电话、拾得地点"
+      ],
+      "unknowns": [
+        "实际拾得时间和经过"
+      ]
+    }
+  ],
+  "clues": [
+    {
+      "clue_id": "clue-bag",
+      "item": "乌青帆布工具包、黄提手、底部红补丁",
+      "custody_at_end": "吕阿棉暂持，陶青已说明将交给值班人员；交接尚未在正文完成",
+      "constraint": "不可写成已由机关正式接收或鉴定"
+    },
+    {
+      "clue_id": "clue-note",
+      "item": "水泥袋内衬塑料片，黑色记号笔写求救内容",
+      "text": "外二底。腿卡。有人吗。",
+      "custody_at_end": "陶青外套口袋；有照片已发送值班室",
+      "constraint": "内容与获救位置对应，但未由笔迹鉴定确认为韩平亲笔；本人叙述承认写过纸条"
+    },
+    {
+      "clue_id": "clue-claim-form",
+      "item": "孟川填写的代领表",
+      "details": "留有姓名与号码；号码末笔拖出格子；陶青后加注未领取",
+      "custody_at_end": "陶青携表追向值班员，尚未描写交付完成",
+      "constraint": "电话号码未拨打、身份未核验；不可视作定位证据"
+    },
+    {
+      "clue_id": "clue-delivery-time",
+      "item": "失物登记时间15:40",
+      "constraint": "仅为送达柜台时刻，实际捞起与入水时刻未知"
+    },
+    {
+      "clue_id": "clue-lifting-account",
+      "item": "韩平关于包被钩子吊走及脚步声的口述",
+      "constraint": "直接口述证据，未获独立核验；不能据此确定提包人是孟川"
+    }
+  ],
+  "scene_plan_file": "scene_plan.json",
+  "chapter_payoff": "通过被扣留工具包中的实际线索找到并救出韩平，物主身份得以确认。",
+  "open_questions": [
+    {
+      "thread_id": "thread-bag-route",
+      "question": "提走工具包的人为何未立即完成救援，包又如何到了旧客运台阶的水里？",
+      "status": "open"
+    },
+    {
+      "thread_id": "thread-claimant",
+      "question": "孟川是谁，他先问纸张与桥上提包者是否有关？",
+      "status": "open"
+    },
+    {
+      "thread_id": "thread-taoqing-departure",
+      "question": "陶青能否完成交接、承担额外交通费并准时试工？",
+      "status": "open"
+    }
+  ],
+  "review": {
+    "self_review": "completed_with_local_repairs",
+    "human_review": null,
+    "external_similarity_scan": "not_run",
+    "reference_text_used": false,
+    "notes": [
+      "起草前先写场景计划；局部修订完善救援协作和实物携带路线。",
+      "不把孟川的自报身份或可疑举动记为犯罪事实。",
+      "将韩平措辞改为我没往水里放，只确认其自身行为。",
+      "将15:40明确为柜台接收时间，避免错误提升为打捞时间。",
+      "没有随机错字、检测器规避、作者验收或记忆入正史声明。"
+    ],
+    "editorial_review": "completed_after_local_repairs; author acceptance still pending"
+  },
+  "manuscript_metrics": {
+    "body_han_characters": 2659,
+    "body_non_whitespace_characters": 3228,
+    "file_unicode_characters": 3509,
+    "file_utf8_bytes": 9993,
+    "sha256": "b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e",
+    "counts_exclude_headings": true
+  }
+}

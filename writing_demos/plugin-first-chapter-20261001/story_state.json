@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "demo_kind": "ORIGINAL_PUBLIC_TEST",
+  "story_id": "demo-retreating-tide",
+  "revision": 0,
+  "status": "draft_awaiting_author_review",
+  "title": "退潮前的失物招领",
+  "confirmed_canon": {
+    "facts": [],
+    "accepted_chapters": [],
+    "memory_updates": []
+  },
+  "candidate_context_source": {
+    "revision": "r1",
+    "location": "draft_context.json",
+    "sha256": "57dc1f6822b077418a6052250d7162e30b1d6cc240c3d5b090fc36a6c3538f8c"
+  },
+  "progress": {
+    "chapter_id": "chapter-001",
+    "base_story_revision": 0,
+    "plan_revision": "p1",
+    "draft_revision": "r1",
+    "stage": "awaiting_author_review",
+    "plan_acceptance": null,
+    "chapter_acceptance": null,
+    "memory_acceptance": null,
+    "plan_source": {
+      "revision": "p1",
+      "location": "scene_plan.json",
+      "sha256": "d0d3b3e0534f0e0e23a3f91222c1b7940fb76c6b7dfa74d8f661e859b93fa0ce"
+    },
+    "draft_source": {
+      "revision": "r1",
+      "location": "chapter-001.md",
+      "sha256": "b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e"
+    },
+    "review_source": {
+      "revision": "r1",
+      "location": "review.json",
+      "sha256": "4bda707e8a88dd12e9f6d394d355fb71779f24b896b99a6bac9080d78045a4f2"
+    },
+    "open_review_issues": [
+      "孟川身份与电话号码未核验",
+      "提包人、工具包入水时刻和经过未知",
+      "陶青能否赶上翌日试工待续"
+    ],
+    "next_action": "Read the complete r1 manuscript and ask the author what to revise or whether to accept this exact version. Do not advance canon or claim memory acceptance."
+  },
+  "pending_memory_updates": [],
+  "privacy": "This public original test is not permission to publish private real novels, characters or progress."
+}
