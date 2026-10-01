@@ -841,7 +841,20 @@ def rebuild_accepted_history(
     if type(recent_limit) is not int or recent_limit < 1:
         raise StateError("recent_limit must be a positive integer")
     readback = _readback_history_binding(state)
+    return _rebuild_history_records(state, readback, expected_history_sha256=expected_history_sha256,
+                                    recent_limit=recent_limit)
 
+
+def _rebuild_history_records(state: StoryState, readback: dict[str, Any], *,
+                             expected_history_sha256: str | None = None,
+                             recent_limit: int = 8) -> dict[str, Any]:
+    """Pure shared derivation; the owning state/journal API validates readback.
+
+    This helper performs no ownership admission or I/O and is not an entry point.
+    Journal callers supply actual envelope readback, never a fabricated v1 receipt.
+    """
+    if type(recent_limit) is not int or recent_limit < 1:
+        raise StateError("recent_limit must be a positive integer")
     names: list[str] = []
     for row in state.canon.get("characters", []):
         if isinstance(row, dict):
@@ -934,6 +947,19 @@ def preflight_next_chapter_context(
             "current_time", "current_place", "recent_chapter_summaries", "open_foreshadowing", "forbidden_revelations")},
     }
 
+    return _preflight_history_context(
+        state, history, sources, budget_bytes, required_sources=required_sources,
+        reserve_bytes=reserve_bytes, history_source_limit=history_source_limit,
+        include_current_draft=include_current_draft)
+
+
+def _preflight_history_context(state: StoryState, history: dict[str, Any], sources: list[dict],
+                               budget_bytes: int, *, required_sources: list[dict] | None = None,
+                               reserve_bytes: int = 0, history_source_limit: int = 4,
+                               include_current_draft: bool = True) -> dict[str, Any]:
+    """Shared formatting after the owning API has admitted state and history."""
+    if type(history_source_limit) is not int or history_source_limit < 0:
+        raise StateError("history_source_limit must be a nonnegative integer")
     supplied = list(sources)
     existing: set[tuple[str, str]] = set()
     for raw in supplied:

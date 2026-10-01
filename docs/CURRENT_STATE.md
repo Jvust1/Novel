@@ -1,3 +1,8 @@
+# 2026-10-01 — 当前作者日志续写候选
+
+当前分支 `feat/journal-continuation-20261001` 叠加已验证 #54。作者接受设定/文风变化、完成影响复审并真实保存读回后，可经日志自己的身份进入实际预算续写；不剥离日志归属，不自动追加作者接受。
+读 [日志续写说明](JOURNAL_CONTINUATION.md) 与 [当前工程记录](../governance/journal_continuation_candidate.json)。下方 #54 及更早范围与分支保留为历史。
+
 # 2026-10-01 — 当前档案绑定续写候选
 
 当前集成候选在 `feat/accepted-archive-continuation-20261001`，叠加已发布 #53；尚未合入 main。

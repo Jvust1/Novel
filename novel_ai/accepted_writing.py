@@ -1,8 +1,9 @@
 """Optional source-bound continuation through the existing history and budget APIs.
 
-Only an actually read, unowned v1 local story archive is admitted. Embedded
-accepted snapshots are authoritative here; their locations are never fetched.
-No author confirmation, story transition, cache or canonical write occurs.
+An actually read v1 archive or explicitly opted-in author journal is admitted
+through its owning protocol. Embedded accepted snapshots are authoritative;
+their locations are never fetched. No new confirmation/event, cache or
+canonical write occurs. Journal replay retains its existing pure reducer.
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from . import gpt_story_journal as journal_api
 from . import gpt_story_state as state_api
 from .engine import ChapterResult, NovelEngine
 from .models import ChapterPlan, Character, SceneBeat, StoryBible, StyleFingerprint
@@ -79,6 +81,84 @@ class RestoredSource:
         _fresh(self)
 
 
+@dataclass(frozen=True)
+class RestoredJournalSource:
+    """A separate owned-envelope identity; v1 source bindings stay unchanged."""
+
+    path: str
+    story_id: str
+    revision: int
+    file_sha256: str
+    state_sha256: str
+    context_revision: int
+    journal_sha256: str
+
+    def binding(self) -> dict[str, Any]:
+        return {"source_kind": "author_journal", **{key: getattr(self, key) for key in (
+            "path", "story_id", "revision", "file_sha256", "state_sha256",
+            "context_revision", "journal_sha256")}}
+
+    def expected_identity(self) -> dict[str, Any]:
+        return {"expected_story_id": self.story_id, "expected_revision": self.revision,
+                "expected_context_revision": self.context_revision,
+                "expected_journal_sha256": self.journal_sha256,
+                "expected_file_sha256": self.file_sha256}
+
+    @property
+    def state(self) -> state_api.StoryState:
+        return _fresh(self)[1]
+
+    @property
+    def journal(self) -> journal_api.Journal:
+        current, _, value = _load_journal(self.path, **self.expected_identity())
+        if current.binding() != self.binding():
+            raise ArchiveError("journal binding differs from its actual saved content")
+        return value
+
+    def assert_current(self) -> None:
+        _fresh(self)
+
+
+ArchiveSource = RestoredSource | RestoredJournalSource
+
+
+def _load_journal(path: str | Path, *, expected_story_id: str, expected_revision: int,
+                  expected_context_revision: int, expected_journal_sha256: str,
+                  expected_file_sha256: str) -> tuple[RestoredJournalSource, state_api.StoryState, journal_api.Journal]:
+    target, raw = _read(path)
+    if not isinstance(expected_file_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_file_sha256):
+        raise ArchiveError("an actual expected journal file SHA-256 is required")
+    if _hash(raw) != expected_file_sha256:
+        raise ArchiveError("journal archive bytes changed; restore and reconcile")
+    payload = strict_json_object(raw.decode("utf-8"), max_bytes=MAX_ARCHIVE_BYTES)
+    if payload.get("engine_version") != journal_api.OWNER:
+        raise ArchiveError("the explicit journal entry requires an author journal envelope")
+    value = journal_api.load_journal(target, expected_story_id=expected_story_id,
+                                     expected_sha256=expected_file_sha256)
+    # Only the owning journal API can admit its current actual observed readback.
+    # This never creates v1 write/read receipts or removes journal_owner.
+    journal_api.rebuild_journal_accepted_history(value, expected_story_id=expected_story_id,
+        expected_revision=expected_revision, expected_context_revision=expected_context_revision,
+        expected_journal_sha256=expected_journal_sha256, expected_file_sha256=expected_file_sha256)
+    state = journal_api.owned_story(value)
+    result = RestoredJournalSource(str(target), state.story_id, state.revision,
+        expected_file_sha256, state_api.state_fingerprint(state), expected_context_revision,
+        expected_journal_sha256)
+    after, content = _read(target)
+    if str(after) != result.path or _hash(content) != expected_file_sha256:
+        raise ArchiveError("journal archive changed during restore")
+    return result, state, value
+
+
+def restore_journal_source(path: str | Path, *, expected_story_id: str, expected_revision: int,
+                            expected_context_revision: int, expected_journal_sha256: str,
+                            expected_file_sha256: str) -> RestoredJournalSource:
+    """Explicitly opt into the owning journal's observed continuation protocol."""
+    return _load_journal(path, expected_story_id=expected_story_id, expected_revision=expected_revision,
+        expected_context_revision=expected_context_revision, expected_journal_sha256=expected_journal_sha256,
+        expected_file_sha256=expected_file_sha256)[0]
+
+
 def _load(path: str | Path, *, expected_story_id: str, expected_revision: int,
           expected_sha256: str) -> tuple[RestoredSource, state_api.StoryState]:
     if not isinstance(expected_story_id, str) or not expected_story_id.strip():
@@ -119,11 +199,14 @@ def restore_source(path: str | Path, *, expected_story_id: str, expected_revisio
                  expected_sha256=expected_sha256)[0]
 
 
-def _fresh(source: RestoredSource) -> tuple[RestoredSource, state_api.StoryState]:
-    if type(source) is not RestoredSource:
+def _fresh(source: ArchiveSource) -> tuple[ArchiveSource, state_api.StoryState]:
+    if type(source) is RestoredJournalSource:
+        current, state, _ = _load_journal(source.path, **source.expected_identity())
+    elif type(source) is RestoredSource:
+        current, state = _load(source.path, expected_story_id=source.story_id,
+                              expected_revision=source.revision, expected_sha256=source.file_sha256)
+    else:
         raise ArchiveError("restore an explicit local archive before continuation")
-    current, state = _load(source.path, expected_story_id=source.story_id,
-                          expected_revision=source.revision, expected_sha256=source.file_sha256)
     if current.binding() != source.binding():
         raise ArchiveError("archive binding differs from its actual saved content")
     return current, state
@@ -203,7 +286,7 @@ def _ids(values, name: str) -> list[str]:
 
 @dataclass(frozen=True)
 class _Prepared:
-    source: RestoredSource
+    source: ArchiveSource
     history: dict[str, Any]
     plan: ChapterPlan
     bible: StoryBible
@@ -215,7 +298,7 @@ class _Prepared:
     story_history: list[dict[str, Any]]
 
 
-def _prepare(source: RestoredSource, *, current_chapter_id: str,
+def _prepare(source: ArchiveSource, *, current_chapter_id: str,
              recall_chapter_ids=(), required_chapter_ids=(), expected_history_sha256: str | None = None,
              budget_bytes: int = 120000, reserve_bytes: int = 0, history_source_limit: int = 4) -> _Prepared:
     source, state = _fresh(source)
@@ -232,8 +315,13 @@ def _prepare(source: RestoredSource, *, current_chapter_id: str,
         raise ArchiveError("historical chapter rewriting requires a separate reconciliation")
     plan = _plan(state.progress.plan)
     _check_names(state)
-    history = state_api.rebuild_accepted_history(state, expected_story_id=source.story_id,
-                                                expected_history_sha256=expected_history_sha256)
+    if type(source) is RestoredJournalSource:
+        journal = source.journal
+        history = journal_api.rebuild_journal_accepted_history(journal, **source.expected_identity(),
+            expected_history_sha256=expected_history_sha256)
+    else:
+        history = state_api.rebuild_accepted_history(state, expected_story_id=source.story_id,
+                                                    expected_history_sha256=expected_history_sha256)
     recall, required = _ids(recall_chapter_ids, "recall_chapter_ids"), _ids(required_chapter_ids, "required_chapter_ids")
     chosen = recall + [key for key in required if key not in recall]
     if any(key not in accepted for key in chosen):
@@ -249,10 +337,15 @@ def _prepare(source: RestoredSource, *, current_chapter_id: str,
     positive_int(budget_bytes, name="budget_bytes")
     if type(reserve_bytes) is not int or reserve_bytes < 0:
         raise ArchiveError("reserve_bytes must be a nonnegative integer")
-    context = state_api.preflight_next_chapter_context(
-        state, sources, budget_bytes, reserve_bytes=reserve_bytes + footer_bytes,
-        expected_story_id=source.story_id, expected_history_sha256=history["accepted_history_sha256"],
-        history_source_limit=history_source_limit, include_current_draft=False)
+    preflight_options = {"reserve_bytes": reserve_bytes + footer_bytes,
+        "expected_history_sha256": history["accepted_history_sha256"],
+        "history_source_limit": history_source_limit, "include_current_draft": False}
+    if type(source) is RestoredJournalSource:
+        context = journal_api.preflight_journal_next_chapter_context(
+            journal, sources, budget_bytes, **source.expected_identity(), **preflight_options)
+    else:
+        context = state_api.preflight_next_chapter_context(
+            state, sources, budget_bytes, expected_story_id=source.story_id, **preflight_options)
     if context["blocked"]:
         raise ArchiveError("accepted context is blocked; required source/context must be reconciled before writing")
     context["context_text"] += footer
@@ -272,7 +365,7 @@ def _prepare(source: RestoredSource, *, current_chapter_id: str,
                      state_api.source_fingerprint(state.progress.plan), voices, plans)
 
 
-def prepare_accepted_context(source: RestoredSource, **options: Any) -> dict[str, Any]:
+def prepare_accepted_context(source: ArchiveSource, **options: Any) -> dict[str, Any]:
     """Read-only preview. Full private context is returned only to the caller."""
     prepared = _prepare(source, **options)
     return {"source": prepared.source.binding(), "history": deepcopy(prepared.history),
@@ -294,7 +387,7 @@ class AcceptedWritingResult:
     """A pending draft with observed execution evidence; never author acceptance."""
 
     result: ChapterResult
-    _source: RestoredSource = field(repr=False)
+    _source: ArchiveSource = field(repr=False)
     _evidence_json: bytes = field(repr=False)
     _observed_evidence_sha256: str | None = field(default=None, init=False, repr=False)
 
@@ -325,7 +418,7 @@ class AcceptedWritingResult:
         return json.loads(self._evidence_json)
 
 
-def _run(source: RestoredSource, *, writer_provider: OpenAICompatibleProvider,
+def _run(source: ArchiveSource, *, writer_provider: OpenAICompatibleProvider,
          reviewer_provider: OpenAICompatibleProvider | None, output_policy: OutputPolicy,
          current_chapter_id: str, recall_chapter_ids=(), required_chapter_ids=(),
          expected_history_sha256: str | None = None, budget_bytes: int = 120000,
@@ -364,7 +457,8 @@ def _run(source: RestoredSource, *, writer_provider: OpenAICompatibleProvider,
                                       if row["structure"]["status"] != "parsed"],
         "author_acceptance": "pending; source state unchanged",
         "external_originals": "not fetched; embedded accepted snapshots only",
-        "scope": "unowned v1 local archive; journal protocol remains separate"}
+        "scope": ("author-journal owned continuation; no transition or acceptance"
+                  if type(source) is RestoredJournalSource else "unowned v1 local archive")}
     bound = AcceptedWritingResult(result, prepared.source, _json(evidence))
     object.__setattr__(bound, "_observed_evidence_sha256", _hash(bound._evidence_json))
     bound.assert_current()

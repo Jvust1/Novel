@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -439,6 +440,110 @@ def preflight_journal(value: Journal | dict, sources: list[dict], budget_bytes: 
         result["reasons"].append("reconciled context requires actual save/readback before drafting")
     result["journal_sha256"] = _token(p)
     result["context_revision"] = p.context_revision
+    return result
+
+
+def _continuation_owner(value: Journal, *, expected_story_id: str, expected_revision: int,
+                        expected_context_revision: int, expected_journal_sha256: str,
+                        expected_file_sha256: str) -> tuple[Projection, v1.StoryState, dict]:
+    """Admit an observed journal, never turn an owned projection into v1 input.
+
+    The actual writer separately rereads the bound file before every request.
+    This API admits only the private observation created by load_journal, not
+    a public receipt string or a reserialized/replayed diagnostic projection.
+    """
+    if type(value) is not Journal:
+        raise JournalError("continuation requires an actual load_journal observation")
+    if not isinstance(expected_story_id, str) or not expected_story_id.strip():
+        raise JournalError("an explicit expected story ID is required")
+    for number in (expected_revision, expected_context_revision):
+        if type(number) is not int or number < 0:
+            raise JournalError("explicit nonnegative story and context revisions are required")
+    for digest in (expected_journal_sha256, expected_file_sha256):
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise JournalError("actual expected journal and file SHA-256 identities are required")
+    p = _project_journal(value)
+    story = _story(p)
+    token = _token(p)
+    if (p.id != expected_story_id or story.revision != expected_revision
+        or p.context_revision != expected_context_revision or token != expected_journal_sha256):
+        raise JournalError("journal continuation identity or version differs")
+    observed = value._observed_readback
+    if (not isinstance(observed, dict) or observed.get("status") != "verified"
+        or observed.get("journal_sha256") != token
+        or observed.get("file_sha256") != expected_file_sha256
+        or not isinstance(observed.get("location"), str) or not observed["location"]):
+        raise JournalError("continuation requires the current actual journal save/readback")
+    receipt = value.write_receipt
+    if (receipt.get("status") != "success" or receipt.get("journal_sha256") != token
+        or receipt.get("content_sha256") != _envelope_digest(value)):
+        raise JournalError("journal content differs from its saved envelope receipt")
+    if _blocked(p):
+        raise JournalError("author amendment/reconciliation is pending; do not continue")
+    if p.amendment is not None and (not p.impacts or any(item["status"] != "compatible" for item in p.impacts.values())):
+        raise JournalError("every amendment impact must have compatible review evidence")
+    if not story.accepted_chapters:
+        raise JournalError("continuation requires accepted history; use the existing first-chapter workflow")
+    binding = {"authority": "actual_author_journal_envelope", "story_id": p.id,
+               "story_revision": story.revision, "context_revision": p.context_revision,
+               "journal_sha256": token, "file_sha256": expected_file_sha256}
+    return p, story, binding
+
+
+def rebuild_journal_accepted_history(value: Journal, *, expected_story_id: str, expected_revision: int,
+                             expected_context_revision: int, expected_journal_sha256: str,
+                             expected_file_sha256: str, expected_history_sha256: str | None = None,
+                             recent_limit: int = 8) -> dict[str, Any]:
+    """Owned journal history using the same pure derivation as the v1 API.
+
+    There is no v1 load/write receipt substitution. The envelope's actual private
+    observation admits this read; public story projections retain journal_owner.
+    """
+    _, story, binding = _continuation_owner(value, expected_story_id=expected_story_id,
+        expected_revision=expected_revision, expected_context_revision=expected_context_revision,
+        expected_journal_sha256=expected_journal_sha256, expected_file_sha256=expected_file_sha256)
+    history = v1._rebuild_history_records(story, {
+        "story_id": story.story_id, "story_revision": story.revision,
+        "file_sha256": expected_file_sha256, "base_context_sha256": _context(story),
+    }, expected_history_sha256=expected_history_sha256, recent_limit=recent_limit)
+    history["journal_binding"] = binding
+    history["readback_scope"] = "actual_author_journal_envelope"
+    return history
+
+
+def preflight_journal_next_chapter_context(value: Journal, sources: list[dict], budget_bytes: int, *,
+                                   expected_story_id: str, expected_revision: int,
+                                   expected_context_revision: int, expected_journal_sha256: str,
+                                   expected_file_sha256: str,
+                                   expected_history_sha256: str | None = None,
+                                   required_sources: list[dict] | None = None,
+                                   reserve_bytes: int = 0, history_source_limit: int = 4,
+                                   include_current_draft: bool = True) -> dict[str, Any]:
+    """Source-admitted continuation; existing preflight_journal remains unchanged."""
+    _, story, binding = _continuation_owner(value, expected_story_id=expected_story_id,
+        expected_revision=expected_revision, expected_context_revision=expected_context_revision,
+        expected_journal_sha256=expected_journal_sha256, expected_file_sha256=expected_file_sha256)
+    if not story.progress.chapter_id or story.progress.phase not in v1.EDITABLE:
+        raise JournalError("next-chapter preflight requires an active chapter before memory is applied")
+    if type(budget_bytes) is not int or budget_bytes <= 0 or type(reserve_bytes) is not int or reserve_bytes < 0:
+        raise JournalError("budget_bytes must be positive and reserve_bytes nonnegative integers")
+    history = rebuild_journal_accepted_history(value, expected_story_id=expected_story_id,
+        expected_revision=expected_revision, expected_context_revision=expected_context_revision,
+        expected_journal_sha256=expected_journal_sha256, expected_file_sha256=expected_file_sha256,
+        expected_history_sha256=expected_history_sha256)
+    authority_text = "\nAUTHOR JOURNAL IDENTITY DATA ONLY\n" + _json(binding).decode("utf-8")
+    authority_bytes = len(authority_text.encode("utf-8"))
+    result = v1._preflight_history_context(story, history, sources, budget_bytes,
+        required_sources=required_sources, reserve_bytes=reserve_bytes + authority_bytes,
+        history_source_limit=history_source_limit, include_current_draft=include_current_draft)
+    result["context_text"] += authority_text
+    result["used_bytes"] += authority_bytes
+    result["reserve_bytes"] = reserve_bytes
+    result["journal_authority_bytes"] = authority_bytes
+    result["journal_binding"] = binding
+    if result["used_bytes"] + reserve_bytes > budget_bytes:
+        result["blocked"] = True
+        result["reasons"].append("journal authority and accepted history do not fit; do not truncate")
     return result
 
 

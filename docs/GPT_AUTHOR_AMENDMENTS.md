@@ -90,3 +90,7 @@ python scripts/story_journal.py preflight /private/story-journal.json --story-id
 `inspect` 给出来源、影响清单、版本和真实读回；`--binding` 仅给绑定字段。第一次继续写作命令的 `checkpoint` 使用本次读回中的 `journal_sha256 / file_sha256 / location`，不能手工编造。程序从不把 `inspect`、审校成功或写文件解释为作者接受。
 
 测试：[`基础/命令行回归`](../tests/test_gpt_story_journal.py)、[`独立边界测试`](../tests/test_gpt_journal_adversarial.py)。只用原创合成资料，覆盖迁移、文风修改、计划重确认、复审遗漏/冲突、私有保存/恢复、后续章节、重复/过期输入、日志顺序和写入中断；不等于真实长篇质量评价。
+
+## 9. 完成变更后进入实际受控续写
+
+已有接受历史且当前日志真正保存读回后，可按 [日志续写入口](JOURNAL_CONTINUATION.md) 重新确认当前计划，再进入原预算会话。新入口始终通过日志自身的历史/预检接口，保留所有权，不伪造 v1 回执，不自动接受正文或记忆。
