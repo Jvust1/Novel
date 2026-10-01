@@ -1,4 +1,4 @@
-当前候选：`chore/quality-gates-integrated-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+当前候选：`fix/reference-text-decoding-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
 
 # Novel：在 GPT 中写长篇小说
 
@@ -22,6 +22,8 @@
 
 已接受版本可直接整理为私有审阅包：[按明确章节顺序精确导出与保存核对](docs/ACCEPTED_REVIEW_EXPORT.md)。
 
+参考文本不再悄悄丢字：[编码确认、完整读取与分析前检查](docs/REFERENCE_DECODING.md)。
+
 ## 从这里开始
 
 1. 读取 [AGENTS.md](AGENTS.md) 和 [GPT 写作入口](docs/GPT_WRITING_ENTRY.md)，核对实际读取的分支或提交
@@ -31,7 +33,7 @@
 
 可直接告诉 GPT：
 
-> 通过 GitHub 插件读取 Jvust1/Novel 的 chore/quality-gates-integrated-20261001 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
+> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/reference-text-decoding-20261001 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
 
 如果插件没有读到该分支或 Drive 文件，GPT 应说明缺少哪个来源，请作者提供可访问的位置；不能假装已加载。上述分支入口尚未合入 `main`，默认分支内容未必相同。
 

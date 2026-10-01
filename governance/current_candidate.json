@@ -1,20 +1,20 @@
 {
   "schema": "novel-public-current-candidate-v1",
   "repository": "Jvust1/Novel",
-  "branch": "chore/quality-gates-integrated-20261001",
+  "branch": "fix/reference-text-decoding-20261001",
   "status": "unmerged_draft_candidate",
   "entry_files": [
     "README.md",
     "AGENTS.md",
     "docs/GPT_WRITING_ENTRY.md"
   ],
-  "candidate_record": "governance/quality_gates_candidate.json",
+  "candidate_record": "governance/reference_decoding_candidate.json",
   "verified_base": {
-    "pr": 61,
-    "head": "d2e56e7459cf8bd85637c7953c64a5d8245aad2a",
-    "ci_run": 36901977307,
+    "pr": 62,
+    "head": "0c6d18543f14af9ad10e845b880bfee70cad1200",
+    "ci_run": 36904885010,
     "tests_each_python": {
-      "passed": 1766,
+      "passed": 1779,
       "skipped": 1
     }
   },

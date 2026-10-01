@@ -15,7 +15,7 @@ from novel_ai.memory_ui import render_memory_proposals
 from novel_ai.longform_tools import near_duplicate_chapters
 from novel_ai.longform_analytics import trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
 from novel_ai.models import Character, ChapterPlan, StoryBible, StyleFingerprint
-from novel_ai.reading import extract_reference_text
+from novel_ai.reading import extract_reference
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.request_budget import RequestBudget, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
@@ -207,6 +207,20 @@ with style_tab:
     )
 
     uploaded = st.file_uploader("上传参考文本（支持 TXT / MD / DOCX / PDF）", type=["txt", "md", "docx", "pdf"])
+    uploaded_data = uploaded.getvalue() if uploaded is not None else None
+    encoding_source = (project_name, uploaded.name, hashlib.sha256(uploaded_data).hexdigest()) if uploaded is not None else None
+    if st.session_state.get("reference_encoding_source") != encoding_source:
+        st.session_state["reference_text_encoding"] = "自动确认 UTF-8 或 BOM"
+        st.session_state["reference_encoding_source"] = encoding_source
+    reference_encoding_labels = {
+        "自动确认 UTF-8 或 BOM": None, "GB18030": "gb18030", "GBK": "gbk", "Big5": "big5",
+        "UTF-8": "utf-8", "UTF-16 小端": "utf-16-le", "UTF-16 大端": "utf-16-be",
+        "UTF-32 小端": "utf-32-le", "UTF-32 大端": "utf-32-be", "Windows-1252": "cp1252",
+    }
+    reference_encoding_label = st.selectbox(
+        "TXT/MD 原文件编码", list(reference_encoding_labels), key="reference_text_encoding",
+        help="无法完整读取时先核对原件，再明确选择。候选编码只是建议，不会自动丢弃字节。",
+    )
     pasted_reference = st.text_area("或粘贴参考文本", height=220)
     reference_name = st.text_input("风格来源名称", value=f"Reference-{len(st.session_state.style_profiles) + 1}")
     weight = st.number_input("融合权重", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
@@ -219,9 +233,20 @@ with style_tab:
 
     if st.button("分析并加入风格库", use_container_width=True):
         text = pasted_reference
-        if uploaded is not None:
-            text = extract_reference_text(uploaded.name, uploaded.getvalue())
-        if len(text.strip()) < 300:
+        reading_info = None
+        try:
+            if uploaded is not None:
+                choice = reference_encoding_labels[reference_encoding_label]
+                if not uploaded.name.lower().endswith((".txt", ".md")):
+                    choice = None
+                extracted = extract_reference(uploaded.name, uploaded_data, encoding=choice)
+                text, reading_info = extracted.text, extracted.decoding
+        except ValueError as exc:
+            st.error(str(exc))
+            text = None
+        if text is None:
+            pass
+        elif len(text.strip()) < 300:
             st.warning("样本文本太短，建议至少提供 300 字；稳定分析最好使用更长样本。")
         else:
             try:
@@ -234,7 +259,8 @@ with style_tab:
 
                 signature = build_reference_signature(text)
                 st.session_state.style_profiles.append(
-                    {"name": reference_name, "weight": float(weight), "fingerprint": fp.model_dump()}
+                    {"name": reference_name, "weight": float(weight), "fingerprint": fp.model_dump(),
+                     "decoding": reading_info}
                 )
                 st.session_state.reference_hashes |= signature
 
