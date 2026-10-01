@@ -6,6 +6,16 @@
 
 本轮只验证合成资料的文件完整性、抽取/摘要中断恢复、评测目录独占与人工评分不被覆盖，以及本地 Recall 的数值/状态/来源契约和实际写作上下文范围。显式历史范围内未验证来源的长篇告警被省略，省略不代表告警已检查通过。本轮新增的最终稿/复审绑定、有限输出、严格 JSON 与 Hook 失败门禁同样只有合成资料及替身测试；不把模型 pass 或工程全绿当作作者接受、原创性证明或可发布结论。当前工程入口见 [HANDOFF](HANDOFF.md) 和 `governance/project_state.json`；历史 Drive 快照清单不是当前源代码 HEAD。冻结 benchmark 用例、既有运行和待人工评分状态保持不变。
 
+## E-ACCEPTED-HISTORY-20261001｜Accepted-history rebuild and next-chapter recovery
+**Date:** 2026-10-01 UTC
+**Status:** EXECUTABLE_HEAD_CI_VERIFIED
+
+The candidate starts from PR #50 head `35208537aa1fb830a2325ec1dd8870bdf0564190`. Focused local execution on the extracted, Drive-readback source ZIP reports **77 passed** across `tests/test_gpt_story_state.py` and `tests/test_gpt_candidate_review.py`; the five newly added accepted-history/next-preflight checks all pass. `py_compile/compileall` for changed Python files passes. The executable candidate commit is `7f2b93367661b0038bab2885851fed607f047882`; GitHub Actions run 36856263295 reports **1206 passed / 1 skipped** on both Python 3.11 and 3.12, with compileall and pytest successful.
+
+The new cases reproduce and guard: a retained old draft leaking after plan replacement; history use before real readback; rebuilding Voice/plan structure from accepted artifacts only; cross-story and stale-history fingerprints; candidate-only saves leaving accepted-history identity stable; restart/reload producing the same accepted-history identity; history-budget blocking; and CLI readback for accepted-history/next-preflight.
+
+This local container is Python 3.13 and lacks Streamlit, so repository-wide collection is not claimed locally. The repository-wide matrix evidence instead comes from GitHub Actions run 36856263295: Python 3.11 **1206 passed / 1 skipped in 59.20s** and Python 3.12 **1206 passed / 1 skipped in 62.80s**. No real manuscript, live model, human author authentication or literary-quality judgment is part of these synthetic checks.
+
 ## E-000｜Foundation baseline
 **Date:** 2026-08-19  
 **Status:** NOT_YET_RUN

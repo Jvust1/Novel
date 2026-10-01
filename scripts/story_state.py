@@ -13,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from pydantic import ValidationError
 from novel_ai.gpt_story_state import (
     Command, StateError, artifact, create_state, load_state, preflight_context,
-    save_state, state_fingerprint, transition, validate_state,
+    preflight_next_chapter_context, rebuild_accepted_history, save_state,
+    state_fingerprint, transition, validate_state,
 )
 
 
@@ -45,6 +46,24 @@ def main(argv=None):
     context.add_argument("--required")
     context.add_argument("--budget-bytes", type=int, required=True)
     context.add_argument("--reserve-bytes", type=int, default=0)
+    history = sub.add_parser("accepted-history", help="reread saved state and rebuild continuity only from accepted versions")
+    history.add_argument("path")
+    history.add_argument("--story-id", required=True)
+    history.add_argument("--revision", type=int)
+    history.add_argument("--sha256")
+    history.add_argument("--expected-history-sha256")
+    history.add_argument("--recent-limit", type=int, default=8)
+    next_context = sub.add_parser("next-preflight", help="reread accepted archive and prepare the real next-chapter context")
+    next_context.add_argument("path")
+    next_context.add_argument("--story-id", required=True)
+    next_context.add_argument("--revision", type=int)
+    next_context.add_argument("--sha256")
+    next_context.add_argument("--sources", required=True)
+    next_context.add_argument("--required")
+    next_context.add_argument("--budget-bytes", type=int, required=True)
+    next_context.add_argument("--reserve-bytes", type=int, default=0)
+    next_context.add_argument("--expected-history-sha256")
+    next_context.add_argument("--history-source-limit", type=int, default=4)
     src = sub.add_parser("artifact", help="read explicit UTF-8 file, hash its actual bytes, emit artifact JSON")
     src.add_argument("path")
     src.add_argument("--source-id", required=True)
@@ -89,6 +108,23 @@ def main(argv=None):
             output = preflight_context(validate_state(Path(args.path).read_bytes()), read_json(args.sources),
                                        args.budget_bytes, reserve_bytes=args.reserve_bytes,
                                        required_sources=read_json(args.required) if args.required else None)
+        elif args.command in {"accepted-history", "next-preflight"}:
+            raw = Path(args.path).read_bytes()
+            state = load_state(args.path, expected_story_id=args.story_id, expected_revision=args.revision,
+                               expected_sha256=args.sha256 or hashlib.sha256(raw).hexdigest())
+            if args.command == "accepted-history":
+                output = rebuild_accepted_history(
+                    state, expected_story_id=args.story_id,
+                    expected_history_sha256=args.expected_history_sha256, recent_limit=args.recent_limit,
+                )
+            else:
+                output = preflight_next_chapter_context(
+                    state, read_json(args.sources), args.budget_bytes,
+                    required_sources=read_json(args.required) if args.required else None,
+                    reserve_bytes=args.reserve_bytes, expected_story_id=args.story_id,
+                    expected_history_sha256=args.expected_history_sha256,
+                    history_source_limit=args.history_source_limit,
+                )
         else:
             path = Path(args.path).absolute()
             # No universal-newline translation: SHA-256 covers the actual UTF-8 file bytes.
@@ -96,7 +132,7 @@ def main(argv=None):
                              location=str(path), revision=args.revision)
             output = value.model_dump(mode="json")
         print(json.dumps(output, ensure_ascii=False, indent=2))
-        return 2 if args.command == "preflight" and output["blocked"] else 0
+        return 2 if args.command in {"preflight", "next-preflight"} and output["blocked"] else 0
     except (OSError, ValueError, TypeError, ValidationError, StateError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

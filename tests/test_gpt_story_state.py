@@ -14,7 +14,8 @@ import pytest
 from pydantic import ValidationError
 
 from novel_ai.gpt_story_state import (
-    StateError, artifact, create_state, load_state, preflight_context, save_state,
+    StateError, artifact, create_state, load_state, preflight_context,
+    preflight_next_chapter_context, rebuild_accepted_history, save_state,
     source_fingerprint, state_fingerprint, transition, validate_state,
 )
 
@@ -620,3 +621,153 @@ def test_material_changes_cannot_bypass_acceptance_before_or_after_commit(sectio
         bad[section][key] = value
         with pytest.raises((StateError, ValidationError)):
             validate_state(bad)
+
+
+
+def _structured_plan_text(title="Accepted plan"):
+    return json.dumps({
+        "chapter_title": title,
+        "chapter_promise": "force a meaningful choice",
+        "tension_curve": "rise",
+        "scenes": [{
+            "scene_no": 1,
+            "pov": "林舟",
+            "place": "旧站台",
+            "time": "深夜",
+            "objective": "离开封锁区",
+            "opposition": "出口被临时封闭",
+            "choice": "绕行废弃检修道",
+            "cost": "放弃安全照明",
+            "state_change": "林舟进入未知区域",
+            "information_release": ["北侧检修道仍可通行"],
+            "foreshadowing": ["废弃广播仍在工作"],
+            "environment_function": "迫使角色做风险选择",
+            "end_hook": "黑暗中有人叫出林舟的名字",
+        }],
+        "must_not_happen": ["林舟不能凭空知道幕后身份"],
+    }, ensure_ascii=False)
+
+
+def _accepted_structured_story(tmp_path):
+    state = create_state("story-history")
+    state.canon["characters"] = [{"name": "林舟", "knows": [], "does_not_know": ["幕后身份"], "false_beliefs": []}]
+    state = step(state, "start_chapter", {"chapter_id": "ch-001"})
+    state = step(state, "set_plan", {"artifact": source(_structured_plan_text(), 1, "plan-001")})
+    state = step(state, "accept_plan", {"confirmation": confirmation(state, "plan")})
+    state = step(state, "set_draft", {"artifact": source("林舟说：“先走。”\n林舟说：“别回头？”", 1, "draft-001")})
+    state = step(state, "review", {"draft_revision": 1, "issues": [], "source": source("review ok", 1, "review-001")["source"]})
+    state = step(state, "accept_chapter", {"confirmation": confirmation(state, "chapter")})
+    state = step(state, "propose_memory", {"changes": [{
+        "path": "/active/current_time", "old_value": None, "new_value": "深夜", "evidence_location": "accepted paragraph 1"
+    }]})
+    state = step(state, "accept_memory", {"confirmation": confirmation(state, "memory")})
+    state = step(state, "apply_memory", {"memory_update_id": state.progress.memory_update_id})
+    path = tmp_path / "history-story.json"
+    saved = save_state(path, state)
+    restored = load_state(path, expected_story_id="story-history", expected_revision=1, expected_sha256=saved.sha256)
+    return path, saved, restored
+
+
+def test_replan_retains_old_candidate_but_excludes_it_from_preflight():
+    state = planned()
+    state = step(state, "set_draft", {"artifact": source("OLD CANDIDATE MUST NOT LEAK", 1, "draft")})
+    assert state.progress.draft_plan_revision == 1
+    state = step(state, "set_plan", {"artifact": source("NEW PLAN ONLY", 2, "plan")})
+    assert state.progress.draft is not None
+    assert state.progress.draft_plan_revision == 1
+    assert state.progress.plan_revision == 2
+    result = preflight_context(state, [], 100000)
+    assert not result["blocked"]
+    assert "NEW PLAN ONLY" in result["context_text"]
+    assert "OLD CANDIDATE MUST NOT LEAK" not in result["context_text"]
+
+
+def test_accepted_history_requires_actual_readback_and_rebuilds_only_accepted_sources(tmp_path):
+    pending, _ = committed()
+    with pytest.raises(StateError, match="verified readback"):
+        rebuild_accepted_history(pending)
+
+    path, saved, restored = _accepted_structured_story(tmp_path)
+    history = rebuild_accepted_history(restored, expected_story_id="story-history")
+    assert history["history_chapter_ids"] == ["ch-001"]
+    assert history["readback_file_sha256"] == saved.sha256
+    assert history["recent_chapters"][0]["structure"]["status"] == "parsed"
+    assert history["recent_chapters"][0]["structure"]["story_dna"]["chapter_title"] == "Accepted plan"
+    assert history["voice_baseline"]["林舟"]["line_count"] == 2
+    assert history["accepted_active"]["current_time"] == "深夜"
+    assert len(history["accepted_history_sha256"]) == 64
+
+    with pytest.raises(StateError, match="different story"):
+        rebuild_accepted_history(restored, expected_story_id="other-story")
+    with pytest.raises(StateError, match="stale"):
+        rebuild_accepted_history(restored, expected_history_sha256="0" * 64)
+    assert path.exists()
+
+
+def test_next_chapter_preflight_uses_accepted_archive_and_survives_restart(tmp_path):
+    path, saved, restored = _accepted_structured_story(tmp_path)
+    first_history = rebuild_accepted_history(restored)
+    state = step(restored, "start_chapter", {"chapter_id": "ch-002"})
+    state = step(state, "set_plan", {"artifact": source("CURRENT UNACCEPTED PLAN", 1, "plan-002")})
+    result = preflight_next_chapter_context(
+        state, [], 100000, expected_story_id="story-history",
+        expected_history_sha256=first_history["accepted_history_sha256"],
+    )
+    assert not result["blocked"]
+    assert result["accepted_history"]["history_chapter_ids"] == ["ch-001"]
+    assert {row["chapter_id"] for row in result["automatic_history_sources"]} == {"ch-001"}
+    assert {row["kind"] for row in result["automatic_history_sources"]} == {"plan", "draft"}
+    assert "ACCEPTED HISTORY ONLY" in result["context_text"]
+    assert "CURRENT UNACCEPTED PLAN" in result["context_text"]
+    assert "林舟说" in result["context_text"]
+    assert result["used_bytes"] == len(result["context_text"].encode("utf-8"))
+    assert result["reserve_bytes"] == 0
+    assert result["history_bytes"] > 0
+
+    restarted = load_state(path, expected_story_id="story-history", expected_revision=1, expected_sha256=saved.sha256)
+    restarted_history = rebuild_accepted_history(restarted)
+    assert restarted_history["accepted_history_sha256"] == first_history["accepted_history_sha256"]
+    restarted = step(restarted, "start_chapter", {"chapter_id": "ch-002"})
+    again = preflight_next_chapter_context(
+        restarted, [], 100000, expected_history_sha256=first_history["accepted_history_sha256"]
+    )
+    assert again["accepted_history"]["accepted_history_sha256"] == first_history["accepted_history_sha256"]
+
+
+def test_next_chapter_preflight_rejects_unverified_or_too_small_history_budget(tmp_path):
+    pending, _ = committed()
+    if pending.progress.phase == "awaiting_save":
+        with pytest.raises(StateError):
+            preflight_next_chapter_context(pending, [], 100000)
+
+    _, _, restored = _accepted_structured_story(tmp_path)
+    state = step(restored, "start_chapter", {"chapter_id": "ch-002"})
+    generous = preflight_next_chapter_context(state, [], 100000, history_source_limit=0)
+    tiny = preflight_next_chapter_context(state, [], max(1, generous["history_bytes"]), history_source_limit=0)
+    assert tiny["blocked"]
+    assert any("accepted-history continuity block" in reason for reason in tiny["reasons"])
+
+
+def test_cli_accepted_history_and_next_preflight_use_real_readback(tmp_path):
+    path, saved, restored = _accepted_structured_story(tmp_path)
+    script = str(ROOT / "scripts/story_state.py")
+    def run(*args, expected=0):
+        result = subprocess.run([sys.executable, script, *map(str, args)], capture_output=True, text=True)
+        assert result.returncode == expected, result.stderr or result.stdout
+        return json.loads(result.stdout) if result.stdout else json.loads(result.stderr)
+
+    history = run("accepted-history", path, "--story-id", "story-history",
+                  "--revision", 1, "--sha256", saved.sha256)
+    assert history["history_chapter_ids"] == ["ch-001"]
+    assert history["readback_file_sha256"] == saved.sha256
+
+    active = step(restored, "start_chapter", {"chapter_id": "ch-002"})
+    active_saved = save_state(path, active, expected_disk_revision=1, expected_disk_sha256=saved.sha256)
+    sources = tmp_path / "sources.json"
+    sources.write_text("[]", encoding="utf-8")
+    result = run("next-preflight", path, "--story-id", "story-history", "--revision", 1,
+                 "--sha256", active_saved.sha256, "--sources", sources, "--budget-bytes", 100000,
+                 "--expected-history-sha256", history["accepted_history_sha256"])
+    assert not result["blocked"]
+    assert result["accepted_history"]["history_chapter_ids"] == ["ch-001"]
+    assert "ACCEPTED HISTORY ONLY" in result["context_text"]

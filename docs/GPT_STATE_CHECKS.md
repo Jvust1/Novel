@@ -46,6 +46,8 @@
 - `save_state(path, state, expected_disk_revision=None, expected_disk_sha256=None)`：保存单个调用者明确指定的私有 JSON
 - `load_state(path, expected_story_id=..., expected_revision=None, expected_sha256=None)`：实际读取并核对，返回恢复副本
 - `preflight_context(state, sources, budget_bytes, required_sources=None, reserve_bytes=0)`：返回实际组装上下文、来源、预算及阻塞原因
+- `rebuild_accepted_history(state, expected_story_id=None, expected_history_sha256=None, recent_limit=8)`：只从本次真实读回的 `accepted_chapters` 重建历史来源、Voice 基线与可解析计划结构
+- `preflight_next_chapter_context(...)`：在通用预检上加入接受历史指纹、最近已接受计划/正文和连续性预算，不把当前候选当历史
 
 所有新动作使用以下共同结构。`expected_state_sha256` 必须来自作决定时实际读取的状态，不能在提交旧命令前偷偷替换成最新值：
 
@@ -115,6 +117,12 @@ plan_source_fingerprint: 当前计划实际来源指纹
 
 所有检索文本都标为材料，不是工具命令或作者确认。检查器不会根据档案里的路径、URL、来源 ID 自动读文件、联网或执行任何内容；要读取什么由调用者明确决定。
 
+### 已接受历史与下一章
+
+继续写下一章时，可先用 `rebuild_accepted_history`。故事 revision 大于 0 时它要求当前对象带有 `load_state` 产生的 verified 读回，并只遍历追加保存的 `accepted_chapters`。计划和正文的精确来源指纹共同形成 `accepted_history_sha256`；换书、接受历史或 Canon/Active/Recall/文风基础变化会使旧指纹失效。当前未接受候选改变整个文件 SHA 时，不应伪装成“历史变化”，所以文件 SHA 作为读回证据单独返回，不进入历史指纹。
+
+`preflight_next_chapter_context` 把最近已接受计划/正文作为可选完整来源，并保留一个不可静默删除的接受历史派生区。预算不足时阻塞。通用 `preflight_context` 也新增一条候选隔离：只有 `draft_plan_revision == plan_revision` 的 draft 才进入当前必要上下文；改计划后保留的旧 draft 不会继续泄漏到提示。详见 [ACCEPTED_HISTORY_REBUILD.md](ACCEPTED_HISTORY_REBUILD.md)。
+
 ### 读者已知和完整真相
 
 `canon.reader_reveal_ledger` 保留作者侧完整记录，要求唯一 `term_id`、类型正确的 `reader_known / full_truth / planned_reveal / source_refs`，拒绝任意额外字段。草稿上下文只投影经过绑定验证的 confirmed 条目的 `term_id / term / reader_known`，绝不自动串入 `full_truth`、未来揭示计划、来源细节或其他注释。
@@ -150,12 +158,14 @@ python scripts/story_state.py artifact /private/plan.txt --source-id chapter-001
 python scripts/story_state.py apply /private/story.json /private/explicit-command.json
 python scripts/story_state.py validate /private/story.json
 python scripts/story_state.py preflight /private/story.json --sources /private/read-sources.json --budget-bytes 60000 --reserve-bytes 10000
+python scripts/story_state.py accepted-history /private/story.json --story-id stable-story-id --revision 12 --sha256 <actual-file-sha256>
+python scripts/story_state.py next-preflight /private/story.json --story-id stable-story-id --revision 12 --sha256 <actual-file-sha256> --sources /private/read-sources.json --budget-bytes 60000
 ```
 
 `inspect` 返回 `{state, expected_state_sha256}`；`create / validate / apply` 的摘要也提供编辑指纹。`apply` 不给命令补填确认或指纹，完全相同的重试不会重写磁盘时间戳。预检阻塞、版本冲突或验证失败时，CLI 返回非零退出状态。
 
 ## 8. 实际测试范围
 
-[`tests/test_gpt_story_state.py`](../tests/test_gpt_story_state.py)覆盖空白模板、32 章合成推进、各阶段确认、计划/正文变更失效、记忆候选篡改、同基础版本的旧编辑、跨故事换档、重复提交、写入前后中断、哈希与读回、历史保留、严格字段类型、来源身份与预算不足、读者知识和完整真相隔离。测试不调用模型、不联网、不访问作者作品，也不修改冻结的公开演示章。
+[`tests/test_gpt_story_state.py`](../tests/test_gpt_story_state.py)覆盖空白模板、32 章合成推进、各阶段确认、计划/正文变更失效、记忆候选篡改、同基础版本的旧编辑、跨故事换档、重复提交、写入前后中断、哈希与读回、历史保留、严格字段类型、来源身份与预算不足、读者知识和完整真相隔离，以及实际读回后的已接受历史重建、旧候选隔离、换书/旧历史指纹拒绝和跨会话下一章恢复。测试不调用模型、不联网、不访问作者作品，也不修改冻结的公开演示章。
 
 这些是工程状态与恢复检查，**不是实际写完一部长篇或证明全书质量**。文学判断和作者决定仍由写作对话承担。
