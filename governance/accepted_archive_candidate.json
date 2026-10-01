@@ -1,0 +1,49 @@
+{
+  "schema": "novel-accepted-archive-candidate-v1",
+  "branch": "feat/accepted-archive-continuation-20261001",
+  "base_pr": 53,
+  "base_head": "b0dcf3d6617dd6c7135e5194e432a8a6500a80ad",
+  "base_tree": "2147ba779f1feb2bda279a65d3ba1f40b4e8d554",
+  "entry": "BudgetedWritingSession.run_from_accepted_archive",
+  "docs": "docs/ACCEPTED_ARCHIVE_CONTINUATION.md",
+  "reuse_trace": "docs/upstream/accepted-archive-continuation-2026-10-01.md",
+  "reuse_kind": "existing Pydantic runtime and licensed PydanticAI selective usage port; no new dependency or second history cache",
+  "source_authority": "actual unowned local v1 story archive with at least one accepted chapter; embedded accepted snapshots only",
+  "history_compatibility": "PR51 history SHA preserved; any file-byte change invalidates the additional execution binding",
+  "author_acceptance": "pending; no state transition, memory application or canonical write",
+  "validation": {
+    "python_3_11": {
+      "passed": 1591,
+      "skipped": 1,
+      "seconds": 123.2
+    },
+    "python_3_12": {
+      "passed": 1591,
+      "skipped": 1,
+      "seconds": 123.45
+    },
+    "new_entry_cases": 97,
+    "owner_cases": 42,
+    "independent_cases": 55,
+    "independent_combined_matrix": "97 passed on each Python 3.11 / 3.12",
+    "compileall": "passed both interpreters",
+    "ruff": "0.16.9 F821 app/novel_ai/scripts plus full new accepted_writing.py checks passed",
+    "document_links": "47 local references checked, no missing target",
+    "skip": "optional qdrant-client absent",
+    "remote_ci": "see exact published PR and packaged verification receipt",
+    "data": "original synthetic archives and HTTPX MockTransport; no paid model or actual author acceptance"
+  },
+  "boundaries": [
+    "first chapter uses existing workflow",
+    "journal-owned states use their existing protocol",
+    "no automatic external Drive freshness check",
+    "trusted local/cooperating writers, not a hostile-process sandbox or lock",
+    "UTF-8 and wire request budgets, not exact input tokens or subscription/billing limits",
+    "no actual paid model, human literary evaluation, historical rewrite or deployment"
+  ],
+  "next_acceptance_gaps": [
+    "cohesive real author sessions and cross-chat source recovery",
+    "explicit integration for journal-owned continuation",
+    "independent human quality evidence and broader security/dependency/lint checks"
+  ]
+}

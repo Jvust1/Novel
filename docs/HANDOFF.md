@@ -1,3 +1,9 @@
+# 2026-10-01 — 当前档案绑定续写候选
+
+当前集成候选在 `feat/accepted-archive-continuation-20261001`，叠加已发布 #53；尚未合入 main。
+本次把 #51 的已接受历史预检、#52 的共享请求预算与实际下一章写作相连，支持每次 HTTP 尝试前/响应后重新读回来源。#53 的记忆候选和作者确认独立保留。
+读取 [GPT 写作入口](GPT_WRITING_ENTRY.md) → [本次能力与边界](ACCEPTED_ARCHIVE_CONTINUATION.md) → [当前工程证据](../governance/accepted_archive_candidate.json)。下方旧候选的版本、分支和待办保留为历史，不自动覆盖本次状态。
+
 # 当前交接 — 2026-10-01
 
 当前工程候选：`fix/accepted-history-rebuild-20261001`，直接叠在 Draft PR #50 的 head `35208537aa1fb830a2325ec1dd8870bdf0564190` 上。新增范围只处理[已接受历史重建与下一章预检](ACCEPTED_HISTORY_REBUILD.md)；#50 的最终稿审校、输出额度与严格 JSON 保持为冻结基线。执行代码提交 `7f2b93367661b0038bab2885851fed607f047882` 的 CI run 36856263295 已验证 Python 3.11/3.12 均为 1206 passed / 1 skipped；以下旧候选记录继续保留。

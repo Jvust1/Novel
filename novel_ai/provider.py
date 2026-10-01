@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from copy import deepcopy
 import re
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 import httpx
@@ -123,14 +123,29 @@ class OpenAICompatibleProvider:
     clipping. Only explicit response_format-unsupported errors are retried.
     """
 
-    def __init__(self, config: ProviderConfig, *, request_budget: RequestBudget | None = None):
+    def __init__(self, config: ProviderConfig, *, request_budget: RequestBudget | None = None,
+                 request_guard: Callable[[], None] | None = None):
         if request_budget is not None and type(request_budget) is not RequestBudget:
             raise TypeError("request_budget must be RequestBudget")
         if request_budget is not None and type(config) is not ProviderConfig:
             raise TypeError("bounded provider requires ProviderConfig")
+        if request_guard is not None and not callable(request_guard):
+            raise TypeError("request_guard must be callable")
         self.config = deepcopy(config) if request_budget is not None else config
         self._budget_config = deepcopy(config) if request_budget is not None else None
         self._request_budget = request_budget
+        self._request_guard = request_guard
+
+    def guarded(self, request_guard: Callable[[], None]) -> OpenAICompatibleProvider:
+        """A source-checked view sharing this exact live budget, never resetting it."""
+        if type(self) is not OpenAICompatibleProvider or self.request_budget is None:
+            raise TypeError("guarded writing requires the owned bounded HTTP transport")
+        if self.config != self._budget_config:
+            raise ValueError("bounded provider configuration changed")
+        if self._request_guard is not None:
+            raise ValueError("a source-bound provider cannot be rebound")
+        return OpenAICompatibleProvider(self._budget_config, request_budget=self.request_budget,
+                                        request_guard=request_guard)
 
     @property
     def request_budget(self) -> RequestBudget | None:
@@ -181,6 +196,8 @@ class OpenAICompatibleProvider:
             # Each request is independent and bounded. No auth/rate-limit/
             # service/transport retry, or repeat after the single downgrade.
             for attempt in range(2):
+                if self._request_guard is not None:
+                    self._request_guard()
                 ticket = None
                 succeeded = False
                 if budget is None:
@@ -196,6 +213,8 @@ class OpenAICompatibleProvider:
                 try:
                     with client.stream("POST", endpoint, **request_kwargs, headers=headers) as response:
                         content = _read_bounded_response(response, config.max_response_bytes)
+                        if self._request_guard is not None:
+                            self._request_guard()
                         if (attempt == 0 and response_format is not None
                                 and _unsupported_response_format(response.status_code, content)):
                             payload = dict(payload)

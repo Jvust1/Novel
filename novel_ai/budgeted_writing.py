@@ -62,6 +62,20 @@ class BudgetedWritingSession:
         reviewer = self._engine(TaskKind.REVIEW) if options.get("review", True) else None
         return writer.run_from_plan(**options, reviewer=reviewer)
 
+    def run_from_accepted_archive(self, source, **options: Any):
+        """Continue a freshly read accepted archive without accepting the result.
+
+        Every owned HTTP attempt, including format fallback, checks source
+        identity and shares this session's existing monotone request allowance.
+        """
+        from .accepted_writing import _run
+
+        self._check_options(options)
+        writer = self._router.provider_for(TaskKind.DRAFT).provider
+        reviewer = self._router.provider_for(TaskKind.REVIEW).provider if options.get("review", True) else None
+        return _run(source, writer_provider=writer, reviewer_provider=reviewer,
+                    output_policy=self._output_policy, **options)
+
     def extract_memory(self, *args: Any, **options: Any) -> Any:
         """Produce a memory candidate only; this function does not apply it."""
         return self._engine(TaskKind.MEMORY).extract_memory(*args, **options)

@@ -1,3 +1,9 @@
+# 2026-10-01 — 当前档案绑定续写候选
+
+当前集成候选在 `feat/accepted-archive-continuation-20261001`，叠加已发布 #53；尚未合入 main。
+本次把 #51 的已接受历史预检、#52 的共享请求预算与实际下一章写作相连，支持每次 HTTP 尝试前/响应后重新读回来源。#53 的记忆候选和作者确认独立保留。
+读取 [GPT 写作入口](GPT_WRITING_ENTRY.md) → [本次能力与边界](ACCEPTED_ARCHIVE_CONTINUATION.md) → [当前工程证据](../governance/accepted_archive_candidate.json)。下方旧候选的版本、分支和待办保留为历史，不自动覆盖本次状态。
+
 # 2026-10-01 — Accepted-history rebuild for next chapter (candidate)
 
 - Rebuild continuity only from actually read, author-accepted chapter plan/draft records; recalculate Voice DNA and parseable plan structure instead of trusting stale session caches
