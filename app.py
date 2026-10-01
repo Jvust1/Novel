@@ -12,6 +12,10 @@ from novel_ai.context import ContextAssembler
 from novel_ai.project_session import switch_project
 from novel_ai.engine import NovelEngine
 from novel_ai.memory import apply_extraction
+from novel_ai.memory_candidate import (
+    MemoryCandidateError, acceptance_receipt, build_memory_candidate,
+    receipt_matches, validate_memory_candidate,
+)
 from novel_ai.longform_tools import build_story_graph, near_duplicate_chapters
 from novel_ai.longform_analytics import chapter_analytics, trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
 from novel_ai.longform_consistency import (
@@ -56,6 +60,8 @@ if "last_overlap" not in st.session_state:
     st.session_state.last_overlap = 0.0
 if "last_extraction" not in st.session_state:
     st.session_state.last_extraction = None
+if "pending_memory_candidate" not in st.session_state:
+    st.session_state.pending_memory_candidate = None
 if "last_self_similarity" not in st.session_state:
     st.session_state.last_self_similarity = []
 
@@ -343,6 +349,7 @@ with write_tab:
         st.session_state.last_result = None
         st.session_state.last_result_meta = {}
         st.session_state.last_extraction = None
+        st.session_state.pending_memory_candidate = None
         st.session_state.last_self_similarity = []
         st.session_state.last_overlap = 0.0
         st.rerun()
@@ -414,6 +421,7 @@ with write_tab:
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
             }
             st.session_state.last_extraction = None
+            st.session_state.pending_memory_candidate = None
             st.success("章节已按确认的计划生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
@@ -461,6 +469,7 @@ with write_tab:
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
             }
             st.session_state.last_extraction = None
+            st.session_state.pending_memory_candidate = None
             st.success("章节已生成并保存到本地项目目录。")
         except Exception as exc:
             st.exception(exc)
@@ -549,8 +558,8 @@ with write_tab:
                 st.warning("综合质量快照未完成；请检查已有章节文件。其他审阅入口仍可使用：" + str(exc))
 
         st.divider()
-        st.subheader("章节后处理 · 记忆抽取")
-        st.caption("章节定稿后抽取摘要、新事实、人物状态/知识变化、时间线与伏笔，并回写本地长期记忆。")
+        st.subheader("章节后处理 · 记忆候选")
+        st.caption("先抽取候选并核对；只有作者点击确认后，才回写人物卡、story_state、摘要与长篇派生记忆。")
         result_meta = st.session_state.get("last_result_meta", {})
         result_matches = (result_meta.get("project", project_name) == project_name
                           and result_meta.get("chapter_id", chapter_id) == chapter_id)
@@ -559,59 +568,122 @@ with write_tab:
                 store, project_name, chapter_id, result_meta["text_sha256"],
             )
         if not result_matches:
-            st.warning("当前显示的是另一章的生成结果，或已保存正文发生变化。请核对原章节与文本版本后再抽取记忆。")
-        if st.button("抽取本章记忆并回写", use_container_width=True, disabled=not result_matches):
+            st.warning("当前显示的是另一章的生成结果，或已保存正文发生变化。请核对原章节与文本版本后再处理记忆。")
+
+        final_text = result.final_text
+        candidate_path = f"memory/candidates/{store.slugify(chapter_id)}.json"
+        pending = st.session_state.get("pending_memory_candidate")
+        if pending is None and result_matches:
+            stored_candidate = store.read_json(project_name, candidate_path, default=None)
+            if isinstance(stored_candidate, dict):
+                try:
+                    validate_memory_candidate(
+                        stored_candidate, project=project_name, chapter_id=chapter_id, chapter_text=final_text,
+                    )
+                    receipt_path = f"memory/memory_acceptance/{stored_candidate['candidate_id']}.json"
+                    receipt = store.read_json(project_name, receipt_path, default=None)
+                    if not receipt_matches(receipt, stored_candidate):
+                        pending = stored_candidate
+                        st.session_state.pending_memory_candidate = stored_candidate
+                except MemoryCandidateError:
+                    pending = stored_candidate
+                    st.session_state.pending_memory_candidate = stored_candidate
+
+        if st.button("抽取本章记忆候选", use_container_width=True, disabled=not result_matches):
             try:
                 engine = NovelEngine(make_provider())
-                final_text = result.final_text
                 extraction = engine.extract_memory(
                     current_bible(),
                     [Character.model_validate(c) for c in st.session_state.characters],
                     chapter_id,
                     final_text,
                 )
-                new_characters, new_state = apply_extraction(
-                    [Character.model_validate(c) for c in st.session_state.characters],
-                    store.load_story_state(project_name),
-                    extraction,
+                candidate = build_memory_candidate(project_name, chapter_id, final_text, extraction)
+                store.write_json(project_name, candidate_path, candidate)
+                st.session_state.pending_memory_candidate = candidate
+                st.session_state.last_extraction = None
+                pending = candidate
+                st.success("记忆候选已生成并保存为待确认项；正式人物卡、story_state 和长篇记忆尚未修改。")
+            except Exception as exc:
+                st.exception(exc)
+
+        candidate_matches = False
+        candidate_extraction = None
+        pending = st.session_state.get("pending_memory_candidate")
+        if pending is not None:
+            try:
+                candidate_extraction = validate_memory_candidate(
+                    pending, project=project_name, chapter_id=chapter_id, chapter_text=final_text,
                 )
-                st.session_state.characters = [c.model_dump() for c in new_characters]
-                store.write_json(project_name, "memory/characters.json", st.session_state.characters)
-                store.save_story_state(project_name, new_state)
-                store.save_extraction(project_name, extraction.model_dump())
-                graph = build_story_graph(st.session_state.characters, new_state)
-                store.write_json(project_name, "memory/story_graph.json", graph)
-                if result.story_dna:
-                    prior_voice = [
-                        row for row in store.load_voice_dna_history(project_name)
-                        if str(row.get("chapter_id")) != chapter_id
-                    ]
-                    prior_dna = [
-                        row for row in store.load_story_dna_history(project_name)
-                        if str(row.get("chapter_id")) != chapter_id
-                    ]
-                    chapter_order = [str(row.get("chapter_id","")) for row in store.all_chapter_summaries(project_name)]
-                    health = build_longform_health(
-                        current_text=final_text,
-                        character_names=[c["name"] for c in st.session_state.characters if c.get("name")],
-                        voice_history=prior_voice,
-                        current_story_dna=result.story_dna,
-                        story_dna_history=prior_dna,
-                        story_state=new_state,
-                        chapter_order=chapter_order,
+                candidate_matches = bool(result_matches)
+                with st.expander("待作者确认的记忆候选", expanded=True):
+                    st.caption(f"候选 ID：{pending['candidate_id']}")
+                    st.json(candidate_extraction.model_dump())
+            except MemoryCandidateError as exc:
+                st.warning("已有记忆候选已失效，不能用于当前正文：" + str(exc))
+
+        if st.button("确认并回写记忆候选", type="primary", use_container_width=True,
+                     disabled=not candidate_matches):
+            try:
+                candidate = st.session_state.get("pending_memory_candidate")
+                extraction = validate_memory_candidate(
+                    candidate, project=project_name, chapter_id=chapter_id, chapter_text=final_text,
+                )
+                receipt = acceptance_receipt(candidate)
+                receipt_path = f"memory/memory_acceptance/{candidate['candidate_id']}.json"
+                existing_receipt = store.read_json(project_name, receipt_path, default=None)
+                if receipt_matches(existing_receipt, candidate):
+                    st.session_state.last_extraction = extraction.model_dump()
+                    st.session_state.pending_memory_candidate = None
+                    st.info("该记忆候选已由作者确认并完成过回写，本次未重复应用。")
+                else:
+                    new_characters, new_state = apply_extraction(
+                        [Character.model_validate(c) for c in st.session_state.characters],
+                        store.load_story_state(project_name),
+                        extraction,
                     )
-                    store.save_voice_dna(project_name, chapter_id, health["voice_dna"])
-                    store.save_longform_health(project_name, health)
-                    store.save_story_dna(project_name, chapter_id, result.story_dna)
-                    analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
-                    store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
-                st.session_state.last_extraction = extraction.model_dump()
-                st.success("记忆已抽取并回写：人物卡、story_state、章节摘要、Story DNA、人物口吻 DNA 与长篇一致性状态均已更新。")
+                    updated_characters = [c.model_dump() for c in new_characters]
+                    store.write_json(project_name, "memory/characters.json", updated_characters)
+                    store.save_story_state(project_name, new_state)
+                    store.save_extraction(project_name, extraction.model_dump())
+                    graph = build_story_graph(updated_characters, new_state)
+                    store.write_json(project_name, "memory/story_graph.json", graph)
+                    if result.story_dna:
+                        prior_voice = [
+                            row for row in store.load_voice_dna_history(project_name)
+                            if str(row.get("chapter_id")) != chapter_id
+                        ]
+                        prior_dna = [
+                            row for row in store.load_story_dna_history(project_name)
+                            if str(row.get("chapter_id")) != chapter_id
+                        ]
+                        chapter_order = [str(row.get("chapter_id","")) for row in store.all_chapter_summaries(project_name)]
+                        health = build_longform_health(
+                            current_text=final_text,
+                            character_names=[c["name"] for c in updated_characters if c.get("name")],
+                            voice_history=prior_voice,
+                            current_story_dna=result.story_dna,
+                            story_dna_history=prior_dna,
+                            story_state=new_state,
+                            chapter_order=chapter_order,
+                        )
+                        store.save_voice_dna(project_name, chapter_id, health["voice_dna"])
+                        store.save_longform_health(project_name, health)
+                        store.save_story_dna(project_name, chapter_id, result.story_dna)
+                        analytics = chapter_analytics(chapter_id, final_text, result.story_dna)
+                        store.save_chapter_analytics(project_name, chapter_id, analytics.to_dict())
+                    # Receipt is deliberately last. Any earlier failure leaves the
+                    # candidate pending; retry is safe because core merges and per-chapter files are idempotent.
+                    store.write_json(project_name, receipt_path, receipt)
+                    st.session_state.characters = updated_characters
+                    st.session_state.last_extraction = extraction.model_dump()
+                    st.session_state.pending_memory_candidate = None
+                    st.success("作者已确认该候选；正式人物卡、story_state、章节摘要、Story DNA、人物口吻 DNA 与长篇一致性状态已更新。")
             except Exception as exc:
                 st.exception(exc)
 
         if st.session_state.last_extraction:
-            with st.expander("本次抽取结果", expanded=False):
+            with st.expander("最近一次已确认并回写的记忆", expanded=False):
                 st.json(st.session_state.last_extraction)
 
     with st.expander("Story DNA 历史库", expanded=False):

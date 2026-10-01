@@ -30,7 +30,7 @@ AUTHOR_FIELDS = (
 FIELDS = (
     'title', 'genre', 'tone', 'premise', 'themes_text', 'rules_text', 'locked_text',
     'forbidden_text', 'outline', 'characters', 'style', 'style_profiles',
-    'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
+    'reference_hashes', 'last_result', 'last_overlap', 'last_extraction', 'pending_memory_candidate',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
     'chapter_id', 'chapter_goal', 'chapter_notes', 'last_self_similarity',
     'diverse_recall',
@@ -53,7 +53,7 @@ def _load_project(store, project):
     loaded['style_profiles'] = store.read_json(project, 'styles/style_profiles.json', [])
     loaded['style'] = store.read_json(project, 'styles/style_dna.json')
     loaded['reference_hashes'] = set(store.read_json(project, 'styles/reference_signature.json', {}).get('hashes', []))
-    loaded.update(last_result=None, last_overlap=0.0, last_extraction=None,
+    loaded.update(last_result=None, last_overlap=0.0, last_extraction=None, pending_memory_candidate=None,
                   pending_plan_json='', pending_plan_meta={}, plan_new=False,
                   last_self_similarity=[], diverse_recall=False)
     hierarchy = store.read_json(project, 'memory/hierarchical_outline.json')

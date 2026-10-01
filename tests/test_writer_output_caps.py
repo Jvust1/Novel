@@ -122,7 +122,8 @@ def test_invalid_memory_json_leaves_actual_workbench_state_untouched(monkeypatch
     for x in app.text_input:
         if x.label=='Base URL':x.set_value('http://never-called.invalid')
         if x.label=='Model':x.set_value('synthetic')
-    next(x for x in app.button if x.label=='抽取本章记忆并回写').click().run()
+    next(x for x in app.button if x.label=='抽取本章记忆候选').click().run()
     assert app.exception and app.session_state['last_extraction'] is None
+    assert app.session_state['pending_memory_candidate'] is None
     assert app.session_state['characters'][0]['knows']==[]
     assert {p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}==before
