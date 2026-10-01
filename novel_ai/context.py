@@ -85,6 +85,15 @@ class ContextAssembler:
         history_chapter_ids: list[str] | None = None,
     ) -> WritingContext:
         config = self.__dict__.copy()  # One call keeps its project and budget settings across callbacks.
+        # All cooperating ProjectStore reads see one recovered memory epoch,
+        # not a mixture across an approved multi-file commit.
+        with config['store']._guard(config['project']):
+            return self._assemble_snapshot(config, recent_limit=recent_limit,
+                max_open_foreshadowing=max_open_foreshadowing, recall_query=recall_query,
+                history_chapter_ids=history_chapter_ids)
+
+    def _assemble_snapshot(self, config, *, recent_limit, max_open_foreshadowing,
+                           recall_query, history_chapter_ids) -> WritingContext:
         state = deepcopy(config['store'].load_story_state(config['project']))
         summaries = deepcopy(config['store'].all_chapter_summaries(config['project']))
         health = deepcopy(config['store'].load_longform_health(config['project']))

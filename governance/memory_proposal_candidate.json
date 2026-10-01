@@ -1,0 +1,42 @@
+{
+  "schema": "novel-confirmed-memory-candidate-v1",
+  "branch": "feat/confirmed-memory-20261001",
+  "base_pr": 52,
+  "base_head": "d1bec4ed18a4fbf090f38f1c8e8b4916a9d52797",
+  "base_tree": "5aa2536530e7765ddb631400e1d831939962654f",
+  "entry": [
+    "novel_ai/memory_proposals.py",
+    "novel_ai/memory_ui.py",
+    "novel_ai/memory_commit.py"
+  ],
+  "docs": "docs/MEMORY_PROPOSALS.md",
+  "reuse_trace": "docs/upstream/memory-proposal-source-reuse-2026-10-01.md",
+  "validation": {
+    "python_3_11": {
+      "passed": 1494,
+      "skipped": 1
+    },
+    "python_3_12": {
+      "passed": 1494,
+      "skipped": 1
+    },
+    "new_memory_tests": 158,
+    "fixed_committer_cases": 76,
+    "independent_cross_review_cases": 36,
+    "real_UI": "Streamlit AppTest including actual MockTransport extraction and restart",
+    "browser_visual": "not run; previous supported route blocked",
+    "skip": "optional qdrant-client absent",
+    "remote_ci": "see exact published PR and packaged verification receipt"
+  },
+  "author_acceptance": "only explicit chapter plus memory decision; hashes and flags do not authenticate humans",
+  "canonical_write_targets": 9,
+  "recovery": "same confirmed after-images or conflict; no model/recompute/rollback promise",
+  "boundaries": [
+    "trusted local directory and cooperating writers",
+    "no Drive or generic filesystem transaction",
+    "no historical chapter rewrite",
+    "unbound legacy Voice/Story histories excluded",
+    "no actual model, API fee, native Windows or literary-quality validation",
+    "GPT owned state/journal uses its existing protocol"
+  ]
+}

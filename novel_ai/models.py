@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Character(BaseModel):
@@ -115,6 +115,7 @@ class ChapterReview(BaseModel):
 
 class CharacterMemoryUpdate(BaseModel):
     """Per-character delta extracted after a chapter is accepted."""
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     goal_change: str = ""
@@ -127,20 +128,23 @@ class CharacterMemoryUpdate(BaseModel):
 
 
 class TimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     chapter_id: str = ""
     description: str
     time_hint: str = ""
 
 
 class ForeshadowItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     id: str
     description: str
-    status: str = "planted"  # planted | advanced | resolved
+    status: Literal["planted", "advanced", "resolved"] = "planted"
     chapter_id: str = ""
 
 
 class MemoryExtraction(BaseModel):
-    """Structured memory written back after each accepted chapter."""
+    """Structured memory candidate; formal writeback needs author acceptance."""
+    model_config = ConfigDict(extra="forbid")
 
     chapter_id: str = ""
     chapter_title: str = ""

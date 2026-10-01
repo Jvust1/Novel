@@ -149,6 +149,13 @@ def test_memory_writeback_persists_character_knowledge_across_fresh_sessions(mon
         plan=plan, draft="沈青向林澄借账本核对。", review=ChapterReview(verdict="pass"),
         ai_flavor={}, story_dna=story_dna_from_plan(plan).to_dict(),
     )
+    from novel_ai.author_workflow import write_author_chapter, save_chapter_plan
+    import hashlib
+    text = "沈青向林澄借账本核对。"
+    write_author_chapter(store, "MyNovel", "007", text)
+    save_chapter_plan(store, "MyNovel", "007", plan, text)
+    at.session_state["last_result_meta"] = {"project": "MyNovel", "chapter_id": "007",
+        "text_sha256": hashlib.sha256((text + "\n").encode()).hexdigest()}
     at.run()
     for item in at.text_input:
         if item.label == "Base URL":
@@ -157,7 +164,14 @@ def test_memory_writeback_persists_character_knowledge_across_fresh_sessions(mon
             item.set_value("fake")
         if item.label == "章节编号 / 名称":
             item.set_value("007")
-    next(button for button in at.button if button.label == "抽取本章记忆并回写").click().run()
+    at.run()
+    next(button for button in at.button if button.label == "提取本章记忆候选 不回写").click().run()
+    assert not at.exception
+    assert store.read_json("MyNovel", "memory/characters.json") == original
+    assert at.session_state["last_extraction"] is None
+    next(x for x in at.checkbox if x.label == "我接受这一版正文作为记忆来源").check().run()
+    next(x for x in at.checkbox if x.label == "我已查看并接受这份记忆变更").check().run()
+    at.button(key="btn_memory_apply").click().run()
     assert not at.exception
     saved = store.read_json("MyNovel", "memory/characters.json")
     assert saved[0]["knows"] == ["账本由林澄保管"]

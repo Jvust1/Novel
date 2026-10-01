@@ -113,16 +113,22 @@ def test_invalid_memory_json_leaves_actual_workbench_state_untouched(monkeypatch
     original=[{'name':'沈青','knows':[],'does_not_know':['证人的姓名']}]
     store.write_json('MyNovel','memory/characters.json',original)
     store.save_story_state('MyNovel',{'facts':['钥匙未交出'],'open_threads':[]})
-    before={p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(OpenAICompatibleProvider,'chat',lambda *a,**kw:bad)
     app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py'),default_timeout=30).run()
     app.session_state['last_result']=ChapterResult(plan=ChapterPlan(),draft='他把钥匙藏回靴底。',review=ChapterReview(verdict='pass'),ai_flavor={})
+    from novel_ai.author_workflow import write_author_chapter, save_chapter_plan
+    import hashlib
+    text='他把钥匙藏回靴底。'
+    write_author_chapter(store,'MyNovel','001',text)
+    save_chapter_plan(store,'MyNovel','001',ChapterPlan(),text)
+    app.session_state['last_result_meta']={'project':'MyNovel','chapter_id':'001','text_sha256':hashlib.sha256((text+'\n').encode()).hexdigest()}
+    before={p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}
     app.run()
     for x in app.text_input:
         if x.label=='Base URL':x.set_value('http://never-called.invalid')
         if x.label=='Model':x.set_value('synthetic')
-    next(x for x in app.button if x.label=='抽取本章记忆并回写').click().run()
+    next(x for x in app.button if x.label=='提取本章记忆候选 不回写').click().run()
     assert app.exception and app.session_state['last_extraction'] is None
     assert app.session_state['characters'][0]['knows']==[]
     assert {p.relative_to(tmp_path):p.read_bytes() for p in tmp_path.rglob('*.json')}==before
