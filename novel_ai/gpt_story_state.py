@@ -967,23 +967,29 @@ def _preflight_history_context(state: StoryState, history: dict[str, Any], sourc
     """Shared formatting after the owning API has admitted state and history."""
     if type(history_source_limit) is not int or history_source_limit < 0:
         raise StateError("history_source_limit must be a nonnegative integer")
-    supplied = list(sources)
-    existing: set[tuple[str, str]] = set()
+    supplied = copy.deepcopy(list(sources))
+    existing: dict[tuple[str, str], str] = {}
     for raw in supplied:
         parsed = ContextSource.model_validate(raw)
-        existing.add((str(parsed.artifact.source.source_id), str(parsed.artifact.source.revision)))
+        key = (str(parsed.artifact.source.source_id), str(parsed.artifact.source.revision))
+        if key in existing:
+            raise StateError("duplicate source ID/revision")
+        existing[key] = source_fingerprint(parsed.artifact)
     automatic = []
     if history_source_limit:
         accepted = [AcceptedChapter.model_validate(row) for row in state.accepted_chapters[-history_source_limit:]]
         for order, record in enumerate(accepted, start=1):
             for label, item, bonus in (("plan", record.plan, 1), ("draft", record.draft, 2)):
                 key = (str(item.source.source_id), str(item.source.revision))
+                fingerprint = source_fingerprint(item)
                 if key in existing:
+                    if existing[key] != fingerprint:
+                        raise StateError("conflicting accepted source ID/revision; reconcile full source identity before writing")
                     continue
                 row = {"artifact": item.model_dump(mode="json"), "required": False,
                        "priority": 10_000 + order * 10 + bonus}
                 supplied.append(row)
-                existing.add(key)
+                existing[key] = fingerprint
                 automatic.append({"chapter_id": record.chapter_id, "kind": label,
                                   "source_id": key[0], "revision": key[1]})
 
