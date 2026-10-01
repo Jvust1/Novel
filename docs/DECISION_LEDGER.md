@@ -156,3 +156,9 @@ Derive a Style Profile from the novel's primary genre, optional secondary genre,
 ## 2026-10-01 — Shared final-text evidence and bounded model output
 
 Consolidate the existing post-plan writer path instead of adding another orchestrator. Bind current reports to exact text/plan/stage; preserve initial evidence and explicit author acceptance. Use existing HTTPX streaming, Python JSON and Pydantic runtime validation; reject malformed/incomplete output rather than adopting permissive partial-JSON repair. Optional backends stay opt-in and their stop/transport/cumulative-budget limits stay explicit. See [FINAL_OUTPUT_GATES.md](FINAL_OUTPUT_GATES.md).
+
+## 2026-10-02 — Full-input and cumulative visible-attempt budgets
+
+Keep existing per-stage output caps, but add one explicit `ModelCallBudget` for the retries/fallbacks used to obtain a single stage result. Count the complete normalized messages before each visible attempt; never trim required context inside the budget layer. Track both cumulative repeated input and conservatively reserved output, and reserve before the backend call so an exception cannot be treated as proof of zero usage.
+
+Built-in HTTP response-format retry, structured fallback and budgeted LiteLLM fallback must expose each attempt to the same ledger. Legacy/custom extensions that do not implement the explicit `budget` parameter remain one engine-visible bounded call; hidden retries inside them are not claimed as covered. Token counting is an engineering bound, not provider billing evidence. See [MODEL_CALL_BUDGETS.md](MODEL_CALL_BUDGETS.md).

@@ -243,3 +243,13 @@ Review found and corrected: same-base candidate edits could overwrite newer draf
 The original public test chapter SHA-256 remains `b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e`; North Star and existing application code remain unchanged in this slice. Byte budgets are not the selected model's exact token counts. Source checks and legal state transitions do not authenticate author messages, prove semantic fact support, establish literary improvement, or provide Drive/multi-file/concurrent-writer transactions. Independent human reading, real long-novel quality, all-genre chapter evaluation and platform publication remain unverified.
 
 Final freeze follow-ups: the material fingerprint now covers Canon/Active/Recall/style before and after confirmed updates; four additional regressions reject direct unapproved material changes. The public test bundle's scene-plan metadata path and dependent context digest were reconciled, with a new all-reference path/hash check. The chapter r1 bytes remain unchanged.
+
+## 2026-10-02 — Model-call budget candidate
+
+Local Python 3.13 targeted verification before remote publication:
+- 190 passed across token-budget, provider, structured-output, model-output-boundary, routed-engine and style-engine tests.
+- 22 passed in the non-Streamlit writer-output subset.
+- `py_compile` passed for token_budget/output_policy/provider/structured_output/engine/routed_engine.
+- Streamlit is absent from the local container; no full-suite success is claimed here. GitHub Linux Python 3.11/3.12 CI is the required full regression evidence after publication.
+
+Adversarial cases include pre-call input refusal with zero provider calls, cumulative repeated-input exhaustion before the next attempt, non-refundable failed-attempt output reservation, reduced allowance on response-format retry, structured fallback stopping before a later backend, and LiteLLM fallbacks expanded into explicit zero-retry attempts. No live paid model or provider billing API was used.

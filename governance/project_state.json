@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "accepted-history-rebuild-candidate",
-  "version": "0.14.0-dev",
+  "stage": "model-call-budget-candidate",
+  "version": "0.15.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Complete full-message input accounting and cumulative visible retry/fallback budgets without silently deleting required story context",
     "Rebuild next-chapter context only from author-accepted history; exclude stale retained drafts and bind explicit historical source versions across restart/readback",
     "Unify actual final-text diagnostics and review/hook paths; apply bounded complete model output without changing explicit author acceptance",
     "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
@@ -170,7 +171,11 @@
     "accepted-history snapshot/fingerprint rebuilt only from validated append-only accepted chapter records",
     "preflight excludes retained stale draft after replanning until explicitly rebound to the current accepted plan",
     "explicit accepted-history chapter inclusion is whole-record and budget-blocking rather than silently truncated",
-    "story_state CLI accepted-history readback entry for restart/session recovery evidence"
+    "story_state CLI accepted-history readback entry for restart/session recovery evidence",
+    "complete normalized-message token accounting before engine-visible model attempts",
+    "shared cumulative input/output reservation ledger for HTTP compatibility retry and structured/model fallbacks",
+    "budgeted LiteLLM fallback expansion into explicit zero-retry model attempts",
+    "pre-call refusal of over-budget required context without automatic trimming"
   ],
   "frozen": false,
   "blocking_issues": [
@@ -325,14 +330,13 @@
     ]
   },
   "latest_verified_candidate": {
-    "pr": 49,
-    "url": "https://github.com/Jvust1/Novel/pull/49",
-    "head": "fe2fa274ad27a4ca9a67ea1a93ce5387ced60f39",
-    "tree": "2e9486185e29d9390fc712c6ae588d3dd5209124",
-    "ci": "https://github.com/Jvust1/Novel/actions/runs/36847102986",
+    "pr": 55,
+    "url": "https://github.com/Jvust1/Novel/pull/55",
+    "head": "6087261fff0069176a24d243da0f1e0d417d6a23",
+    "ci": "https://github.com/Jvust1/Novel/actions/runs/36894996226",
     "status": "success",
-    "tests": "879 passed, 1 skipped on each Linux Python 3.11/3.12 job",
-    "scope": "frozen predecessor; resolve current branch head from GitHub"
+    "tests": "1206 passed, 1 skipped on each Linux Python 3.11/3.12 job",
+    "scope": "accepted-history recovery predecessor; current model-budget candidate is stacked on this exact head"
   },
   "recall_integrity_candidate": {
     "branch": "fix/recall-integrity-20261001",
@@ -414,17 +418,37 @@
       "state_and_candidate_tests": "77 passed",
       "expanded_gpt_tests": "126 passed across five separately completed test files",
       "py_compile": "passed",
-      "full_pytest": "collection blocked: streamlit missing for tests/test_app.py and tests/test_author_ui.py",
-      "python_3_11_ci": "pending",
-      "python_3_12_ci": "pending",
-      "streamlit_local": "not installed in current container"
+      "full_pytest": "GitHub Actions full suite passed on Linux Python 3.11/3.12; local Streamlit unavailable",
+      "python_3_11_ci": "1206 passed, 1 skipped",
+      "python_3_12_ci": "1206 passed, 1 skipped",
+      "streamlit_local": "not installed in current container",
+      "ci_run": "https://github.com/Jvust1/Novel/actions/runs/36894996226"
     },
     "boundaries": [
       "no automatic relevance choice for historical chapters",
       "no human literary-quality conclusion",
       "no Drive cross-file transaction or remote lock",
-      "no automatic promotion of memory/Voice/Story DNA candidates",
-      "input tokenizer and cumulative multi-call budget still pending"
+      "no automatic promotion of memory/Voice/Story DNA candidates"
+    ]
+  },
+  "model_call_budget_candidate": {
+    "branch": "fix/model-call-budgets-20261002",
+    "base_pr": 55,
+    "base_head": "6087261fff0069176a24d243da0f1e0d417d6a23",
+    "docs": "docs/MODEL_CALL_BUDGETS.md",
+    "validation": {
+      "local_python": "3.13.5",
+      "budget_provider_structured_related": "190 passed",
+      "writer_output_non_streamlit": "22 passed, 5 deselected",
+      "py_compile": "passed",
+      "full_ci": "pending publication",
+      "live_provider_calls": "not run"
+    },
+    "boundaries": [
+      "token counts are engineering bounds rather than provider billing evidence",
+      "legacy extensions with hidden internal retries are outside the explicit cumulative contract",
+      "no cross-stage monetary budget across plan/draft/review/repair/memory",
+      "no automatic trimming of required Canon, knowledge boundaries, accepted history or current required plan"
     ]
   }
 }

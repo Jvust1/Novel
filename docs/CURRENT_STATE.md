@@ -1,3 +1,12 @@
+# 2026-10-02 — Complete input and cumulative model-attempt budgets (candidate)
+
+- Count the complete normalized messages before every engine-visible model/backend attempt; over-budget required context blocks before the call rather than being silently clipped
+- Share one conservative ledger across HTTP response-format retry, structured-extractor fallback and LiteLLM model fallback; failed attempts keep their input/output reservation because zero remote usage cannot be proven
+- Track cumulative repeated input as well as reserved output; attempts and remaining allowances are inspectable from the budget snapshot
+- Preserve legacy direct-call compatibility, while built-in NovelEngine paths use the explicit budget contract
+- Local Python 3.13 evidence: 190 budget/provider/structured/model-output/routed tests passed; 22 non-Streamlit writer-output tests passed; modified runtime files compile. Full 3.11/3.12 CI remains the release gate
+- [Behavior, accounting and limits](MODEL_CALL_BUDGETS.md)
+
 # 2026-10-02 — Accepted-history rebuild and stale-candidate isolation (candidate)
 
 - Rebuild accepted history only from append-only author-accepted chapter records; current/future/other-story candidates are excluded

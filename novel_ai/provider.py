@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .token_budget import ModelBudgetExceeded, ModelCallBudget
 from .output_policy import (
     DEFAULT_MAX_OUTPUT_BYTES,
     DEFAULT_MAX_RESPONSE_BYTES,
@@ -130,6 +131,7 @@ class OpenAICompatibleProvider:
         temperature: float = 0.8,
         max_tokens: int | None = None,
         response_format: dict[str, Any] | None = None,
+        budget: ModelCallBudget | None = None,
     ) -> str:
         base = self.config.base_url.rstrip("/")
         if not base:
@@ -158,10 +160,14 @@ class OpenAICompatibleProvider:
             timeout=self.config.timeout,
             trust_env=not is_loopback_url(endpoint),
         ) as client:
-            # Each request is independent and bounded. No auth/rate-limit/
-            # service/transport retry, or repeat after the single downgrade.
+            # Every request is individually bounded. When NovelEngine supplies
+            # a stage budget, the one format-downgrade retry also reserves from
+            # the same cumulative allowance. No other retry is performed.
             for attempt in range(2):
-                with client.stream("POST", endpoint, json=payload, headers=headers) as response:
+                attempt_payload = dict(payload)
+                if budget is not None:
+                    attempt_payload["max_tokens"] = budget.claim(messages, payload["max_tokens"])
+                with client.stream("POST", endpoint, json=attempt_payload, headers=headers) as response:
                     content = _read_bounded_response(response, self.config.max_response_bytes)
                     if (attempt == 0 and response_format is not None
                             and _unsupported_response_format(response.status_code, content)):
@@ -181,7 +187,7 @@ class OpenAICompatibleProvider:
                     except UnicodeError:
                         raise OutputValidationError("model HTTP response is not valid UTF-8") from None
                     return completion_text(data, max_bytes=self.config.max_output_bytes,
-                                           max_tokens=payload["max_tokens"])
+                                           max_tokens=attempt_payload["max_tokens"])
         raise RuntimeError("model request did not produce a completion")
 
 
@@ -204,10 +210,12 @@ class LiteLLMConfig:
 class LiteLLMProvider:
     """Optional LiteLLM adapter using Novel's existing provider chat contract.
 
-    The first model is primary; remaining models are passed as LiteLLM fallbacks.
-    LiteLLM stays optional and is imported lazily. Its SDK buffers responses:
-    only returned content bytes are bounded here, not transport allocation.
-    Missing finish_reason is rejected just as in the HTTPX adapter.
+    The first model is primary. Legacy direct callers may still pass remaining
+    models to LiteLLM as fallbacks. When NovelEngine supplies a cumulative
+    budget, fallbacks are expanded into explicit sequential zero-retry calls so
+    each attempt is visible to the shared allowance. The SDK still buffers
+    responses; only returned content bytes are bounded here, not transport
+    allocation. Missing finish_reason is rejected just as in the HTTPX adapter.
     """
 
     def __init__(self, config: LiteLLMConfig, *, completion_func: Any | None = None):
@@ -230,36 +238,58 @@ class LiteLLMProvider:
         temperature: float = 0.8,
         max_tokens: int | None = None,
         response_format: dict[str, Any] | None = None,
+        budget: ModelCallBudget | None = None,
     ) -> str:
-        kwargs: dict[str, Any] = {
-            "model": self.config.models[0],
-            "messages": messages,
-            "temperature": temperature,
-            "timeout": self.config.timeout,
-            "num_retries": 0,
-        }
-        if len(self.config.models) > 1:
-            kwargs["fallbacks"] = list(self.config.models[1:])
-        if self.config.api_key:
-            kwargs["api_key"] = self.config.api_key
-        if self.config.api_base:
-            kwargs["api_base"] = self.config.api_base
-        kwargs["max_tokens"] = positive_int(
+        requested_tokens = positive_int(
             self.config.default_max_tokens if max_tokens is None else max_tokens,
             name="max_tokens",
         )
         positive_int(self.config.max_output_bytes, name="max_output_bytes")
-        if response_format is not None:
-            kwargs["response_format"] = response_format
 
-        try:
-            response = self._completion(**kwargs)
-        except Exception as exc:
-            # SDK exceptions can contain request bodies, credentials and raw
-            # completions; retain only the exception class as a safe diagnostic.
-            raise RuntimeError(f"LiteLLM completion failed ({type(exc).__name__})") from None
-        return completion_text(response, max_bytes=self.config.max_output_bytes,
-                               max_tokens=kwargs["max_tokens"])
+        def kwargs_for(model: str, attempt_tokens: int, *, include_fallbacks: bool) -> dict[str, Any]:
+            kwargs: dict[str, Any] = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+                "timeout": self.config.timeout,
+                "num_retries": 0,
+                "max_tokens": attempt_tokens,
+            }
+            if include_fallbacks and len(self.config.models) > 1:
+                kwargs["fallbacks"] = list(self.config.models[1:])
+            if self.config.api_key:
+                kwargs["api_key"] = self.config.api_key
+            if self.config.api_base:
+                kwargs["api_base"] = self.config.api_base
+            if response_format is not None:
+                kwargs["response_format"] = response_format
+            return kwargs
+
+        if budget is None:
+            kwargs = kwargs_for(self.config.models[0], requested_tokens, include_fallbacks=True)
+            try:
+                response = self._completion(**kwargs)
+            except Exception as exc:
+                # SDK exceptions can contain request bodies, credentials and raw
+                # completions; retain only the exception class as a safe diagnostic.
+                raise RuntimeError(f"LiteLLM completion failed ({type(exc).__name__})") from None
+            return completion_text(response, max_bytes=self.config.max_output_bytes,
+                                   max_tokens=kwargs["max_tokens"])
+
+        failures: list[str] = []
+        for model in self.config.models:
+            attempt_tokens = budget.claim(messages, requested_tokens)
+            kwargs = kwargs_for(model, attempt_tokens, include_fallbacks=False)
+            try:
+                response = self._completion(**kwargs)
+                return completion_text(response, max_bytes=self.config.max_output_bytes,
+                                       max_tokens=attempt_tokens)
+            except ModelBudgetExceeded:
+                raise
+            except Exception as exc:
+                failures.append(type(exc).__name__)
+        raise RuntimeError("LiteLLM completion failed across configured models (" +
+                           ", ".join(failures) + ")") from None
 
 
 def sglang_provider_config(

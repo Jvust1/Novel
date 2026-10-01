@@ -25,10 +25,10 @@
   ],
   "scope": "Historical archive inventory; not an assertion of current branch HEAD or latest private delivery",
   "current_candidate": {
-    "branch": "fix/recall-integrity-20261001",
-    "base_verified_pr": 48,
-    "base_verified_head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
-    "source_of_truth": "Resolve the current branch/PR head through GitHub; exact packaged source and CI receipts are delivered separately",
+    "branch": "fix/model-call-budgets-20261002",
+    "base_verified_pr": 55,
+    "base_verified_head": "6087261fff0069176a24d243da0f1e0d417d6a23",
+    "source_of_truth": "Resolve current candidate branch/PR head and CI through GitHub; no new persistent Drive artifact is claimed by this code-only slice",
     "guide": "docs/HANDOFF.md"
   }
 }
