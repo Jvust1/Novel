@@ -5,6 +5,7 @@ from typing import Any, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from .token_budget import ModelBudgetExceeded, ModelCallBudget
 from .output_policy import (
     DEFAULT_MAX_OUTPUT_BYTES,
     DEFAULT_MAX_TOKENS,
@@ -229,10 +230,12 @@ class GuidanceStructuredExtractor:
 
 
 class FallbackStructuredExtractor:
-    """Try explicitly selected backends in order, keeping the same allowances.
+    """Try selected backends in order under one optional cumulative allowance.
 
-    This opt-in chain may make one call per configured adapter; it does not
-    establish a cumulative token/spending budget across those attempts.
+    NovelEngine supplies a shared ModelCallBudget. Each real backend attempt
+    reserves from it before execution; exhaustion propagates instead of silently
+    falling through to another provider. Direct legacy callers without a budget
+    retain the previous per-attempt behavior.
     """
 
     name = "fallback-chain"
@@ -253,17 +256,21 @@ class FallbackStructuredExtractor:
         temperature: float,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
+        budget: ModelCallBudget | None = None,
     ) -> ModelT:
         _limits(max_tokens, max_output_bytes)
         failures: list[str] = []
         for extractor in self.extractors:
             try:
+                attempt_tokens = budget.claim(messages, max_tokens) if budget is not None else max_tokens
                 kwargs = dict(response_model=response_model, messages=messages,
-                              temperature=temperature, max_tokens=max_tokens,
+                              temperature=temperature, max_tokens=attempt_tokens,
                               max_output_bytes=max_output_bytes)
                 _check_keywords(extractor.extract, **kwargs)
                 value = extractor.extract(**kwargs)
                 return _validate(response_model, value, max_output_bytes)
+            except ModelBudgetExceeded:
+                raise
             except Exception as exc:
                 name = str(getattr(extractor, "name", extractor.__class__.__name__))
                 failures.append(f"{name}: {exc.__class__.__name__}")

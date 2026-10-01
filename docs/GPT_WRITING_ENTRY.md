@@ -8,14 +8,15 @@
 
 ## 1. 先读哪些来源
 
-1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/accepted-history-rebuild-20261002`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
+1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/model-call-budgets-20261002`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
 2. **私有故事档案**：读作者指定 Drive 文件的实际内容，核对 `story_id / revision`、当前阶段、接受记录和保存回执。工程文件 `governance/project_state.json` 不是小说档案。
 3. **Canon**：已确认的世界规则、锁定事实、人物身份与知识边界、总纲。只有实际读到且与本章相关的约束才能进入本次上下文；关键约束缺失时先补齐。
 4. **Active**：本章目标、出场人物当前状态、时间地点、近章摘要、开放伏笔、当前作品文风，以及当前计划/草稿/审校候选的原件。
 5. **读者信息**：按 [读者信息揭示账本](READER_REVEAL_LEDGER.md) 把读者已知、人物已知、作者完整真相分开。起草只取已确认 `term_id / term / reader_known` 白名单；完整真相和计划揭晓只用于私有规划/审校，不自动写入正文或导出。需要本章新揭示时，由已确认章计划明确范围。
 6. **Recall**：按稳定 ID、章节和版本检索本章确实需要的历史原件或片段。先用索引定位，再读来源；不默认把全书塞进上下文，不将摘要冒充完整修订现场。
    有执行器时可先用 [`accepted-history`](ACCEPTED_HISTORY_REBUILD.md) 从实际读回档案重建只含作者已接受版本的清单，再显式点名本章需要的已接受历史原件；当前候选、未来章、别书缓存不得混入。
-7. **阶段提示**：读 [文风包说明](prompts/natural-fiction/README.md)、[类型文风卡](prompts/natural-fiction/GENRE_PROFILES.md)，再读本次需要的写前、审校或修订提示。
+7. **模型调用预算**：实际执行器发送完整 messages 前，按 [输入与累计调用预算](MODEL_CALL_BUDGETS.md) 计量。必要上下文超出配置时停止调用并报告阻塞；不能通过静默裁掉 Canon、知识边界、明确点名的已接受历史或当前必要计划来“过预算”。
+8. **阶段提示**：读 [文风包说明](prompts/natural-fiction/README.md)、[类型文风卡](prompts/natural-fiction/GENRE_PROFILES.md)，再读本次需要的写前、审校或修订提示。
 
 已有作品只补会阻塞当前步骤的缺口。新书把[空白模板](../writing_templates/story_state.template.json)复制到指定私有 Drive，仓库模板保持空白；先集中确定主类型、主角与核心冲突；有足够信息后提出暂定文风卡和计划。空数组代表尚未记录，不证明故事中不存在这些信息。
 
