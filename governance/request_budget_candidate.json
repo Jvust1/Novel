@@ -1,0 +1,41 @@
+{
+  "schema": "novel-independent-request-budget-candidate-v1",
+  "branch": "feat/request-budget-20261001",
+  "base_pr": 51,
+  "base_head": "bcd34013f436f58a894daba71497ee4702ca27da",
+  "base_tree": "acd4480ac25b5713ba80bc08a77ebd2c79eaf9bb",
+  "base_files_preserved": 13,
+  "entry": "novel_ai/budgeted_writing.py:BudgetedWritingSession",
+  "docs": "docs/REQUEST_BUDGETS.md",
+  "source_reuse": "third_party/pydantic-ai-usage-limits/provenance.json",
+  "validation": {
+    "python_3_11": {
+      "passed": 1336,
+      "skipped": 1
+    },
+    "python_3_12": {
+      "passed": 1336,
+      "skipped": 1
+    },
+    "new_budget_tests": 130,
+    "independent_boundary_tests": 54,
+    "skip": "optional qdrant-client absent",
+    "network": "HTTPX MockTransport; no actual model endpoint",
+    "real_cost_or_quality": "not established",
+    "remote_ci": "see exact published PR head and delivery verification receipt"
+  },
+  "scope": [
+    "complete per-request and cumulative wire JSON byte admission",
+    "owned OpenAI-compatible HTTP attempts incl format fallback",
+    "worst-case reserved max_tokens sum, no refund after dispatch",
+    "same allowance across existing writing/review/style/memory paths",
+    "no canonical story or author acceptance writes"
+  ],
+  "excluded": [
+    "ChatGPT conversation/subscription metering",
+    "actual tokenizer/chat framing/window/dollar ceiling",
+    "opaque SDK and external hook execution",
+    "multi-process/device persistence",
+    "unpublished local accepted-history extended writer"
+  ]
+}

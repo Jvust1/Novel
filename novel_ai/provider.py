@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import deepcopy
 import re
 from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+
+from .request_budget import RequestBudget, bounded_request_bytes
 
 from .output_policy import (
     DEFAULT_MAX_OUTPUT_BYTES,
@@ -120,8 +123,18 @@ class OpenAICompatibleProvider:
     clipping. Only explicit response_format-unsupported errors are retried.
     """
 
-    def __init__(self, config: ProviderConfig):
-        self.config = config
+    def __init__(self, config: ProviderConfig, *, request_budget: RequestBudget | None = None):
+        if request_budget is not None and type(request_budget) is not RequestBudget:
+            raise TypeError("request_budget must be RequestBudget")
+        if request_budget is not None and type(config) is not ProviderConfig:
+            raise TypeError("bounded provider requires ProviderConfig")
+        self.config = deepcopy(config) if request_budget is not None else config
+        self._budget_config = deepcopy(config) if request_budget is not None else None
+        self._request_budget = request_budget
+
+    @property
+    def request_budget(self) -> RequestBudget | None:
+        return self._request_budget
 
     def chat(
         self,
@@ -131,57 +144,82 @@ class OpenAICompatibleProvider:
         max_tokens: int | None = None,
         response_format: dict[str, Any] | None = None,
     ) -> str:
-        base = self.config.base_url.rstrip("/")
+        if self.request_budget is not None:
+            if self.config != self._budget_config:
+                raise ValueError("bounded provider configuration changed; create an explicitly configured session")
+            config = deepcopy(self._budget_config)
+        else:
+            config = self.config
+        base = config.base_url.rstrip("/")
         if not base:
             raise ValueError("Base URL 不能为空")
         endpoint = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
 
         payload: dict[str, Any] = {
-            "model": self.config.model,
+            "model": config.model,
             "messages": messages,
             "temperature": temperature,
         }
         payload["max_tokens"] = positive_int(
-            self.config.default_max_tokens if max_tokens is None else max_tokens,
+            config.default_max_tokens if max_tokens is None else max_tokens,
             name="max_tokens",
         )
-        positive_int(self.config.max_output_bytes, name="max_output_bytes")
-        positive_int(self.config.max_response_bytes, name="max_response_bytes")
+        positive_int(config.max_output_bytes, name="max_output_bytes")
+        positive_int(config.max_response_bytes, name="max_response_bytes")
         if response_format is not None:
             payload["response_format"] = response_format
 
         headers = {"Content-Type": "application/json", "Accept-Encoding": "identity"}
-        if self.config.api_key:
-            headers["Authorization"] = f"Bearer {self.config.api_key}"
+        if config.api_key:
+            headers["Authorization"] = f"Bearer {config.api_key}"
 
+        budget = self.request_budget
         with httpx.Client(
-            timeout=self.config.timeout,
+            timeout=config.timeout,
             trust_env=not is_loopback_url(endpoint),
         ) as client:
             # Each request is independent and bounded. No auth/rate-limit/
             # service/transport retry, or repeat after the single downgrade.
             for attempt in range(2):
-                with client.stream("POST", endpoint, json=payload, headers=headers) as response:
-                    content = _read_bounded_response(response, self.config.max_response_bytes)
-                    if (attempt == 0 and response_format is not None
-                            and _unsupported_response_format(response.status_code, content)):
-                        payload = dict(payload)
-                        payload.pop("response_format", None)
-                        continue
-                    if not response.is_success:
-                        raise httpx.HTTPStatusError(
-                            f"model endpoint returned HTTP {response.status_code}",
-                            request=response.request,
-                            response=response,
-                        )
-                    try:
-                        data = strict_json_object(
-                            content.decode("utf-8"), max_bytes=self.config.max_response_bytes
-                        )
-                    except UnicodeError:
-                        raise OutputValidationError("model HTTP response is not valid UTF-8") from None
-                    return completion_text(data, max_bytes=self.config.max_output_bytes,
-                                           max_tokens=payload["max_tokens"])
+                ticket = None
+                succeeded = False
+                if budget is None:
+                    request_kwargs = {"json": payload}
+                else:
+                    # These are the exact bytes sent; role/content, schema,
+                    # model and all request fields are included, not just a
+                    # clipped prompt estimate. Each format fallback reserves
+                    # another entire attempt before any network dispatch.
+                    body = bounded_request_bytes(payload, max_bytes=budget.limits.max_request_bytes)
+                    ticket = budget.admit(body, max_tokens=payload["max_tokens"])
+                    request_kwargs = {"content": body}
+                try:
+                    with client.stream("POST", endpoint, **request_kwargs, headers=headers) as response:
+                        content = _read_bounded_response(response, config.max_response_bytes)
+                        if (attempt == 0 and response_format is not None
+                                and _unsupported_response_format(response.status_code, content)):
+                            payload = dict(payload)
+                            payload.pop("response_format", None)
+                            continue
+                        if not response.is_success:
+                            raise httpx.HTTPStatusError(
+                                f"model endpoint returned HTTP {response.status_code}",
+                                request=response.request,
+                                response=response,
+                            )
+                        try:
+                            data = strict_json_object(
+                                content.decode("utf-8"), max_bytes=config.max_response_bytes
+                            )
+                        except UnicodeError:
+                            raise OutputValidationError("model HTTP response is not valid UTF-8") from None
+                        text = completion_text(data, max_bytes=config.max_output_bytes,
+                                               max_tokens=payload["max_tokens"])
+                        succeeded = True
+                        return text
+                finally:
+                    if ticket is not None:
+                        budget.finish(ticket, succeeded=succeeded)
         raise RuntimeError("model request did not produce a completion")
 
 
