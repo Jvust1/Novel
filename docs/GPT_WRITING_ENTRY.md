@@ -10,7 +10,7 @@
 
 ## 1. 先读哪些来源
 
-1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `fix/accepted-history-rebuild-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
+1. **规则**：指定仓库与 ref，读 `README.md` → `AGENTS.md` 顶部 → 本文件。此入口位于 `feat/accepted-archive-continuation-20261001`，未合入 `main`；记录实际读到的 ref，不能因看见链接就称已加载。
 2. **私有故事档案**：读作者指定 Drive 文件的实际内容，核对 `story_id / revision`、当前阶段、接受记录和保存回执。工程文件 `governance/project_state.json` 不是小说档案。
 3. **Canon**：已确认的世界规则、锁定事实、人物身份与知识边界、总纲。只有实际读到且与本章相关的约束才能进入本次上下文；关键约束缺失时先补齐。
 4. **Active**：本章目标、出场人物当前状态、时间地点、近章摘要、开放伏笔、当前作品文风，以及当前计划/草稿/审校候选的原件。
@@ -98,6 +98,8 @@
 需要中途改设定/文风时，可使用 [作者变更日志](GPT_AUTHOR_AMENDMENTS.md) 的 `scripts/story_journal.py`，实际复用 BSD-3-Clause 的 eventsourcing 源码重放与版本检查。旧状态先明确迁移到新文件；历史正文替换和派生记忆重算仍需另行对账，不会自动完成。
 
 执行器已有明确可信的本地编码器时，可按 [本地语义 Recall](RECALL_INTEGRITY.md) 显式接入 `ContextAssembler`，核对当前项目和摘要来源后进入计划到复审的链路；更新失败不能继续用过期 corpus 起草。它不默认启用，不要求作者安装模型，不替代原件读取和作者确认。
+
+已有执行器时，[档案绑定续写](ACCEPTED_ARCHIVE_CONTINUATION.md) 把实际读回的未被 journal 拥有的 v1 档案接到原历史预检和受预算约束的实际写作。档案变化会使旧执行句柄失效；不自动接受正文或记忆，不新增第二套缓存。没有执行器时继续使用上述文本协议。
 
 ## 7. 只报告真正做过的事
 
