@@ -1,9 +1,76 @@
 from __future__ import annotations
 
 from collections import Counter
-from math import sqrt
+from collections.abc import Mapping, Set
+from math import fsum, sqrt
+from numbers import Real
 import re
 from typing import Protocol, Sequence
+
+from pydantic import FiniteFloat, TypeAdapter, ValidationError
+
+
+_FINITE_VECTOR_BATCH = TypeAdapter(list[list[FiniteFloat]])
+
+
+def _ordered_values(value: object) -> list:
+    """Detach ordered iterables, including NumPy arrays and encoder generators."""
+    if isinstance(value, (str, bytes, bytearray, Mapping, Set)):
+        raise ValueError("embedding 必须是有序数值向量")
+    try:
+        return list(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("embedding 必须是有序数值向量") from exc
+
+
+def _validated_vectors(
+    values: object, *, count: int, dimension: int | None = None,
+) -> list[list[float]]:
+    """Validate/detach a complete batch before its caller publishes any state.
+
+    Pydantic supplies finite float validation. The Real guard also excludes
+    NumPy bool/zero-dimensional arrays that strict float coercion would accept.
+    Empty batches are allowed only for zero inputs; empty vectors are invalid.
+    """
+    rows = _ordered_values(values)
+    if len(rows) != count:
+        raise ValueError("embedding 数量与输入文本数量必须一致")
+    detached = []
+    for row in rows:
+        cells = _ordered_values(row)
+        if not cells:
+            raise ValueError("embedding 向量不能为空")
+        if dimension is None:
+            dimension = len(cells)
+        if len(cells) != dimension:
+            raise ValueError("embedding 维度与索引不一致")
+        if any(isinstance(cell, bool) or not isinstance(cell, Real) for cell in cells):
+            raise ValueError("embedding 必须是有限实数向量，不能包含布尔值")
+        detached.append(cells)
+    try:
+        return _FINITE_VECTOR_BATCH.validate_python(detached, strict=True)
+    except ValidationError as exc:
+        raise ValueError("embedding 必须是有限实数向量，不能包含 NaN/Infinity") from exc
+
+
+def _normalize_vector(vector: Sequence[float]) -> tuple[float, ...]:
+    """Normalize already-validated values without squaring their original scale.
+
+    Zero vectors deliberately remain zero and have cosine similarity zero.
+    Scaling first preserves huge and subnormal finite vectors, including before
+    an optional accelerator converts the unit vector to float32.
+    """
+    scale = max(abs(value) for value in vector)
+    if scale == 0:
+        return tuple(0.0 for _ in vector)
+    scaled = [value / scale for value in vector]
+    norm = sqrt(fsum(value * value for value in scaled))
+    return tuple(value / norm for value in scaled)
+
+
+def _unit_cosine(a: Sequence[float], b: Sequence[float]) -> float:
+    score = fsum(x * y for x, y in zip(a, b, strict=True))
+    return round(max(-1.0, min(1.0, score)), 6)
 
 
 class Encoder(Protocol):
@@ -39,12 +106,9 @@ def char_ngram_similarity(text_a: str, text_b: str, *, n: int = 2) -> float:
 
 
 def vector_cosine(a: Sequence[float], b: Sequence[float]) -> float:
-    if not a or not b or len(a) != len(b):
-        return 0.0
-    dot = sum(float(x) * float(y) for x, y in zip(a, b))
-    norm_a = sqrt(sum(float(x) * float(x) for x in a))
-    norm_b = sqrt(sum(float(y) * float(y) for y in b))
-    return round(dot / (norm_a * norm_b), 6) if norm_a and norm_b else 0.0
+    """Finite, bounded cosine; invalid/empty/mismatched vectors fail explicitly."""
+    left, right = _validated_vectors([a, b], count=2)
+    return _unit_cosine(_normalize_vector(left), _normalize_vector(right))
 
 
 class Text2VecEncoder:
@@ -98,10 +162,8 @@ def semantic_similarity(text_a: str, text_b: str, encoder: Encoder | None = None
     """
     if encoder is None:
         return char_ngram_similarity(text_a, text_b)
-    vectors = encoder.encode([text_a, text_b])
-    if len(vectors) != 2:
-        raise ValueError("encoder 必须为两个输入各返回一个向量")
-    return vector_cosine(vectors[0], vectors[1])
+    vectors = _validated_vectors(encoder.encode([text_a, text_b]), count=2)
+    return _unit_cosine(_normalize_vector(vectors[0]), _normalize_vector(vectors[1]))
 
 
 def max_reference_similarity(text: str, references: Sequence[str], encoder: Encoder | None = None) -> dict:

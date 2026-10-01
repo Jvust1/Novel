@@ -1,11 +1,12 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "storage-evidence-hardening-candidate",
+  "stage": "local-semantic-recall-integrity-candidate",
   "version": "0.12.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
     "Protect manuscripts, chapter summaries and benchmark evidence through confined atomic writes and bounded recovery; then close verified provider/vector/final-report gaps",
     "Validate explicit author setting/style amendment migration, affected-source reviews and private save/readback before continuing GPT writing",
     "Use GPT + GitHub repository instructions as the primary writing entry; adapt style to genre/reader/scene and preserve private version-bound book state without requiring a local UI",
@@ -162,19 +163,18 @@
     "Whole unmodified MIT pytransitions core used by optional GPT story-state Machine with Pydantic validation, exact-source confirmations, idempotent operations and private save/readback",
     "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth",
     "Additive private author-change journal using pinned BSD-3-Clause eventsourcing immutable replay/version guards, original v1 evidence retention, conservative chapter/derived-context review and explicit author resume",
-    "Pinned boltons atomic-write source port in ProjectStore and eval writers, PR16 path confinement reconciliation, cooperating-process project locks, fixed extraction-summary intent recovery, exclusive benchmark evidence and scoring no-clobber"
+    "Pinned boltons atomic-write source port in ProjectStore and eval writers, PR16 path confinement reconciliation, cooperating-process project locks, fixed extraction-summary intent recovery, exclusive benchmark evidence and scoring no-clobber",
+    "Existing Pydantic TypeAdapter/FiniteFloat runtime reuse for validated finite vectors, coherent local Recall snapshots and explicit exact-source semantic history in ContextAssembler"
   ],
   "frozen": false,
   "blocking_issues": [
     "Before general release: output budgets and response-format fallback still need hardening",
-    "Before general release: local semantic recall must reject invalid vectors and preserve state after failed updates",
     "Before general release: all repaired-text result reports and external review hooks need parity",
     "Independent human literary-quality evaluation and production security/dependency/lint acceptance remain unestablished"
   ],
   "pending_sync": [],
   "next_steps": [
-    "Finish exact-head CI and delivery verification for the storage/evidence candidate without changing frozen prior candidates",
-    "Close verified local semantic recall validation and failed-update consistency gaps",
+    "Finish exact-head CI and delivery verification for the Recall/context candidate, preserving prior snapshots",
     "Bound model outputs, narrow format fallback, and clarify ambiguous structured-output parsing",
     "Recompute final repaired-text reports consistently and align supported editorial hooks",
     "Obtain actual author/reader evaluation before claiming literary or market quality",
@@ -319,13 +319,41 @@
     ]
   },
   "latest_verified_candidate": {
-    "pr": 47,
-    "url": "https://github.com/Jvust1/Novel/pull/47",
-    "head": "601c2f71b003425481552aec5554aee5945b19a8",
-    "tree": "1ab3b8f89be5671fa1ce4fab5faf8f3c052f0a33",
-    "ci": "https://github.com/Jvust1/Novel/actions/runs/36837227118",
+    "pr": 48,
+    "url": "https://github.com/Jvust1/Novel/pull/48",
+    "head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
+    "tree": "013ca6c7741093bba7388eb44a7b22c9bcfcdbdc",
+    "ci": "https://github.com/Jvust1/Novel/actions/runs/36840688905",
     "status": "success",
-    "tests": "534 passed, 1 skipped",
-    "scope": "frozen predecessor; current branch head must be resolved from GitHub, not inferred from this receipt"
+    "tests": "632 passed, 1 skipped on each Linux Python 3.11/3.12 job",
+    "scope": "frozen predecessor; resolve current branch head from GitHub"
+  },
+  "recall_integrity_candidate": {
+    "branch": "fix/recall-integrity-20261001",
+    "base_pr": 48,
+    "base_head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
+    "docs": "docs/RECALL_INTEGRITY.md",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 879,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 879,
+        "skipped": 1
+      },
+      "new_backend_integrity_tests": 107,
+      "independent_context_tests": 85,
+      "workflow_and_source_tests": 14,
+      "skip_reason": "optional qdrant-client absent",
+      "compileall": "passed",
+      "diff_check": "passed",
+      "real_embedding_and_native_faiss": "not_run; packages absent; synthetic stubs only",
+      "human_quality": "not_established",
+      "independent_scoped_guard_tests": 41
+    },
+    "native_faiss_and_real_embedding": "not_run; packages absent; synthetic stubs only",
+    "authoritative_story_storage": false,
+    "unbound_longform_cache": "omitted for every explicit history scope; legacy unscoped use remains disclosed; whole overlong legacy guards omitted"
   }
 }

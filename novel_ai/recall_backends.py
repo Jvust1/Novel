@@ -1,44 +1,122 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import dataclass
 import importlib.util
+from numbers import Integral
+from threading import RLock
 from typing import Iterable, Sequence
 
 from .recall import RecallDocument, RecallHit
-from .semantic import Encoder, vector_cosine
+from .qdrant_recall import _json_safe_metadata
+from .semantic import Encoder, _normalize_vector, _ordered_values, _unit_cosine, _validated_vectors
+
+
+@dataclass(frozen=True)
+class _RecallSnapshot:
+    documents: tuple[RecallDocument, ...] = ()
+    vectors: tuple[tuple[float, ...], ...] = ()
+    unit_vectors: tuple[tuple[float, ...], ...] = ()
+    faiss: object | None = None
+    index: object | None = None
 
 
 class LocalSemanticRecall:
-    """Local semantic recall implementing the shared RecallBackend contract.
+    """Local recall with atomic, detached corpus/vector/index snapshots.
 
-    Existing add()/search() callers remain supported, while upsert()/query()
-    allow the same upper-layer code to switch between this backend and Qdrant.
+    Legacy add()/search() and read-only copies of ids/texts/metadata/vectors
+    remain available. Invalid updates and optional accelerator failures leave
+    the previous snapshot intact. Zero vectors are valid and score zero.
     """
 
     name = "local-semantic"
 
     def __init__(self, encoder: Encoder):
+        if not callable(getattr(encoder, "encode", None)):
+            raise TypeError("encoder 必须提供 encode()")
         self.encoder = encoder
-        self.ids: list[str] = []
-        self.texts: list[str] = []
-        self.metadata: list[dict] = []
-        self.vectors: list[list[float]] = []
-        self._faiss = None
-        self._index = None
+        self._state = _RecallSnapshot()
+        self._update_lock = RLock()
+        self._updating = False
 
-    def _encode(self, texts: Sequence[str]) -> list[list[float]]:
-        rows = [list(map(float, row)) for row in self.encoder.encode(list(texts))]
-        if len(rows) != len(texts):
-            raise ValueError("embedding 数量与 texts 数量必须一致")
-        if rows and self.vectors and len(rows[0]) != len(self.vectors[0]):
-            raise ValueError("embedding 维度发生变化")
-        return rows
+    @property
+    def ids(self) -> list[str]:
+        return [document.document_id for document in self._state.documents]
+
+    @property
+    def texts(self) -> list[str]:
+        return [document.text for document in self._state.documents]
+
+    @property
+    def metadata(self) -> list[dict]:
+        return [deepcopy(document.metadata) for document in self._state.documents]
+
+    @property
+    def vectors(self) -> list[list[float]]:
+        return [list(vector) for vector in self._state.vectors]
+
+    @property
+    def _index(self):
+        return self._state.index
+
+    @property
+    def _faiss(self):
+        return self._state.faiss
+
+    def _encode(self, texts: Sequence[str], *, dimension: int | None = None) -> list[list[float]]:
+        try:
+            values = self.encoder.encode(list(texts))
+            return _validated_vectors(values, count=len(texts), dimension=dimension)
+        except Exception as exc:
+            raise ValueError("embedding 计算或校验失败") from exc
+
+    @staticmethod
+    def _documents(documents: Iterable[RecallDocument]) -> list[RecallDocument]:
+        detached = []
+        for document in documents:
+            if not isinstance(document, RecallDocument):
+                raise TypeError("documents 必须包含 RecallDocument")
+            if not isinstance(document.document_id, str) or not document.document_id.strip():
+                raise ValueError("RecallDocument.document_id 必须为非空字符串")
+            if not isinstance(document.text, str) or not document.text.strip():
+                raise ValueError("RecallDocument.text 必须为非空字符串")
+            # Reuse the existing Qdrant adapter's safe, detached JSON contract.
+            metadata = _json_safe_metadata(document.metadata)
+            detached.append(RecallDocument(document.document_id, document.text, metadata))
+        return detached
 
     def _replace_all(self, docs: Sequence[RecallDocument]) -> None:
-        self.ids = [str(d.document_id) for d in docs]
-        self.texts = [str(d.text) for d in docs]
-        self.metadata = [dict(d.metadata) for d in docs]
-        self.vectors = self._encode(self.texts) if self.texts else []
-        self._rebuild()
+        """Caller holds _update_lock; publish only after all work succeeds."""
+        if self._updating:
+            raise ValueError("encoder 或索引构建期间不能递归修改 Recall")
+        self._updating = True
+        try:
+            state = self._state
+            dimension = len(state.vectors[0]) if state.vectors else None
+            vectors = self._encode([doc.text for doc in docs], dimension=dimension) if docs else []
+            units = tuple(_normalize_vector(vector) for vector in vectors)
+            faiss, index = self._build_index(units)
+            self._state = _RecallSnapshot(
+                documents=tuple(docs),
+                vectors=tuple(tuple(vector) for vector in vectors),
+                unit_vectors=units,
+                faiss=faiss,
+                index=index,
+            )
+        finally:
+            self._updating = False
+
+    def replace_documents(self, documents: Iterable[RecallDocument]) -> None:
+        """Atomically replace the entire corpus; an empty iterable clears it.
+
+        Duplicate IDs keep their first position and last supplied document, as
+        in upsert(). Dimension remains fixed until the corpus is explicitly
+        cleared. No previous/foreign documents are retained by replacement.
+        """
+        incoming = self._documents(documents)
+        unique = {document.document_id: document for document in incoming}
+        with self._update_lock:
+            self._replace_all(list(unique.values()))
 
     def add(
         self,
@@ -46,92 +124,103 @@ class LocalSemanticRecall:
         texts: Sequence[str],
         metadata: Sequence[dict] | None = None,
     ) -> None:
+        if isinstance(ids, (str, bytes)) or isinstance(texts, (str, bytes)):
+            raise ValueError("ids 与 texts 必须为序列，不能为单个字符串")
         if len(ids) != len(texts):
             raise ValueError("ids 与 texts 数量必须一致")
         if metadata is not None and len(metadata) != len(ids):
             raise ValueError("metadata 与 ids 数量必须一致")
         rows = [
-            RecallDocument(str(item_id), str(text), dict((metadata or [{}] * len(ids))[i]))
-            for i, (item_id, text) in enumerate(zip(ids, texts))
+            RecallDocument(item_id, text, metadata[i] if metadata is not None else {})
+            for i, (item_id, text) in enumerate(zip(ids, texts, strict=True))
         ]
         self.upsert(rows)
 
     def upsert(self, documents: Iterable[RecallDocument]) -> None:
-        incoming = list(documents)
+        incoming = self._documents(documents)
         if not incoming:
             return
-        merged = {
-            item_id: RecallDocument(item_id, text, meta)
-            for item_id, text, meta in zip(self.ids, self.texts, self.metadata)
-        }
-        for document in incoming:
-            if not isinstance(document, RecallDocument):
-                raise TypeError("documents 必须包含 RecallDocument")
-            if not document.document_id.strip():
-                raise ValueError("RecallDocument.document_id 不能为空")
-            if not document.text.strip():
-                raise ValueError("RecallDocument.text 不能为空")
-            merged[document.document_id] = document
-        self._replace_all(list(merged.values()))
+        with self._update_lock:
+            merged = {document.document_id: document for document in self._state.documents}
+            for document in incoming:
+                merged[document.document_id] = document
+            self._replace_all(list(merged.values()))
 
-    def _rebuild(self) -> None:
-        self._faiss = None
-        self._index = None
-        if not self.vectors or importlib.util.find_spec("faiss") is None:
-            return
+    @staticmethod
+    def _build_index(unit_vectors: Sequence[Sequence[float]]) -> tuple[object | None, object | None]:
+        if not unit_vectors or importlib.util.find_spec("faiss") is None:
+            return None, None
         try:
             import faiss
             import numpy as np
 
-            matrix = np.asarray(self.vectors, dtype="float32")
-            faiss.normalize_L2(matrix)
+            # Normalize in scaled float64 math first. float32 conversion of
+            # raw huge/subnormal vectors would overflow or erase direction.
+            matrix = np.asarray(unit_vectors, dtype="float32")
             index = faiss.IndexFlatIP(matrix.shape[1])
             index.add(matrix)
-            self._faiss = faiss
-            self._index = index
-        except Exception:
-            self._faiss = None
-            self._index = None
+            if index.ntotal != len(unit_vectors) or index.d != matrix.shape[1]:
+                raise ValueError("FAISS 索引数量或维度与向量不一致")
+            return faiss, index
+        except Exception as exc:
+            raise ValueError("FAISS 索引构建失败；原索引保持不变") from exc
 
-    def search(self, query: str, k: int = 5) -> list[RecallHit]:
-        if not self.vectors or not str(query).strip():
-            return []
-        k = max(1, min(int(k), len(self.ids)))
-        q = list(map(float, self.encoder.encode([query])[0]))
-        if len(q) != len(self.vectors[0]):
-            raise ValueError("query embedding 维度与索引不一致")
+    @staticmethod
+    def _accelerated_scores(state: _RecallSnapshot, unit_query: Sequence[float]) -> dict[int, float]:
+        """Check the complete accelerator result before constructing any hit.
 
-        if self._index is not None:
+        FlatIP is exhaustive. Fetch all rows so a top-k cutoff cannot select an
+        arbitrary subset of a tie; the public order is score then document ID.
+        A malformed result raises rather than silently disabling a usable index.
+        """
+        count = len(state.documents)
+        try:
             import numpy as np
 
-            matrix = np.asarray([q], dtype="float32")
-            self._faiss.normalize_L2(matrix)
-            scores, idxs = self._index.search(matrix, k)
-            return [
-                RecallHit(
-                    document_id=self.ids[i],
-                    score=round(float(score), 6),
-                    text=self.texts[i],
-                    metadata=dict(self.metadata[i]),
-                )
-                for score, i in zip(scores[0], idxs[0])
-                if i >= 0
-            ]
+            matrix = np.asarray([unit_query], dtype="float32")
+            scores, indices = state.index.search(matrix, count)
+            values = _validated_vectors(scores, count=1, dimension=count)[0]
+            rows = _ordered_values(indices)
+            if len(rows) != 1:
+                raise ValueError("FAISS 索引结果必须恰好包含一行")
+            ids = _ordered_values(rows[0])
+            if len(ids) != count:
+                raise ValueError("FAISS 返回数量与索引不一致")
+            if any(isinstance(i, bool) or not isinstance(i, Integral) for i in ids):
+                raise ValueError("FAISS 索引位置必须为整数")
+            if len(set(ids)) != count or any(i < 0 or i >= count for i in ids):
+                raise ValueError("FAISS 返回重复或越界索引位置")
+            # Float32 accumulation can overshoot a unit-vector dot slightly.
+            if any(abs(score) > 1.00001 for score in values):
+                raise ValueError("FAISS 相似度超出余弦范围")
+            return {int(i): round(max(-1.0, min(1.0, score)), 6)
+                    for i, score in zip(ids, values, strict=True)}
+        except Exception as exc:
+            raise ValueError("FAISS 查询失败或返回无效结果；原索引保持不变") from exc
 
+    def search(self, query: str, k: int = 5) -> list[RecallHit]:
+        if not isinstance(k, int) or isinstance(k, bool) or k < 1:
+            raise ValueError("limit 必须是至少 1 的整数")
+        if not isinstance(query, str):
+            raise ValueError("query 必须为字符串")
+        state = self._state
+        if not state.documents or not query.strip():
+            return []
+        query_vector = self._encode([query], dimension=len(state.vectors[0]))[0]
+        unit_query = _normalize_vector(query_vector)
+        if state.index is not None:
+            scores = self._accelerated_scores(state, unit_query)
+        else:
+            scores = {i: _unit_cosine(unit_query, vector)
+                      for i, vector in enumerate(state.unit_vectors)}
         rows = [
-            RecallHit(
-                document_id=self.ids[i],
-                score=vector_cosine(q, vector),
-                text=self.texts[i],
-                metadata=dict(self.metadata[i]),
-            )
-            for i, vector in enumerate(self.vectors)
+            RecallHit(document_id=document.document_id, score=scores[i], text=document.text,
+                      metadata=deepcopy(document.metadata))
+            for i, document in enumerate(state.documents)
         ]
-        return sorted(rows, key=lambda x: (-x.score, x.document_id))[:k]
+        return sorted(rows, key=lambda hit: (-hit.score, hit.document_id))[:k]
 
     def query(self, text: str, *, limit: int = 5) -> list[RecallHit]:
-        if limit < 1:
-            raise ValueError("limit 必须至少为 1")
         return self.search(text, limit)
 
 
