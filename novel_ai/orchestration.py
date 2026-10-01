@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any
 
 from .provider import LiteLLMConfig, LiteLLMProvider, OpenAICompatibleProvider, ProviderConfig
+from .request_budget import RequestBudget
 
 
 class TaskKind(str, Enum):
@@ -80,8 +81,12 @@ class ProviderRouter:
         TaskKind.BENCHMARK: ("colab", "litellm", "local", "v4"),
     }
 
-    def __init__(self, config: RouterConfig | None = None):
+    def __init__(self, config: RouterConfig | None = None, *, request_budget: RequestBudget | None = None):
         config = config or RouterConfig.from_env()
+        if request_budget is not None and type(request_budget) is not RequestBudget:
+            raise TypeError("request_budget must be RequestBudget")
+        if request_budget is not None and config.litellm is not None:
+            raise ValueError("bounded router does not support opaque LiteLLM retries/fallbacks")
         self._targets: dict[str, ProviderTarget] = {}
         for name, provider_config in (
             ("local", config.local),
@@ -92,7 +97,7 @@ class ProviderRouter:
             if provider_config is not None:
                 self._targets[name] = ProviderTarget(
                     name=name,
-                    provider=OpenAICompatibleProvider(provider_config),
+                    provider=OpenAICompatibleProvider(provider_config, request_budget=request_budget),
                 )
         if config.litellm is not None:
             self._targets["litellm"] = ProviderTarget(
