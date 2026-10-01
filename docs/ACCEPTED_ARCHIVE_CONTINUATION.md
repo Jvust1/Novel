@@ -22,7 +22,7 @@
 
 只使用档案内嵌的已接受快照，`Artifact.location` 不会触发联网或任意文件读取。未声称已检查外部 Drive 原件是否又被改动；需要这种保证时，先用已授权工具重新获取并对账。
 
-本接口暂只接入已有至少一章接受历史、未被 journal 拥有的 v1 故事档案。首章继续走现有对话写作或 run_from_plan；这里不改变 #51 两种空历史指纹的既有定义，也不把它们混为同一份证据。作者变更 journal 或带 `journal_owner` 的投影会明确拒绝，继续走 [原作者变更协议](GPT_AUTHOR_AMENDMENTS.md)，不剥离所有权字段或私自迁移。已接受旧章重写也须另行对账。
+原 `restore_source` 接入已有至少一章接受历史、未被 journal 拥有的 v1 档案。首章继续走现有对话写作或 run_from_plan；这里不改变 #51 两种空历史指纹的既有定义。作者日志可显式选择 [restore_journal_source 入口](JOURNAL_CONTINUATION.md)，按日志自己的读回/影响复审门禁进入同一预算会话；不能把带 `journal_owner` 的投影当成普通 v1 输入。已接受旧章重写仍须另行对账。
 
 ## 上下文与实际额度
 
