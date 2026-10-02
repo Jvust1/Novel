@@ -7,6 +7,7 @@ Unused desktop workflow binding omitted. Provider credentials are not cached.
 import copy
 import json
 
+from .author_workflow import load_character_source
 from .style_commit import load_style_bundle
 
 _CHARACTER_FORM_FIELDS = (
@@ -31,7 +32,7 @@ AUTHOR_FIELDS = (
 
 FIELDS = (
     'title', 'genre', 'tone', 'premise', 'themes_text', 'rules_text', 'locked_text',
-    'forbidden_text', 'outline', 'characters', 'style', 'style_profiles',
+    'forbidden_text', 'outline', 'characters', 'characters_source_sha256', 'style', 'style_profiles',
     'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
     'style_snapshot', 'style_pending',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
@@ -65,7 +66,9 @@ def _load_project(store, project):
         value = bible.get(field, [])
         loaded[key] = '\n'.join(value) if isinstance(value, list) else str(value)
     loaded['outline'] = store.read_json(project, 'memory/outline.json', {}).get('outline', '')
-    loaded['characters'] = store.read_json(project, 'memory/characters.json', [])
+    character_source = load_character_source(store, project)
+    loaded['characters'] = character_source['cards']
+    loaded['characters_source_sha256'] = character_source['sha256']
     loaded.update(_style_fields(load_style_bundle(store, project)))
     loaded['style_pending'] = None
     loaded.update(last_result=None, last_overlap=0.0, last_extraction=None,

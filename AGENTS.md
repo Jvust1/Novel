@@ -1,4 +1,6 @@
-当前候选：`fix/pdf-reader-security-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+当前候选：`fix/character-source-binding-20261001`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+
+旧人物来源不能继续写作：[核对两版、保留编辑与明确重新载入](docs/CHARACTER_SOURCE_BINDINGS.md)。
 
 PDF 参考读取依赖已升级：[修复已知解析资源风险与验证范围](docs/PDF_READER_SECURITY.md)。
 
@@ -12,7 +14,7 @@ PDF 参考读取依赖已升级：[修复已知解析资源风险与验证范围
 
 ## 当前执行顺序
 
-1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/pdf-reader-security-20261001`，尚未合入 `main`；不要假定默认分支已有它。
+1. 确认实际读取的仓库分支/提交，读 `README.md` → 本节 → `docs/GPT_WRITING_ENTRY.md`。新入口位于 `fix/character-source-binding-20261001`，尚未合入 `main`；不要假定默认分支已有它。
 2. 通过当前可用工具，读取作者指定的私有 Drive 故事档案及其中引用的当前计划、正文、审校和接受记录。只有链接不等于读到内容；缺少来源时标记 `source_unavailable` / `awaiting_source`，问最小补充问题。
 3. 按 Canon → Active → 与本章有关的 Recall 组装资料。当前作者明确决定与已确认版本优先，冲突先列出；候选与无来源推断不得写成既定事实。
    - 已有接受章节且有实际执行器时，优先按 `docs/ACCEPTED_HISTORY_REBUILD.md` 从本次真实读回的接受档案重建历史；不要把旧候选或跨书缓存当作历史。
