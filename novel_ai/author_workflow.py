@@ -20,7 +20,7 @@ from .market_eval import (
     MarketChapter, MarketCorpus, MarketScore, Stage, STAGE_SIZES,
     aggregate_market_scores, market_scoring_csv,
 )
-from .models import Character, ChapterPlan, SceneBeat
+from .models import Character, ChapterPlan, SceneBeat, StoryBible
 from .outline import HierarchicalOutline, OutlineNode, validate_outline
 from .release_pack import ReleasePack
 from .storage import ProjectStore
@@ -101,6 +101,52 @@ def save_workbench_characters(store: ProjectStore, project: str, cards: list[dic
         actual = character_digest(load_saved_characters(store, project))
         if actual != expected_after:
             raise ValueError("人物保存读回不一致，请保留当前编辑并核对；未更新会话来源绑定。")
+    return actual
+
+
+def story_bible_digest(bible: dict) -> str:
+    """Bind the complete saved settings, including author extension fields."""
+    if not isinstance(bible, dict):
+        raise TypeError("故事设定必须是 JSON 对象；请保留原件并核对。")
+    StoryBible.model_validate(bible, strict=True)
+    return _digest(json.dumps(bible, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8"))
+
+
+def load_story_bible_source(store: ProjectStore, project: str) -> dict:
+    missing = object()
+    with store._guard(project):
+        bible = store.read_json(project, "memory/story_bible.json", missing)
+        if bible is missing:
+            return {"bible": {}, "sha256": None}
+        return {"bible": bible, "sha256": story_bible_digest(bible)}
+
+
+def require_saved_story_bible(store: ProjectStore, project: str, expected_sha256: str | None) -> dict:
+    source = load_story_bible_source(store, project)
+    if source["sha256"] != expected_sha256:
+        raise ValueError("已保存故事设定已变化；当前编辑已保留。请先下载草案，再在新会话读取当前项目并核对，重新载入或生成计划。")
+    return source["bible"]
+
+
+def save_workbench_story_settings(store: ProjectStore, project: str, bible: dict,
+                                  outline: str, expected_sha256: str | None) -> str:
+    """CAS the existing Bible save; retain the original two-file failure boundary.
+
+    The Bible and flat outline remain separate atomic writes. A later failure
+    may leave the Bible published; do not advance the UI baseline until readback.
+    This does not add a flat-outline version check or multi-file transaction.
+    """
+    expected_after = story_bible_digest(bible)
+    detached = json.loads(json.dumps(bible, ensure_ascii=False, allow_nan=False))
+    if not isinstance(outline, str):
+        raise TypeError("总纲必须是文本。")
+    with store._guard(project):
+        require_saved_story_bible(store, project, expected_sha256)
+        store.write_json(project, "memory/story_bible.json", detached)
+        store.write_json(project, "memory/outline.json", {"outline": outline})
+        actual = load_story_bible_source(store, project)["sha256"]
+        if actual != expected_after:
+            raise ValueError("故事设定保存读回不一致；可能已写入文件，请保留编辑并重新读取核对。")
     return actual
 
 
