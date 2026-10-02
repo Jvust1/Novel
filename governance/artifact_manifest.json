@@ -15,20 +15,120 @@
       "source_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
       "purpose": "Project-state and deliverables snapshot after open-source ecosystem integration",
       "status": "archived_verified"
+    },
+    {
+      "name": "诡舍_(夜来风雨声丶)_(z-library.sk,_1lib.sk,_z-lib.sk).epub",
+      "type": "private_reference_epub",
+      "drive_file_id": "1CVFSwQosm82281lnea7oLZos-kcRmIgc",
+      "drive_path": "Novel/01_Raw_Uploads/诡舍_(夜来风雨声丶)_(z-library.sk,_1lib.sk,_z-lib.sk).epub",
+      "content_sha256": "32a0e9eccc3579b197ee7a274815096f9c4fc488cc32e7c3534ae5707c54d6f6",
+      "size_bytes": 4221956,
+      "version": "source-file-20261002",
+      "purpose": "Private user-provided reference novel; craft analysis source only, not copied into GitHub or used as a plot template.",
+      "status": "private_reference_archived"
+    },
+    {
+      "name": "神秘复苏_(佛前献花)_(z-library.sk,_1lib.sk,_z-lib.sk).epub",
+      "type": "private_reference_epub",
+      "drive_file_id": "1hekFJYMbrbTiUKjc68hRHsULvTG9u0Dr",
+      "drive_path": "Novel/01_Raw_Uploads/神秘复苏_(佛前献花)_(z-library.sk,_1lib.sk,_z-lib.sk).epub",
+      "content_sha256": "cc931b34552960343634a94604e511f096ef9403314f3d4a13523b425c7fe8af",
+      "size_bytes": 18281650,
+      "version": "source-file-20261002",
+      "purpose": "Private user-provided reference novel; craft analysis source only, not copied into GitHub or used as a plot template.",
+      "status": "private_reference_archived"
+    },
+    {
+      "name": "Novel_双书参考消化笔记_v1.md",
+      "type": "reference_analysis",
+      "drive_file_id": "1Bihi-xWaY4auuo14bi1Z4VuEc8AYJIb2",
+      "drive_path": "Novel/05_Reference_Materials/Novel_双书参考消化笔记_v1.md",
+      "content_sha256": "006417d18ba7dd98632e66ebb81033cdfd1c23c71bba6734e1cde32bad063503",
+      "size_bytes": 16945,
+      "version": "v1",
+      "purpose": "First-pass high-level craft analysis of two private reference novels; preserves the boundary between observations and reusable writing principles.",
+      "status": "archived_private_reference_analysis"
+    },
+    {
+      "name": "Novel_双书参考档案_v1.json",
+      "type": "reference_provenance",
+      "drive_file_id": "1V0FCElAa4zZPdRRCAst0LIddeKqpq1qw",
+      "drive_path": "Novel/05_Reference_Materials/Novel_双书参考档案_v1.json",
+      "content_sha256": "aaca4fc5fffe0e8c99ff078414449ba3ee63abeed6c3dc45f1c5e9f03c9c9ea8",
+      "size_bytes": 34459,
+      "version": "v1",
+      "purpose": "Source hashes, selected reading scope and provenance for the two-book reference analysis; no full book text.",
+      "status": "archived_private_reference_provenance"
+    },
+    {
+      "name": "有人还没搬走_完整正文_初稿r1.md",
+      "type": "private_manuscript_draft",
+      "drive_file_id": "1NoiBAXO5vwW9_qsFqyFLWE3rrpoby2Wz",
+      "drive_path": "Novel/02_Generated_Artifacts/Novel/有人还没搬走_完整正文_初稿r1.md",
+      "content_sha256": "6f9b8c3f10b3825f0797ac8ab1399e8b984df01626150bc113460f97af66e136",
+      "size_bytes": 277680,
+      "version": "r1",
+      "purpose": "Original 60-chapter long-form sample manuscript generated from Novel writing principles and high-level reference analysis.",
+      "status": "draft_candidate_author_acceptance_pending"
+    },
+    {
+      "name": "有人还没搬走_完整正文_初稿r1.epub",
+      "type": "private_manuscript_epub",
+      "drive_file_id": "1CWHKs6ySkIECHa9I--pulTbd5cMSH6Rb",
+      "drive_path": "Novel/02_Generated_Artifacts/Novel/有人还没搬走_完整正文_初稿r1.epub",
+      "content_sha256": "3e604f180d4a62b8b9e157e205c6b225fdaa7451e552765eb6a31d203f2066ec",
+      "size_bytes": 188030,
+      "version": "r1",
+      "purpose": "EPUB rendering of the original long-form sample draft.",
+      "status": "draft_candidate_author_acceptance_pending"
+    },
+    {
+      "name": "有人还没搬走_完整正文_初稿r1.txt",
+      "type": "private_manuscript_text",
+      "drive_file_id": "1ntx4pSvTQewhOlKtF9JuCX1TmTd8Crk5",
+      "drive_path": "Novel/02_Generated_Artifacts/Novel/有人还没搬走_完整正文_初稿r1.txt",
+      "content_sha256": "05e8033a59580cf88a746ec58588b1b2178a2fbe665d048a726facd718f96c8d",
+      "size_bytes": 277756,
+      "version": "r1",
+      "purpose": "Plain-text rendering of the original long-form sample draft.",
+      "status": "draft_candidate_author_acceptance_pending"
+    },
+    {
+      "name": "有人还没搬走_创作档案_含剧透_r1.md",
+      "type": "private_story_workfile",
+      "drive_file_id": "15ZXv8be56Q2euUM5ya6PAlnFlicJoGaY",
+      "drive_path": "Novel/02_Generated_Artifacts/Novel/有人还没搬走_创作档案_含剧透_r1.md",
+      "content_sha256": "0d164fdfb7c8fe5d0c4415b52c1392234e65e7fa9722658ce7fd080a80570556",
+      "size_bytes": 31134,
+      "version": "r1",
+      "purpose": "Spoiler-containing creative archive for the sample, including story state, chapter summaries, foreshadowing and revision notes.",
+      "status": "private_workfile_author_acceptance_pending"
+    },
+    {
+      "name": "有人还没搬走_全书与创作档案_r1.zip",
+      "type": "private_delivery_bundle",
+      "drive_file_id": "18WXzr31GrkWLDh0X-MYmM8BHBIs2G0c7",
+      "drive_path": "Novel/02_Generated_Artifacts/Novel/有人还没搬走_全书与创作档案_r1.zip",
+      "content_sha256": "b511ddf5e7db15c5d9ee29a408b93009f7f5f49b19a7139fb3eb52c50b3d73bb",
+      "size_bytes": 461330,
+      "version": "r1",
+      "purpose": "Convenience bundle containing the sample manuscript and creative archive; constituent artifacts remain independently tracked.",
+      "status": "private_delivery_candidate"
     }
   ],
   "notes": [
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
-    "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
+    "For copyrighted reference texts, prefer derived high-level craft observations, provenance and non-reversible signatures in GitHub; do not publish reference text.",
     "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
+    "The 2026-10-02 long-form sample is an original draft candidate. Drive archival does not equal author acceptance, independent human review, platform approval or publication.",
     "Historical listed Drive snapshot verified in 04_Snapshots on 2026-09-28; existing 2026-09-25 Windows delivery ZIP was not duplicated."
   ],
-  "scope": "Historical archive inventory; not an assertion of current branch HEAD or latest private delivery",
+  "scope": "Persistent Drive artifact inventory for Novel, including historical evidence and current private deliveries; this file does not publish private content or constitute author acceptance.",
   "current_candidate": {
-    "branch": "fix/recall-integrity-20261001",
-    "base_verified_pr": 48,
-    "base_verified_head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
-    "source_of_truth": "Resolve the current branch/PR head through GitHub; exact packaged source and CI receipts are delivered separately",
+    "branch": "main",
+    "base_verified_pr": 76,
+    "base_verified_head": "c2d2fe1446eae96d29c1286945dd464d3664257b",
+    "source_of_truth": "Resolve current main and exact CI through GitHub; private manuscript state and artifacts remain in the author-designated Drive vault.",
     "guide": "docs/HANDOFF.md"
   }
 }
