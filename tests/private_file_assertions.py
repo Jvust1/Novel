@@ -6,6 +6,8 @@ import subprocess
 
 def assert_windows_private_file(path):
     script = """$ErrorActionPreference='Stop';
+    # Do not inherit a PowerShell 7 module search path into Windows PowerShell 5.
+    Import-Module -Name (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1') -ErrorAction Stop;
     $acl=Get-Acl -LiteralPath $env:NOVEL_TEST_ACL_PATH;
     $rules=@($acl.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]) | ForEach-Object {
       @{sid=$_.IdentityReference.Value; rights=[int]$_.FileSystemRights;
