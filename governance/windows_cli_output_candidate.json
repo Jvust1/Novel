@@ -1,0 +1,21 @@
+{
+  "schema": "novel-parallel-windows-cli-output-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "fix/windows-cli-output-20261002",
+  "base_pr": 70,
+  "base_head": "42d3fa9007100531ae8bd78ee7eadf77025cd176",
+  "base_tree": "bd0c635450fc255e87122183e9a3f3cd39212103",
+  "scope": "scripts/story_state.py main() success/error JSON stream representation only",
+  "docs": "docs/WINDOWS_STORY_STATE_CLI.md",
+  "regression_tests": "tests/test_story_state_cli_encoding.py",
+  "cumulative_candidate_pointer_unchanged": "governance/current_candidate.json",
+  "validation_authority": "actual candidate PR head, its CI, and independently observed local execution receipts",
+  "boundaries": [
+    "parallel follow-up; not a replacement cumulative candidate or a main merge",
+    "no changes in reserved settings CAS/recovery product, test or entry files",
+    "ASCII JSON wire escapes retain decoded Unicode; persisted UTF-8 state and byte hashes unchanged",
+    "source access, disk write, actual readback and author acceptance remain distinct",
+    "synthetic offline CLI checks do not establish whole-application Windows or power-loss support",
+    "no private manuscripts, new application dependencies, model requests or deployment"
+  ]
+}
