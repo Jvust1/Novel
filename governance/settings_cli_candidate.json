@@ -1,0 +1,21 @@
+{
+  "schema": "novel-settings-cli-integration-candidate-v1",
+  "branch": "fix/settings-recovery-cli-20261002",
+  "base_pr": 72,
+  "base_head": "1be2c45105580502077c4a32a4300b28e6f04fc4",
+  "base_tree": "79f243feec2c51343f08179f4c4e1ad677994770",
+  "docs": "docs/SETTINGS_CLI_INTEGRATION.md",
+  "scope": "verified #72 settings recovery plus disjoint #71 CLI JSON fix; align cumulative public entry",
+  "incorporated_cli": {
+    "pr": 71,
+    "head": "08c33dae4c1b52700e34430ac397465a8f33318f",
+    "ci_run": 36963891187
+  },
+  "validation_authority": "exact integration PR head CI and observed delivery verification, not an inferred summed test result",
+  "boundaries": [
+    "original #71/#72 branches and their recorded outcomes retained",
+    "no implementation rewrite in settings recovery, style, memory or storage",
+    "no main merge, paid model call, private manuscript or deployment",
+    "integration completion is not whole-product Windows, literary or human acceptance certification"
+  ]
+}
