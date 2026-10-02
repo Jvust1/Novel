@@ -1,4 +1,5 @@
 """Independent synthetic review of accepted-only export and save boundaries."""
+from contextlib import contextmanager
 from dataclasses import replace
 import hashlib
 import io
@@ -282,11 +283,14 @@ def test_mid_save_root_redirection_is_rejected_without_deleting_foreign_files(tm
         store.root.rename(backup)
         store.root.symlink_to(external, target_is_directory=True)
     if when == "before_link":
-        original = workflow.os.fsync
-        def fsync(fd):
-            original(fd)
+        original = workflow.tempfile.NamedTemporaryFile
+        @contextmanager
+        def staged_file(*args, **kwargs):
+            with original(*args, **kwargs) as handle:
+                yield handle
+            assert handle.closed
             redirect()
-        monkeypatch.setattr(workflow.os, "fsync", fsync)
+        monkeypatch.setattr(workflow.tempfile, "NamedTemporaryFile", staged_file)
     else:
         original = workflow._read_bytes
         def read(path):
@@ -345,15 +349,18 @@ def test_replaced_temporary_file_is_neither_published_nor_deleted(tmp_path, monk
     source, _ = source_archive(tmp_path)
     bundle = build(source)
     store = ProjectStore(tmp_path / "out")
-    original = workflow.os.fsync
+    original = workflow.tempfile.NamedTemporaryFile
     replacements = []
-    def replace_temporary(fd):
-        original(fd)
-        temporary, = store.root.rglob(".release-*")
+    @contextmanager
+    def replace_temporary(*args, **kwargs):
+        with original(*args, **kwargs) as handle:
+            yield handle
+        assert handle.closed
+        temporary = Path(handle.name)
         temporary.rename(tmp_path / "original-staged-bytes")
         temporary.write_bytes(b"foreign replacement must not be deleted or published")
         replacements.append(temporary)
-    monkeypatch.setattr(workflow.os, "fsync", replace_temporary)
+    monkeypatch.setattr(workflow.tempfile, "NamedTemporaryFile", replace_temporary)
     with pytest.raises(ValueError):
         export.save_accepted_review_bundle(store, source.story_id, bundle)
     assert len(replacements) == 1
