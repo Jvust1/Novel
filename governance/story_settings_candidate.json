@@ -1,0 +1,20 @@
+{
+  "schema": "novel-story-settings-source-candidate-v1",
+  "branch": "fix/story-settings-source-20261002",
+  "base_pr": 69,
+  "base_head": "e8d4de082d231ab38631dd74a9fccf31abf7fc2c",
+  "base_tree": "a63277e5c2885cdd9b211bcb7b878730df2af867",
+  "docs": "docs/STORY_SETTINGS_SOURCE.md",
+  "scope": "optional local workbench saved story Bible source guard, plan binding and compare-before-save; preserve author edits and existing authority boundaries",
+  "validation": {
+    "receipt": "exact published PR commit CI and separately verified delivery receipt; no result inferred from this static pointer",
+    "network": "synthetic offline fixtures and HTTPX MockTransport; no paid model requests"
+  },
+  "boundaries": [
+    "local candidate saving is not author acceptance",
+    "Bible and flat outline remain separate atomic writes, not a multi-file transaction",
+    "flat outline changes alone do not receive an independent CAS guard",
+    "no automatic merge or refresh; preserve and download edits before fresh-session reconciliation",
+    "no main merge, deployment, private manuscript publication or paid model"
+  ]
+}

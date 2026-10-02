@@ -7,7 +7,7 @@ Unused desktop workflow binding omitted. Provider credentials are not cached.
 import copy
 import json
 
-from .author_workflow import load_character_source
+from .author_workflow import load_character_source, load_story_bible_source
 from .style_commit import load_style_bundle
 
 _CHARACTER_FORM_FIELDS = (
@@ -32,7 +32,7 @@ AUTHOR_FIELDS = (
 
 FIELDS = (
     'title', 'genre', 'tone', 'premise', 'themes_text', 'rules_text', 'locked_text',
-    'forbidden_text', 'outline', 'characters', 'characters_source_sha256', 'style', 'style_profiles',
+    'forbidden_text', 'outline', 'characters', 'characters_source_sha256', 'story_bible_source_sha256', 'style', 'style_profiles',
     'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
     'style_snapshot', 'style_pending',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
@@ -55,8 +55,10 @@ def preserve_project_fields(state):
 
 
 def _load_project(store, project):
-    bible = store.read_json(project, 'memory/story_bible.json', {})
+    bible_source = load_story_bible_source(store, project)
+    bible = bible_source['bible']
     loaded = {key: bible.get(key, '') for key in ('genre', 'tone', 'premise')}
+    loaded['story_bible_source_sha256'] = bible_source['sha256']
     loaded['memory_source_bible'] = copy.deepcopy(bible)
     loaded['title'] = bible.get('title') or project
     for key, field in (

@@ -10,6 +10,7 @@ from novel_ai.author_ui import outline_digest, render_outline_editor, render_rel
 from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter, require_saved_outline
 from novel_ai.author_workflow import (
     character_context_binding, load_character_source, require_saved_characters, save_workbench_characters,
+    require_saved_story_bible, save_workbench_story_settings,
 )
 from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
@@ -147,12 +148,20 @@ with story_tab:
 
     outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280, key="outline")
     if st.button("保存故事设定到本地", use_container_width=True):
-        bible = current_bible()
-        saved_bible = {**st.session_state.get("memory_source_bible", {}), **bible.model_dump()}
-        store.write_json(project_name, "memory/story_bible.json", saved_bible)
-        st.session_state.memory_source_bible = saved_bible
-        store.write_json(project_name, "memory/outline.json", {"outline": outline})
-        st.success("已保存到本地 data/projects 目录。")
+        try:
+            bible = current_bible()
+            saved_bible = {**st.session_state.get("memory_source_bible", {}), **bible.model_dump()}
+            saved_digest = save_workbench_story_settings(store, project_name, saved_bible, outline,
+                st.session_state.get("story_bible_source_sha256", "unavailable"))
+            st.session_state.memory_source_bible = saved_bible
+            st.session_state.story_bible_source_sha256 = saved_digest
+            st.success("已保存并读回本地故事设定。若已有待写计划，请重新载入或生成后核对。")
+        except (OSError, ValueError, TypeError) as exc:
+            st.error("故事设定保存未完成，可能已写入部分文件；请保留草案并读取核对。" + str(exc))
+    st.download_button("下载当前故事设定与总纲草案", data=json.dumps({
+        "story_bible": {**st.session_state.get("memory_source_bible", {}), **current_bible().model_dump()},
+        "outline": outline,
+    }, ensure_ascii=False, indent=2), file_name="story-settings-draft.json", mime="application/json")
     render_outline_editor(store, project_name, title, premise)
 
 with char_tab:
@@ -403,7 +412,7 @@ with write_tab:
     def _validate_chapter_target():
         validate_chapter_target(store, project_name, chapter_id, allow_overwrite=allow_overwrite)
 
-    def _plan_binding(*, check_characters=True):
+    def _plan_binding(*, check_characters=True, check_story_bible=True):
         meta = deepcopy(st.session_state.pending_plan_meta)
         if meta.get("project", project_name) != project_name or meta.get("chapter_id", chapter_id) != chapter_id:
             raise ValueError("待确认计划属于另一章，请重新载入或生成本章计划。")
@@ -415,17 +424,23 @@ with write_tab:
                 and meta["character_context_sha256"] != character_context_binding(st.session_state.characters,
                     st.session_state.get("characters_source_sha256", "unavailable"))):
             raise ValueError("人物背景已变化，旧计划不能继续写正文；请重新生成场景计划，或载入章节后重新核对。")
+        if (check_story_bible and "story_bible_source_sha256" in meta
+                and meta["story_bible_source_sha256"] != st.session_state.get("story_bible_source_sha256", "unavailable")):
+            raise ValueError("故事设定保存版本已变化，旧计划不能继续写正文；请重新载入或生成计划并核对。")
         return meta
 
     def _engine_and_inputs(*, replan_characters=False):
         style_snapshot = require_current_style(st.session_state, store, project_name)
-        bound_meta = _plan_binding(check_characters=not replan_characters)
+        bound_meta = _plan_binding(check_characters=not replan_characters, check_story_bible=not replan_characters)
+        bible_source = st.session_state.get("story_bible_source_sha256", "unavailable")
+        require_saved_story_bible(store, project_name, bible_source)
         character_source = st.session_state.get("characters_source_sha256", "unavailable")
         require_saved_characters(store, project_name, character_source)
         character_binding = character_context_binding(st.session_state.characters, character_source)
 
         def current_sources():
             require_current_style({"style_snapshot": style_snapshot}, store, project_name)
+            require_saved_story_bible(store, project_name, bible_source)
             require_saved_characters(store, project_name, character_source)
             if character_context_binding(st.session_state.characters,
                     st.session_state.get("characters_source_sha256", "unavailable")) != character_binding:
@@ -468,7 +483,7 @@ with write_tab:
 
     if make_plan:
         try:
-            meta = _plan_binding(check_characters=False)
+            meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
@@ -484,7 +499,7 @@ with write_tab:
             plan = engine.plan(
                 bible, outline, chapter_goal, characters, context.recent_summaries, planning_context
             )
-            _plan_binding(check_characters=False)
+            _plan_binding(check_characters=False, check_story_bible=False)
             current_sources()
             st.session_state.pending_plan_json = plan.model_dump_json(indent=2)
             st.session_state.pending_plan_meta = {
@@ -493,6 +508,7 @@ with write_tab:
                 "extra": context.prompt_sections(),
                 "recall_report": context.recall_report,
                 "character_context_sha256": character_binding,
+                "story_bible_source_sha256": st.session_state.get("story_bible_source_sha256", "unavailable"),
             }
             st.session_state.plan_new = True
             st.rerun()
@@ -549,7 +565,7 @@ with write_tab:
     if one_shot:
         try:
             _validate_chapter_target()
-            meta = _plan_binding(check_characters=False)
+            meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
@@ -581,7 +597,7 @@ with write_tab:
             ]
             with store._guard(project_name):
                 current_sources()
-                _plan_binding(check_characters=False)
+                _plan_binding(check_characters=False, check_story_bible=False)
                 write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
                 save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
             st.session_state.last_result = result
