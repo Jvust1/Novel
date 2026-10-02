@@ -30,7 +30,7 @@
   ],
   "adaptation": {
     "local_path": "novel_ai/_vendor/boltons_atomic.py",
-    "sha256": "1fbd6bd3e50279113bfeef56558d3067885f75bc2c73da97736761a49bb7f6cb",
+    "sha256": "ee526aa0a46aaed79e57ca3dc1e4bd67c5a6445c4f0dc832bee41a6d797dcfdf",
     "source_path": "boltons/fileutils.py",
     "source_line_ranges": [
       [
@@ -48,24 +48,24 @@
     ],
     "local_modified_blocks": {
       "_sync_directory": {
-        "start": 73,
-        "end": 99
+        "start": 75,
+        "end": 101
       },
       "sync_directory": {
-        "start": 102,
-        "end": 108
+        "start": 104,
+        "end": 110
       },
       "atomic_save": {
-        "start": 111,
-        "end": 119
+        "start": 113,
+        "end": 121
       },
       "atomic_rename": {
-        "start": 122,
-        "end": 130
+        "start": 124,
+        "end": 132
       },
       "AtomicSaver": {
-        "start": 133,
-        "end": 243
+        "start": 135,
+        "end": 249
       }
     }
   },
@@ -87,7 +87,8 @@
     "Clean owned descriptors and part files for setup/body/flush/fsync/close/publication failures without masking the first exception.",
     "Attempt POSIX parent-directory fsync after publication. Report unsupported directory sync via directory_synced=False; propagate other postcommit errors without a rollback promise.",
     "Remove overwrite_part, rm_part_on_exc and custom part names; reject context reuse; do not add file locking, directory creation, or confinement to this narrow kernel.",
-    "Expose sync_directory(path) so callers can resync already-published entries before bounded recovery retirement and sync intent deletion afterward."
+    "Expose sync_directory(path) so callers can resync already-published entries before bounded recovery retirement and sync intent deletion afterward.",
+    "Windows default 0600 parts delegate exclusive creation to Novel private_files.create_private_file: protected effective-user DACL at creation, same-handle owner/ACE readback before content, fail closed; POSIX open flags and lifecycle unchanged."
   ],
   "honest_limits": [
     "One file is published at a time; there is no multi-file transaction or write lock.",
@@ -96,7 +97,8 @@
     "Directory fsync is unavailable on non-POSIX hosts and can be unsupported by a filesystem; no universal power-loss durability guarantee.",
     "SIGKILL/process loss can leave an unreferenced private temporary file; randomized names permit subsequent writes without unsafe stale-file deletion.",
     "Atomic no-clobber fails closed when hard links are unsupported.",
-    "Upstream has only one directly targeted AtomicSaver PathLike smoke test in test_fileutils.py; Novel adds synthetic fault-injection coverage."
+    "Upstream has only one directly targeted AtomicSaver PathLike smoke test in test_fileutils.py; Novel adds synthetic fault-injection coverage.",
+    "Windows private DACL scope covers new default 0600 atomic files, not old files, parents, locks, Drive or privileged backup/owner access."
   ],
   "candidate_comparison": [
     {
