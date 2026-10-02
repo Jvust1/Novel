@@ -131,10 +131,11 @@ def main(argv=None):
             value = artifact(path.read_bytes().decode("utf-8"), source_id=args.source_id,
                              location=str(path), revision=args.revision)
             output = value.model_dump(mode="json")
-        print(json.dumps(output, ensure_ascii=False, indent=2))
+        # ASCII JSON escapes preserve Unicode values on narrow redirected streams.
+        print(json.dumps(output, ensure_ascii=True, indent=2))
         return 2 if args.command in {"preflight", "next-preflight"} and output["blocked"] else 0
     except (OSError, ValueError, TypeError, ValidationError, StateError) as exc:
-        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        print(json.dumps({"error": str(exc)}, ensure_ascii=True), file=sys.stderr)
         return 2
 
 
