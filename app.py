@@ -10,7 +10,11 @@ from novel_ai.author_ui import outline_digest, render_outline_editor, render_rel
 from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter, require_saved_outline
 from novel_ai.author_workflow import (
     character_context_binding, load_character_source, require_saved_characters, save_workbench_characters,
-    require_saved_story_bible, save_workbench_story_settings,
+    require_saved_story_bible,
+)
+from novel_ai.settings_commit import prepare_settings_save
+from novel_ai.settings_ui import (
+    settings_input_binding, require_current_settings, freeze_settings_request, commit_pending_settings,
 )
 from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
@@ -147,21 +151,38 @@ with story_tab:
         forbidden_text = st.text_area("明确禁止的剧情处理（每行一个）", height=100, key="forbidden_text")
 
     outline = st.text_area("总纲 / 卷纲 / 上层大纲", height=280, key="outline")
-    if st.button("保存故事设定到本地", use_container_width=True):
+    def current_settings_files():
+        bible = {**st.session_state.get("memory_source_bible", {}), **current_bible().model_dump()}
+        return prepare_settings_save(st.session_state.get("settings_snapshot"), bible, outline)
+
+    if st.button("保存故事设定到本地", use_container_width=True, disabled=bool(st.session_state.get("settings_pending"))):
         try:
-            bible = current_bible()
-            saved_bible = {**st.session_state.get("memory_source_bible", {}), **bible.model_dump()}
-            saved_digest = save_workbench_story_settings(store, project_name, saved_bible, outline,
-                st.session_state.get("story_bible_source_sha256", "unavailable"))
-            st.session_state.memory_source_bible = saved_bible
-            st.session_state.story_bible_source_sha256 = saved_digest
-            st.success("已保存并读回本地故事设定。若已有待写计划，请重新载入或生成后核对。")
+            snapshot = require_current_settings(st.session_state, store, project_name)
+            files = current_settings_files()
+            binding = settings_input_binding(files)
+            freeze_settings_request(st.session_state, store, project_name, files=files,
+                expected_before=snapshot["sha256"], binding=binding)
+            commit_pending_settings(st.session_state, store, project_name, binding=binding)
+            st.success("已保存并读回故事设定与总纲。已有待写计划须重新载入或生成后核对。")
         except (OSError, ValueError, TypeError) as exc:
-            st.error("故事设定保存未完成，可能已写入部分文件；请保留草案并读取核对。" + str(exc))
+            st.error("设定保存未完成或尚待核对；原操作与编辑已保留，不代表回滚。" + str(exc))
     st.download_button("下载当前故事设定与总纲草案", data=json.dumps({
         "story_bible": {**st.session_state.get("memory_source_bible", {}), **current_bible().model_dump()},
         "outline": outline,
+        "outline_document": {**st.session_state.get("settings_snapshot", {}).get("outline", {}), "outline": outline},
     }, ensure_ascii=False, indent=2), file_name="story-settings-draft.json", mime="application/json")
+    if st.session_state.get("settings_pending"):
+        st.info("原设定保存仍待核对，后续写作和其他资料操作暂停。保留当前草案；仅重试同一份原操作，或在新会话读取已恢复文件后人工核对。")
+        if st.button("重试这次故事设定保存", key="retry_settings_save"):
+            try:
+                commit_pending_settings(st.session_state, store, project_name,
+                    binding=settings_input_binding(current_settings_files()))
+                st.rerun()
+            except (OSError, ValueError, TypeError) as exc:
+                st.error(str(exc))
+        # Do not let later tabs perform implicit reads/recovery after this failed
+        # save. Existing project fields were preserved before rendering widgets.
+        st.stop()
     render_outline_editor(store, project_name, title, premise)
 
 with char_tab:
@@ -427,10 +448,14 @@ with write_tab:
         if (check_story_bible and "story_bible_source_sha256" in meta
                 and meta["story_bible_source_sha256"] != st.session_state.get("story_bible_source_sha256", "unavailable")):
             raise ValueError("故事设定保存版本已变化，旧计划不能继续写正文；请重新载入或生成计划并核对。")
+        if (check_story_bible and "settings_source_sha256" in meta
+                and meta["settings_source_sha256"] != st.session_state.get("settings_snapshot", {}).get("sha256")):
+            raise ValueError("故事设定或平面总纲保存版本已变化，旧计划不能继续写正文；请重新载入或生成计划并核对。")
         return meta
 
     def _engine_and_inputs(*, replan_characters=False):
         style_snapshot = require_current_style(st.session_state, store, project_name)
+        settings_snapshot = require_current_settings(st.session_state, store, project_name)
         bound_meta = _plan_binding(check_characters=not replan_characters, check_story_bible=not replan_characters)
         bible_source = st.session_state.get("story_bible_source_sha256", "unavailable")
         require_saved_story_bible(store, project_name, bible_source)
@@ -440,6 +465,7 @@ with write_tab:
 
         def current_sources():
             require_current_style({"style_snapshot": style_snapshot}, store, project_name)
+            require_current_settings({"settings_snapshot": settings_snapshot}, store, project_name)
             require_saved_story_bible(store, project_name, bible_source)
             require_saved_characters(store, project_name, character_source)
             if character_context_binding(st.session_state.characters,
@@ -451,7 +477,7 @@ with write_tab:
         engine = NovelEngine(make_provider(request_guard=current_sources))
         bible = current_bible()
         characters = [Character.model_validate(c) for c in st.session_state.characters]
-        return engine, bible, characters, current_sources, character_binding
+        return engine, bible, characters, current_sources, character_binding, settings_snapshot
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -484,7 +510,7 @@ with write_tab:
     if make_plan:
         try:
             meta = _plan_binding(check_characters=False, check_story_bible=False)
-            engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
+            engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )
@@ -509,6 +535,7 @@ with write_tab:
                 "recall_report": context.recall_report,
                 "character_context_sha256": character_binding,
                 "story_bible_source_sha256": st.session_state.get("story_bible_source_sha256", "unavailable"),
+                "settings_source_sha256": deepcopy(settings_snapshot["sha256"]),
             }
             st.session_state.plan_new = True
             st.rerun()
@@ -525,7 +552,7 @@ with write_tab:
                 check = validate_plan_stage(plan)
                 if not check.ok:
                     raise ValueError("请先补全场景计划：" + "；".join(check.issues))
-            engine, bible, characters, current_sources, character_binding = _engine_and_inputs()
+            engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
@@ -566,7 +593,7 @@ with write_tab:
         try:
             _validate_chapter_target()
             meta = _plan_binding(check_characters=False, check_story_bible=False)
-            engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
+            engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )

@@ -15,6 +15,7 @@ from .author_workflow import (
 from .market_eval import aggregate_market_scores, market_scoring_csv, parse_market_scores
 from .outline import HierarchicalOutline, validate_outline
 from .outline_markdown import parse_markdown_outline
+from .settings_ui import require_current_settings
 from .release_pack import MarketProfile, build_release_pack
 
 
@@ -74,6 +75,7 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
                 st.session_state.hierarchy_previous_node = selected
             st.text_input("本章保存编号（可改为 001、002 等）", key="hierarchy_target_id")
             if st.button("载入本章到写作工作台", key="btn_load_hierarchy"):
+                settings = require_current_settings(st.session_state, store, project)
                 require_saved_outline(store, project, outline_digest(data))
                 require_saved_characters(store, project, st.session_state.get("characters_source_sha256", "unavailable"))
                 require_saved_story_bible(store, project, st.session_state.get("story_bible_source_sha256", "unavailable"))
@@ -94,6 +96,7 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
                     "outline_context": outline_chapter_context(outline, selected),
                     "character_context_sha256": character_binding,
                     "story_bible_source_sha256": st.session_state.get("story_bible_source_sha256", "unavailable"),
+                    "settings_source_sha256": settings["sha256"],
                 }
                 st.session_state.last_result = None
                 st.session_state.last_result_meta = {}

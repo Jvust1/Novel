@@ -1,7 +1,7 @@
 """Independent offline regressions for local story-setting source conflicts.
 
 Synthetic AppTest input and MockTransport only; no browser or real model calls.
-The Bible and flat outline deliberately remain separate atomic publications.
+The two atomic files share one recoverable, fixed-input publication operation.
 """
 import json
 from copy import deepcopy
@@ -10,7 +10,10 @@ import pytest
 from test_author_ui import button, configure_provider
 from test_character_source_review import setup
 
+from novel_ai import settings_commit
 from novel_ai.author_workflow import load_story_bible_source
+from novel_ai.settings_commit import INTENT_PATH, SETTINGS_PATHS, load_settings_bundle
+from novel_ai.settings_ui import settings_input_binding
 from novel_ai.storage import ProjectStore
 
 BASE = {
@@ -124,15 +127,17 @@ def test_own_save_preserves_extensions_invalidates_old_plan_and_allows_replan(mo
 
 
 @pytest.mark.parametrize("failure", ["bible-write", "outline-write", "readback-error", "readback-mismatch"])
-def test_failed_save_keeps_old_ui_source_and_preserves_partial_publication_boundary(monkeypatch, tmp_path, failure):
+def test_failed_save_retains_frozen_operation_then_exact_retry_reads_back_both_files(monkeypatch, tmp_path, failure):
     app, store, calls = seeded(monkeypatch, tmp_path)
     baseline = app.session_state["story_bible_source_sha256"]
     source = deepcopy(app.session_state["memory_source_bible"])
+    snapshot = deepcopy(app.session_state["settings_snapshot"])
     bible_path, outline_path = paths(store)
     before_bible, before_outline = bible_path.read_bytes(), outline_path.read_bytes()
     edit_settings(app)
-    original_write, original_read = ProjectStore._write, ProjectStore.read_json
+    original_write, original_read = ProjectStore._write, settings_commit._read
     bible_published = []
+    outline_published = []
 
     def write(self, path, *args, **kwargs):
         if (failure == "bible-write" and path.name == "story_bible.json"
@@ -141,28 +146,48 @@ def test_failed_save_keeps_old_ui_source_and_preserves_partial_publication_bound
         result = original_write(self, path, *args, **kwargs)
         if path.name == "story_bible.json":
             bible_published.append(path.read_bytes())
+        if path.name == "outline.json":
+            outline_published.append(path.read_bytes())
         return result
 
-    def read(self, project, relative, *args, **kwargs):
-        value = original_read(self, project, relative, *args, **kwargs)
-        if relative == "memory/story_bible.json" and bible_published:
+    def read(path):
+        value = original_read(path)
+        if path.name == "story_bible.json" and bible_published and outline_published:
             if failure == "readback-error":
                 raise OSError("synthetic settings readback unavailable")
             if failure == "readback-mismatch":
-                return {**value, "genre": "synthetic inconsistent readback"}
+                return json.dumps({**json.loads(value), "genre": "synthetic inconsistent readback"}).encode()
         return value
 
     monkeypatch.setattr(ProjectStore, "_write", write)
-    monkeypatch.setattr(ProjectStore, "read_json", read)
+    monkeypatch.setattr(settings_commit, "_read", read)
     button(app, "保存故事设定到本地").click().run()
     assert app.error and not app.exception
-    assert not any("已保存并读回本地故事设定" in item.value for item in app.success)
+    assert not any("已保存并读回" in item.value for item in app.success)
     assert app.session_state["story_bible_source_sha256"] == baseline
     assert app.session_state["memory_source_bible"] == source
+    assert app.session_state["settings_snapshot"] == snapshot
     assert_edits(app)
     assert calls == []
+    frozen = deepcopy(app.session_state["settings_pending"])
+    assert frozen["project"] == "MyNovel"
+    assert frozen["expected_before"] == snapshot["sha256"]
+    assert frozen["binding"] == settings_input_binding(frozen["files"])
+    assert set(frozen["files"]) == set(SETTINGS_PATHS)
+    intent_path = store.project_dir("MyNovel") / INTENT_PATH
+    intent = json.loads(intent_path.read_bytes())
+    assert intent["files"] == frozen["files"]
+    assert intent["receipt"]["request_id"] == frozen["request_id"]
+    assert {item.label for item in app.button} == {"保存故事设定到本地", "重试这次故事设定保存"}
+    assert len(app.get("download_button")) == 1
+    app.run()
+    assert not app.exception
+    assert button(app, "保存故事设定到本地").disabled
+    assert app.session_state["settings_pending"] == frozen
+    assert app.session_state["settings_snapshot"] == snapshot
+    assert_edits(app)
     monkeypatch.setattr(ProjectStore, "_write", original_write)
-    monkeypatch.setattr(ProjectStore, "read_json", original_read)
+    monkeypatch.setattr(settings_commit, "_read", original_read)
     if failure == "bible-write":
         assert bible_path.read_bytes() == before_bible
         assert outline_path.read_bytes() == before_outline
@@ -175,11 +200,26 @@ def test_failed_save_keeps_old_ui_source_and_preserves_partial_publication_bound
             assert outline_path.read_bytes() == before_outline
         else:
             assert json.loads(outline_path.read_bytes()) == {"outline": "本会话未保存的总纲"}
-        app.button(key="btn_plan").click().run()
-        assert app.exception and calls == []
-        assert store.all_chapter_texts("MyNovel") == []
-        assert app.session_state["story_bible_source_sha256"] == baseline
-        assert_edits(app)
+    # Reading via Store would recover the intent. Until explicit retry, inspect
+    # raw paths so this test also proves the UI did not implicitly recover it.
+    assert not any((store.project_dir("MyNovel") / "chapters").iterdir())
+    app.button(key="retry_settings_save").click().run()
+    assert not app.error and not app.exception
+    assert app.session_state["settings_pending"] is None
+    assert not intent_path.exists()
+    assert [path.read_bytes() for path in paths(store)] == [frozen["files"][p].encode() for p in SETTINGS_PATHS]
+    readback = load_settings_bundle(store, "MyNovel")
+    assert app.session_state["settings_snapshot"] == readback
+    assert app.session_state["memory_source_bible"] == readback["bible"]
+    assert app.session_state["story_bible_source_sha256"] == load_story_bible_source(store, "MyNovel")["sha256"]
+    receipts = list((store.project_dir("MyNovel") / "memory/settings_commits").glob("*.json"))
+    assert len(receipts) == 1
+    receipt = json.loads(receipts[0].read_bytes())
+    assert receipt["request_id"] == frozen["request_id"]
+    assert receipt["after"] == readback["sha256"]
+    assert app.button(key="btn_plan") is not None
+    assert_edits(app)
+    assert calls == []
 
 
 def test_project_switch_retains_cached_baseline_and_blocks_stale_saved_settings(monkeypatch, tmp_path):

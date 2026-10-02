@@ -7,7 +7,8 @@ Unused desktop workflow binding omitted. Provider credentials are not cached.
 import copy
 import json
 
-from .author_workflow import load_character_source, load_story_bible_source
+from .author_workflow import load_character_source, story_bible_digest
+from .settings_commit import SETTINGS_PATHS, load_settings_bundle
 from .style_commit import load_style_bundle
 
 _CHARACTER_FORM_FIELDS = (
@@ -35,6 +36,7 @@ FIELDS = (
     'forbidden_text', 'outline', 'characters', 'characters_source_sha256', 'story_bible_source_sha256', 'style', 'style_profiles',
     'reference_hashes', 'last_result', 'last_overlap', 'last_extraction',
     'style_snapshot', 'style_pending',
+    'settings_snapshot', 'settings_pending',
     'pending_plan_json', 'pending_plan_meta', 'plan_editor', 'plan_new',
     'chapter_id', 'chapter_goal', 'chapter_notes', 'last_self_similarity',
     'diverse_recall', 'memory_candidate_json', 'last_memory_commit', 'memory_source_bible', 'memory_ui_readback_pending',
@@ -55,10 +57,13 @@ def preserve_project_fields(state):
 
 
 def _load_project(store, project):
-    bible_source = load_story_bible_source(store, project)
-    bible = bible_source['bible']
+    settings = load_settings_bundle(store, project)
+    bible = settings['bible']
     loaded = {key: bible.get(key, '') for key in ('genre', 'tone', 'premise')}
-    loaded['story_bible_source_sha256'] = bible_source['sha256']
+    loaded['story_bible_source_sha256'] = (story_bible_digest(bible)
+        if settings['sha256'][SETTINGS_PATHS[0]] is not None else None)
+    loaded['settings_snapshot'] = copy.deepcopy(settings)
+    loaded['settings_pending'] = None
     loaded['memory_source_bible'] = copy.deepcopy(bible)
     loaded['title'] = bible.get('title') or project
     for key, field in (
@@ -67,7 +72,7 @@ def _load_project(store, project):
     ):
         value = bible.get(field, [])
         loaded[key] = '\n'.join(value) if isinstance(value, list) else str(value)
-    loaded['outline'] = store.read_json(project, 'memory/outline.json', {}).get('outline', '')
+    loaded['outline'] = settings['outline'].get('outline', '')
     character_source = load_character_source(store, project)
     loaded['characters'] = character_source['cards']
     loaded['characters_source_sha256'] = character_source['sha256']
