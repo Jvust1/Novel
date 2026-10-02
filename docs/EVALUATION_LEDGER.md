@@ -1,4 +1,56 @@
+# 2026-10-01 — 历史来源同标识冲突检查
+
+当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 第一章预检身份保护
+
+当前候选 `fix/initial-preflight-identity-20261001` 叠加已验证 #64。仅补上 revision 0 空历史分支原先遗漏的显式故事身份/历史指纹检查，保留原默认输出和空历史指纹，不新增历史机制。真实 API/CLI 反例、来源预算与候选隔离控制见 [说明](INITIAL_PREFLIGHT_IDENTITY.md) 和 [本轮记录](../governance/initial_preflight_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 风格资料一致保存候选
+
+当前分支 `fix/style-save-consistency-20261001` 叠加已验证 #63。实际复现 Style Lab 第二文件失败后会话与重启状态分歧，现通过固定三文件恢复、独立操作标识、版本检查和真实读回接入现有原子保存。人物、章纲、正文接受、记忆确认及私有来源边界保持原协议。见 [能力与边界](STYLE_SAVE_INTEGRITY.md) 和 [本轮记录](../governance/style_save_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 参考文本读取完整性
+
+使用原创合成 UTF-8、带 BOM Unicode、GB18030、Big5 和非法尾部数据，检查原字节/解码摘要、歧义确认、完整读取、分析前失败、跨编码同文原创性与旧文件保护。真实 CLI、Streamlit AppTest 和独立对抗测试纳入原完整矩阵；最终结果见本轮候选记录，未使用私人小说或付费模型。
+
+# 2026-10-01 — 质量门禁集成
+
+CI 保留完整 Python 3.11/3.12 编译与 pytest 矩阵，新增依赖兼容、致命静态和公开入口漂移检查。默认 Ruff 诊断仅报告，当前精确计数与测试结果见 governance/quality_gates_candidate.json；不把 pip check 称为漏洞扫描。
+
+# 2026-10-01 — 接受稿审阅包候选验证
+
+原始合成 v1/作者日志经真实状态推进后导出；覆盖拒绝稿隔离、原 UTF-8 与章序、同文不同接受证明、移动下载目录的确定性、伪造/陈旧来源、未决变更、暂存替换、竞争复用和异常重试。两类实际 CLI 与旧 ZIP 四种固定摘要纳入测试。最终计数与实际运行范围见 [本轮记录](../governance/accepted_export_candidate.json)；精确远端提交 CI 见发布 PR 与交付内验证回执。没有真人文学评分或付费模型执行。
+
+# 2026-10-01 — 作者日志所属续写候选
+
+最终本地 Python 3.11 / 3.12 全量回归各 **1670 passed、1 skipped**（161.92s / 161.74s）。新增 79 项日志续写检查，含 52 项独立反例；旧普通档案的历史与预检固定基准保持一致。唯一跳过为缺少可选 qdrant-client。双版本 compileall、scoped F821、accepted_writing.py 完整 Ruff、60 条本地文档链接和既有 5 个 eventsourcing 许可/源码哈希核对通过。
+
+覆盖变更确认与复审、实际保存读回、假回执、日志归属、上下文反转、候选事件、事件冲突、请求中变化、格式降级和完整预算。测试数据为原创合成故事及模拟确认，没有真实付费模型或文学质量结论；精确公开提交 CI 另见对应 PR 和归档回执。
+
+# 2026-10-01 — 来源绑定续写候选
+
+最终本地 Python 3.11 / 3.12 全量回归各 **1591 passed、1 skipped**（123.20s / 123.45s），新增 97 项实际入口检查，含 55 项独立反例审查。实际请求使用 HTTPX MockTransport；模型输出和作者确认均为原创合成测试数据。唯一跳过是可选 qdrant-client 未安装。
+
+来源在各阶段或格式降级响应中变化会拒绝下一请求/候选，完整文风和 Canon 留在请求中，预算失败不退款、不重置；第二章明确接受后真实保存/读回再进入第三章。首章空历史身份歧义与人物名歧义在新入口明确拒绝，不改旧接口默认含义。两版 compileall、scoped F821、新模块完整 Ruff 和文档链接检查通过。真实长篇与文学质量未验收；公开提交 CI 另以对应 PR/归档回执为准。
+
 # Evaluation Ledger
+
+## 当前证据边界 2026年10月1日
+
+下列 E-000、E-001 等条目分别记录当时的阶段，不互相覆盖。E-001 留存了历史真实运行记录，但本轮未读取新的人工评分原件，也未完成新的独立真人盲评，因此不把任何工程回归称为文学质量提升。
+
+本轮只验证合成资料的文件完整性、抽取/摘要中断恢复、评测目录独占与人工评分不被覆盖，以及本地 Recall 的数值/状态/来源契约和实际写作上下文范围。显式历史范围内未验证来源的长篇告警被省略，省略不代表告警已检查通过。本轮新增的最终稿/复审绑定、有限输出、严格 JSON 与 Hook 失败门禁同样只有合成资料及替身测试；不把模型 pass 或工程全绿当作作者接受、原创性证明或可发布结论。当前工程入口见 [HANDOFF](HANDOFF.md) 和 `governance/project_state.json`；历史 Drive 快照清单不是当前源代码 HEAD。冻结 benchmark 用例、既有运行和待人工评分状态保持不变。
+
+## E-ACCEPTED-HISTORY-20261001｜Accepted-history rebuild and next-chapter recovery
+**Date:** 2026-10-01 UTC
+**Status:** EXECUTABLE_HEAD_CI_VERIFIED
+
+The candidate starts from PR #50 head `35208537aa1fb830a2325ec1dd8870bdf0564190`. Focused local execution on the extracted, Drive-readback source ZIP reports **77 passed** across `tests/test_gpt_story_state.py` and `tests/test_gpt_candidate_review.py`; the five newly added accepted-history/next-preflight checks all pass. `py_compile/compileall` for changed Python files passes. The executable candidate commit is `7f2b93367661b0038bab2885851fed607f047882`; GitHub Actions run 36856263295 reports **1206 passed / 1 skipped** on both Python 3.11 and 3.12, with compileall and pytest successful.
+
+The new cases reproduce and guard: a retained old draft leaking after plan replacement; history use before real readback; rebuilding Voice/plan structure from accepted artifacts only; cross-story and stale-history fingerprints; candidate-only saves leaving accepted-history identity stable; restart/reload producing the same accepted-history identity; history-budget blocking; and CLI readback for accepted-history/next-preflight.
+
+This local container is Python 3.13 and lacks Streamlit, so repository-wide collection is not claimed locally. The repository-wide matrix evidence instead comes from GitHub Actions run 36856263295: Python 3.11 **1206 passed / 1 skipped in 59.20s** and Python 3.12 **1206 passed / 1 skipped in 62.80s**. No real manuscript, live model, human author authentication or literary-quality judgment is part of these synthetic checks.
 
 ## E-000｜Foundation baseline
 **Date:** 2026-08-19  
@@ -143,3 +195,97 @@ Novel 的最终评测从“单章质量”扩展为四级：
 
 评测完成前，当前结论仅限于工程闭环已建立。
 
+
+## E-004｜LangChain MMR continuity pilot
+**Date:** 2026-09-30
+**Status:** OFFLINE_ENGINEERING_PILOT_ONLY
+
+Synthetic Chinese summaries cover a key-holder thread, a near-duplicate key thread, a separate ledger thread and irrelevant weather. The MMR port selects both relevant plot threads ahead of the duplicate. Tests verify deterministic selection, non-finite score rejection, bounded candidate memory, character/token budgets including labels, no match, zero recent count, unchanged Canon/Active, and an explicit default-off UI control.
+
+Mocked five-stage tests exercise both NovelEngine and RoutedNovelEngine: plan → draft → continuity review → repair → re-review, asserting that selected historical facts reach every request. Streamlit AppTest exercises plan confirmation → draft → repair → re-review without network/model access. These tests validate engineering propagation, not an LLM's factual compliance or story quality. The original frozen `novel-ab-v1` inputs and first-real evidence are not changed or rerun.
+
+Known limits: lexical bigrams miss synonyms and implications; at most 2,000 query/summary characters are scored; complete query-relevant sentence excerpts preserve matching late facts and negations when they fit; overlong sentences are omitted; similarity is not truth and does not override Canon, character knowledge, or human acceptance. Real long-form A/B, calibrated thresholds and human blind scores are not run.
+
+## E-005｜spaCy speaker-span engineering pilot
+**Date:** 2026-09-30
+**Status:** SYNTHETIC_OFFLINE_ONLY
+
+Reproduced the old false assignment of 林舟明's dialogue to 林舟. Added deterministic tests for longest-name order invariance, duplicate spans, leading/trailing speech tags, ambiguous multi-name tags, distant/unknown-actor addressees, negation/non-speaking fragments, adjacent pre-tags, newlines, escaped names, names mentioned inside dialogue, versioned/mixed baselines and actual NovelEngine voice-review consumption. Model responses are mocked and source sentences are original synthetic test data.
+
+No real-model run, human blind evaluation, semantic-speaker accuracy study or manuscript benchmark is performed. False negatives remain possible with indirect speech, unknown aliases, complex clauses and nested quotations. Legacy baseline data is preserved but does not contribute to version-2 drift evaluation.
+
+## E-006｜Combined same-project continuity and persistence pilot
+**Date:** 2026-09-30
+**Status:** SYNTHETIC_PROVIDER_MOCKED_ONLY
+
+Two end-to-end tests combine MMR recall and distinct overlapping speaker names through both normal/routed engines, deterministic review, one repair/re-review, synthetic acceptance, memory extraction/application, metric-only voice storage, fresh character reload and subsequent recall. The same accepted-memory delta remains idempotent and preserves the unrelated character's unknown knowledge.
+
+Additional Streamlit AppTests reproduced and then verified the fixes for missing character persistence and skipped revised-voice checks. Standard/refine-mode tests verify reference-overlap issues enter both review and re-review; unresolved overlap stays revise without starting a second repair. The initial separate combined baseline was 244 passed, 1 skipped before these extra regressions; final exact local counts are recorded in the review report.
+
+No original novel/reference corpus or real provider call is used. The single skipped integration requires optional qdrant-client. Manual cloud-browser inspection was blocked by ERR_BLOCKED_BY_CLIENT on the local preview URL; headless AppTest coverage is not a visual-browser pass.
+
+## E-007｜Existing workflow reconciliation checks
+**Date:** 2026-09-30
+**Status:** LOCAL_OFFLINE_ONLY
+
+Reproduced edited chapter001 moving to the newest slot and changing Active/Recall membership. The in-place update port preserves001–006 order and updates only the existing row while removing same-ID duplicates. Added zero/negative budget tests.
+
+Project-session tests cover separate characters/plans/styles/reference signatures and MMR flags, preserving unsaved A drafts through B and back, independent nested cache objects, no provider-credential caching and no on-switch file writes. A corrupt target JSON caused Streamlit to drop the unrendered chapter-goal widget; an AppTest reproduced the loss and verifies restoration after the recovery guard. Review also caught the valid empty-project-name cache edge and unsubmitted character-form carryover; regression tests cover their fixes.
+
+No real model, remote CI or migration of previously corrupted chronology is claimed. The original combined source-port pilot remains separately preserved.
+
+## E-008｜Canon field propagation
+**Date:** 2026-09-30
+**Status:** LOCAL_PROVIDER_MOCKED_ONLY
+
+AppTests verify different world-rule and locked-fact values through stored load, editing, saving, new app session and the captured planning request. Another test confirms unsaved locked-fact edits remain with their book during switching. Only synthetic facts and a scripted provider are used; no claim is made about LLM adherence or real-story quality.
+
+## E-LOCAL-20261001｜Author workflow and private review-candidate delivery
+**Date:** 2026-10-01 UTC
+**Status:** OFFLINE_ENGINEERING_VERIFIED; HUMAN_STORY_EVALUATION_PENDING
+
+Preserved input baseline: full previous continuity/Canon/session snapshot tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`; baseline rerun Python 3.11: **261 passed, 1 skipped**.
+
+Final local candidate checks:
+
+- Linux Python **3.11.16**: full `python -m pytest -q -rs`, **413 passed, 1 skipped**
+- Linux Python **3.12.14**: full `python -m pytest -q -rs`, **413 passed, 1 skipped**
+- Both runtimes: `compileall` for app, package and scripts passed; `git diff --check` passed
+- The single skip is the existing optional Qdrant integration test because `qdrant-client` is not installed, not an executed integration pass
+- Core author-workflow tests: 94 synthetic tests covering safe explicit chapter selection/order, plan/text binding, stale review/context rejection, deterministic bundle/hash identity, symlink/path rejection, atomic no-clobber writes, interrupted persistence and race simulations
+- Streamlit AppTest uses actual widgets and reruns with a mocked provider. It exercises Markdown import/save, scene-only notes and current editable seed plan into planning, three chapter saves, score import, candidate ZIP, repeated-save reuse, restart, A→B→A, malformed-target-load recovery, per-chapter overwrite consent, save failure/result identity, external draft changes and unreadable unrelated files
+- Original synthetic pilot CLI created and reopened an 8-member ZIP: three original short chapters, outline, blank ten-dimension CSV, metadata, manifest and README. Every chapter SHA and ZIP CRC matched; `human_review_status=awaiting_human_review`, `publishability_verdict=null`. There are no filled human scores in the delivered sample
+- Four-page editable Chinese running/limits guide was rendered and every page visually inspected
+
+Independent code review found and the candidate fixed: unsafe inventory reads, chapter-ID normalization aliases, overwrite permission leaking to the next chapter, pre-provider-only overwrite checks, failed plan save retaining the wrong result identity, old manuscript memory writeback, invalid saved workspace types, and loss of scene-only author notes during planning.
+
+Not run / not established: real provider/model quality, frozen unseen A/B, independent reader scoring, Windows device/UI, live platform rules or submission, and remote exact-head CI. Supported cloud-browser preview was attempted but blocked with `ERR_BLOCKED_BY_CLIENT`; no alternate route was used, so browser visual acceptance remains unverified. No public push, PR, merge or deployment was performed for this candidate. No cross-file transaction/concurrent-explicit-overwrite lock is claimed.
+
+## E-GPT-ENTRY-20261001｜GPT-first writing, state recovery and licensed reuse
+**Date:** 2026-10-01 UTC
+**Status:** LOCAL_ENGINEERING_VERIFIED; AUTHOR_AND_READER_QUALITY_NOT_ESTABLISHED
+
+This candidate preserves the previous engineering core and the plugin-written original r1 chapter while adding a GPT-readable entry, three licensed writing/review/repair prompts, nine provisional genre profiles, a licensed reader-reveal ledger adaptation and an optional executable state helper.
+
+Actual upstream-to-entry trace:
+
+- Complete unmodified MIT pytransitions core at `bd42b38f3627e6bca7274fb4d9af2e105f75da7c` → fixed `Machine` phases in `gpt_story_state` → explicit command CLI → interruption/stale/idempotent/32-chapter synthetic tests
+- MIT op7418/Humanizer-zh and blader/humanizer selected rules at their recorded pins → GPT prewrite/editorial-review/local-repair files → three actual fact-locked local style comparisons, kept separate from the unchanged r1 chapter
+- MIT chinese-novelist-skill five-column term/reveal record → private blank ledger and phase prompts → source/acceptance-aware, whitelist-only reader-known projection
+
+Final local validation on Linux:
+
+- Python 3.11.16 full suite: **503 passed, 1 skipped**
+- Python 3.12.14 full suite: **503 passed, 1 skipped**
+- The one skip is the existing optional Qdrant integration because qdrant-client is absent
+- Compileall and final staged diff checks passed
+- 49 focused state tests include a 32-chapter synthetic plan/accept/draft/review/memory/save/restore progression; confirmations are explicitly labeled synthetic fixtures, not user approval
+- 23 separately authored adversarial review tests verify content-derived memory IDs, accepted-history preservation, stale edit fingerprints, exact plan/draft/source binding, missing-source blocks, data-only content and required-context budgets
+- 18 entry/source/template/style checks verify pinned MIT license Git blob identities, links, empty templates, immutable original r1, only-declared-patch changes, and the scope of the original only/if condition
+- Private local write plus actual reload smoke succeeded; remote Drive write/transaction behavior is not implemented or claimed by that helper
+
+Review found and corrected: same-base candidate edits could overwrite newer drafts; same numeric revision could retain an old acceptance after source substitution; memory candidate contents could change under an old derived ID; accepted history could be dropped; required context could substitute a different location/body with the same ID/revision; known unavailable sources were not blocking; reader ledger projection required verifiable applied-memory ownership and default normalization. A prose comparison's only/if scope was also corrected rather than dismissed as stylistic.
+
+The original public test chapter SHA-256 remains `b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e`; North Star and existing application code remain unchanged in this slice. Byte budgets are not the selected model's exact token counts. Source checks and legal state transitions do not authenticate author messages, prove semantic fact support, establish literary improvement, or provide Drive/multi-file/concurrent-writer transactions. Independent human reading, real long-novel quality, all-genre chapter evaluation and platform publication remain unverified.
+
+Final freeze follow-ups: the material fingerprint now covers Canon/Active/Recall/style before and after confirmed updates; four additional regressions reject direct unapproved material changes. The public test bundle's scene-plan metadata path and dependent context digest were reconciled, with a new all-reference path/hash check. The chapter r1 bytes remain unchanged.

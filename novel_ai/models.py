@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Character(BaseModel):
@@ -91,23 +91,31 @@ class StyleFingerprint(BaseModel):
 
 
 class ReviewIssue(BaseModel):
-    category: str
-    severity: str = "medium"
+    category: str = Field(min_length=1)
+    severity: Literal["low", "medium", "high"] = "medium"
     excerpt: str = ""
-    reason: str
+    reason: str = Field(min_length=1)
     suggestion: str
 
 
 class ChapterReview(BaseModel):
-    verdict: str = "revise"
+    verdict: Literal["pass", "revise"] = "revise"
     issues: list[ReviewIssue] = Field(default_factory=list)
     continuity_updates: list[str] = Field(default_factory=list)
     character_updates: list[str] = Field(default_factory=list)
     open_threads: list[str] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def consistent_verdict(self) -> "ChapterReview":
+        # Model approval is only a review result, never author acceptance.
+        if any(issue.severity in {"medium", "high"} for issue in self.issues):
+            self.verdict = "revise"
+        return self
+
 
 class CharacterMemoryUpdate(BaseModel):
     """Per-character delta extracted after a chapter is accepted."""
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     goal_change: str = ""
@@ -120,20 +128,23 @@ class CharacterMemoryUpdate(BaseModel):
 
 
 class TimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     chapter_id: str = ""
     description: str
     time_hint: str = ""
 
 
 class ForeshadowItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     id: str
     description: str
-    status: str = "planted"  # planted | advanced | resolved
+    status: Literal["planted", "advanced", "resolved"] = "planted"
     chapter_id: str = ""
 
 
 class MemoryExtraction(BaseModel):
-    """Structured memory written back after each accepted chapter."""
+    """Structured memory candidate; formal writeback needs author acceptance."""
+    model_config = ConfigDict(extra="forbid")
 
     chapter_id: str = ""
     chapter_title: str = ""

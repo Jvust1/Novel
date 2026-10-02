@@ -1,0 +1,47 @@
+{
+  "upstream_repository": "pytransitions/transitions",
+  "upstream_commit": "bd42b38f3627e6bca7274fb4d9af2e105f75da7c",
+  "observed_stars": 6595,
+  "checked_at_utc": "2026-10-01",
+  "license": "MIT",
+  "version": "0.9.4",
+  "mode": "Unmodified complete core module plus init/version; extensions not copied",
+  "files": [
+    {
+      "path": "transitions/__init__.py",
+      "git_blob_sha": "28e11b9ee6a44d5854f728e734bc19e768e6de42",
+      "size": 554,
+      "url": "https://github.com/pytransitions/transitions/blob/bd42b38f3627e6bca7274fb4d9af2e105f75da7c/transitions/__init__.py",
+      "local_path": "novel_ai/_vendor/transitions/__init__.py"
+    },
+    {
+      "path": "transitions/core.py",
+      "git_blob_sha": "3d469ac522cdfec097c2b34a5fbfa61e229cd41e",
+      "size": 61931,
+      "url": "https://github.com/pytransitions/transitions/blob/bd42b38f3627e6bca7274fb4d9af2e105f75da7c/transitions/core.py",
+      "local_path": "novel_ai/_vendor/transitions/core.py"
+    },
+    {
+      "path": "transitions/version.py",
+      "git_blob_sha": "acfcc2bae2c48ebd55f57e6930040160e019f0f2",
+      "size": 174,
+      "url": "https://github.com/pytransitions/transitions/blob/bd42b38f3627e6bca7274fb4d9af2e105f75da7c/transitions/version.py",
+      "local_path": "novel_ai/_vendor/transitions/version.py"
+    },
+    {
+      "path": "LICENSE",
+      "git_blob_sha": "7702c8602705c8dd6b06b6d7860c347fd28c5666",
+      "size": 1098,
+      "url": "https://github.com/pytransitions/transitions/blob/bd42b38f3627e6bca7274fb4d9af2e105f75da7c/LICENSE",
+      "local_path": "third_party/transitions/LICENSE"
+    }
+  ],
+  "dependency": "six>=1.16,<2",
+  "integration": "novel_ai/gpt_story_state.py",
+  "model_api_or_network_calls": false,
+  "notes": [
+    "Machine uses fixed Novel events, auto_transitions=False; untrusted state cannot supply callback/import names",
+    "GitHub file reads/writes do not execute this module; optional Python checks require an actual executor",
+    "Pydantic remains the existing runtime validator; observed repository 28909 stars/MIT on 2026-10-01"
+  ]
+}

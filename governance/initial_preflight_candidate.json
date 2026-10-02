@@ -1,0 +1,42 @@
+{
+  "schema": "novel-initial-preflight-candidate-v1",
+  "branch": "fix/initial-preflight-identity-20261001",
+  "base_pr": 64,
+  "base_head": "f8062ebf538a5758c9ccb2915feb2143bf928fe2",
+  "base_tree": "493bf6613c002bf693abd321b6c6d18b0c606c90",
+  "docs": "docs/INITIAL_PREFLIGHT_IDENTITY.md",
+  "scope": "honor explicit story/history expectations in the existing revision-zero preflight branch",
+  "preserved": "identical omitted/None default output and preflight-specific empty history hash; existing accepted/journal/source/budget/candidate guards",
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "new_regression_cases": 23,
+    "independent_original_cases": 13,
+    "before_fix": "3 expected failures and 10 passing controls in independent suite",
+    "independent_review": "221 nearby state/candidate/accepted/journal cases passed after fix",
+    "full_default_output_sha256": "1c58cebfa7ed6d5cb01f8e93b47a3dc8648654ae83aa7b404e74cfa2f8b9034f",
+    "revision_zero_preflight_hash_fixture": "2aae93342763c2168c37a0b215d036ceefc93c3a8da2ebef84c02f101c55204e",
+    "fatal_ruff": "passed E9,F63,F7,F82",
+    "new_tests_ruff": "passed",
+    "default_ruff_advisory_count": 446,
+    "compileall": "passed Python 3.11/3.12",
+    "data": "synthetic archives only; no model or network calls",
+    "python_3_11": {
+      "passed": 1983,
+      "skipped": 1,
+      "seconds": 169.46
+    },
+    "python_3_12": {
+      "passed": 1983,
+      "skipped": 1,
+      "seconds": 168.05
+    },
+    "pip_check": "passed both installed environments",
+    "document_links_checked": 60,
+    "skip": "optional qdrant-client absent"
+  },
+  "boundaries": [
+    "no new history mechanism or dependency",
+    "no automatic acceptance, model request or archive write",
+    "no main merge, deployment or private manuscript publication"
+  ]
+}

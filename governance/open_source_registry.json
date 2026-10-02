@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-30",
+  "updated_at": "2026-10-01",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 58,
+    "total": 61,
     "p0": 15,
-    "p1": 28,
+    "p1": 31,
     "no_license": 2,
     "agpl": 2
   },
@@ -48,9 +48,13 @@
       "repo": "PenglongHuang/chinese-novelist-skill",
       "category": "story_generation",
       "license": "MIT",
-      "mode": "git-submodule+research-port",
+      "mode": "git-submodule+licensed-template-adaptation",
       "priority": "P1",
-      "use": "中文小说问答、偏好记忆、断点续写与校验流程"
+      "use": "Actual term/reader-known/full-truth/planned-reveal ledger connected to GPT prewrite/review and state-context projection; no upstream automatic-approval bypass",
+      "upstream_commit": "cb6c3e7d0563c6a685e6539ea642642ab98855d7",
+      "stars_observed": 3258,
+      "checked_at_utc": "2026-10-01",
+      "provenance": "third_party/chinese-novelist-skill/provenance.json"
     },
     {
       "key": "booknlp",
@@ -201,9 +205,30 @@
       "repo": "langchain-ai/langchain",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P2",
-      "use": "外部工具和 retriever 接入模式"
+      "use": "Opt-in local MMR continuity selection plus source-adapted Markdown author-outline import wired into actual writer/review/release workflow; no LangChain runtime dependency",
+      "source_port": {
+        "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+        "path": "libs/core/langchain_core/vectorstores/utils.py",
+        "symbol": "maximal_marginal_relevance",
+        "local_path": "novel_ai/_vendor/langchain_mmr.py",
+        "license_path": "third_party/langchain/LICENSE",
+        "stars_checked": 147315,
+        "checked_at_utc": "2026-09-30T18:11:00Z"
+      },
+      "additional_source_ports": [
+        {
+          "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+          "path": "libs/text-splitters/langchain_text_splitters/markdown.py",
+          "symbol": "MarkdownHeaderTextSplitter.split_text",
+          "local_path": "novel_ai/_vendor/langchain_markdown.py",
+          "license_path": "third_party/langchain/LICENSE",
+          "stars_checked": 147336,
+          "checked_at_utc": "2026-10-01",
+          "provenance": "third_party/langchain/markdown-outline-provenance.json"
+        }
+      ]
     },
     {
       "key": "haystack",
@@ -408,9 +433,18 @@
       "repo": "explosion/spaCy",
       "category": "nlp_pipeline",
       "license": "MIT",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P1",
-      "use": "成熟NLP流水线与句法/实体分析框架，用于可选的结构、重复与角色语言特征分析"
+      "use": "成熟NLP流水线与句法/实体分析框架，用于可选的结构、重复与角色语言特征分析",
+      "source_port": {
+        "upstream_commit": "26b4d1dc04a812f426e4bef3e8a1b6f159d6f048",
+        "path": "spacy/util.py",
+        "symbol": "filter_spans",
+        "local_path": "novel_ai/_vendor/spacy_spans.py",
+        "license_path": "third_party/spacy/LICENSE",
+        "stars_checked": 33931,
+        "checked_at_utc": "2026-09-30T18:34:00Z"
+      }
     },
     {
       "key": "pycorrector",
@@ -537,6 +571,45 @@
       "mode": "git-submodule+optional",
       "priority": "P1",
       "use": "Story DNA 低维投影"
+    },
+    {
+      "key": "pytransitions",
+      "repo": "pytransitions/transitions",
+      "category": "workflow",
+      "license": "MIT",
+      "mode": "vendored-unmodified-core",
+      "priority": "P1",
+      "use": "Actual fixed-state Machine used by optional GPT writing state commands; author/source/version guards and save/restore tests",
+      "upstream_commit": "bd42b38f3627e6bca7274fb4d9af2e105f75da7c",
+      "stars_observed": 6595,
+      "provenance": "third_party/transitions/provenance.json",
+      "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "humanizer_zh",
+      "repo": "op7418/Humanizer-zh",
+      "category": "writing_prompts",
+      "license": "MIT",
+      "mode": "licensed-prompt-adaptation",
+      "priority": "P1",
+      "use": "Voice calibration and meaning-preserving local-edit rules connected to GPT writing/review/repair, not detector-evasion rules",
+      "upstream_commit": "f4518a8eab97b8bfebc66a89d34320a89bef6930",
+      "stars_observed": 18786,
+      "provenance": "docs/prompts/natural-fiction/source-lock.json",
+      "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "humanizer",
+      "repo": "blader/humanizer",
+      "category": "writing_prompts",
+      "license": "MIT",
+      "mode": "licensed-prompt-adaptation",
+      "priority": "P1",
+      "use": "Actual sample-voice calibration and added/dropped meaning check translated into bounded Chinese-fiction prompts",
+      "upstream_commit": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8",
+      "stars_observed": 53203,
+      "provenance": "docs/prompts/natural-fiction/source-lock.json",
+      "checked_at_utc": "2026-10-01"
     }
   ]
 }

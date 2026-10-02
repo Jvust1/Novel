@@ -1,3 +1,141 @@
+# 2026-10-01 — 历史来源同标识冲突检查
+
+当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 第一章预检身份保护
+
+当前候选 `fix/initial-preflight-identity-20261001` 叠加已验证 #64。仅补上 revision 0 空历史分支原先遗漏的显式故事身份/历史指纹检查，保留原默认输出和空历史指纹，不新增历史机制。真实 API/CLI 反例、来源预算与候选隔离控制见 [说明](INITIAL_PREFLIGHT_IDENTITY.md) 和 [本轮记录](../governance/initial_preflight_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 风格资料一致保存候选
+
+当前分支 `fix/style-save-consistency-20261001` 叠加已验证 #63。实际复现 Style Lab 第二文件失败后会话与重启状态分歧，现通过固定三文件恢复、独立操作标识、版本检查和真实读回接入现有原子保存。人物、章纲、正文接受、记忆确认及私有来源边界保持原协议。见 [能力与边界](STYLE_SAVE_INTEGRITY.md) 和 [本轮记录](../governance/style_save_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 当前参考文本完整读取候选
+
+当前分支 `fix/reference-text-decoding-20261001` 叠加已验证 #62。TXT/MD 不再忽略坏字节；BOM/UTF-8 严格读取，其他编码先提出候选并要求明确选择，全部字节可逆后才进入风格和原创性检查。当前工程入口以 [公开指针](../governance/current_candidate.json) 为准。见 [能力与边界](REFERENCE_DECODING.md) 和 [本轮记录](../governance/reference_decoding_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 当前质量门禁与公开入口
+
+当前分支 `chore/quality-gates-integrated-20261001` 叠加已验证 #61。当前工程指针为 [current_candidate.json](../governance/current_candidate.json)，其指定的候选记录与 README、AGENTS 顶部、GPT 写作入口共同核对；旧 project_state / artifact_manifest 保留为历史，不作为当前分支或私有交付权限。
+本轮只移入 #60 已验证的 CI 门禁与脚本启动修复，沿用本分支全部历史/日志/记忆/导出功能。见 [质量门禁说明](QUALITY_GATES.md)。下方记录保留历史。
+
+# 2026-10-01 — 当前已接受稿审阅包候选
+
+当前分支 `feat/accepted-review-export-20261001` 叠加已验证 [#56](https://github.com/Jvust1/Novel/pull/56)，尚未合入 main。实际读回 v1 接受档案或归属明确且已完成影响复审的作者日志后，将明确选择的 3/20 章原字节交给已有审阅打包器；保存、重复保存与竞争复用均重新核对来源。
+读 [接受稿导出](ACCEPTED_REVIEW_EXPORT.md) 和 [当前工程记录](../governance/accepted_export_candidate.json)。下方历史记录继续保留。外部 #55/#57–#60 是另一条旧 #50 基线候选，未在本分支合并或宣称兼容。
+
+# 2026-10-01 — 当前作者日志续写候选
+
+当前分支 `feat/journal-continuation-20261001` 叠加已验证 #54。作者接受设定/文风变化、完成影响复审并真实保存读回后，可经日志自己的身份进入实际预算续写；不剥离日志归属，不自动追加作者接受。
+读 [日志续写说明](JOURNAL_CONTINUATION.md) 与 [当前工程记录](../governance/journal_continuation_candidate.json)。下方 #54 及更早范围与分支保留为历史。
+
+# 2026-10-01 — 当前档案绑定续写候选
+
+当前集成候选在 `feat/accepted-archive-continuation-20261001`，叠加已发布 #53；尚未合入 main。
+本次把 #51 的已接受历史预检、#52 的共享请求预算与实际下一章写作相连，支持每次 HTTP 尝试前/响应后重新读回来源。#53 的记忆候选和作者确认独立保留。
+读取 [GPT 写作入口](GPT_WRITING_ENTRY.md) → [本次能力与边界](ACCEPTED_ARCHIVE_CONTINUATION.md) → [当前工程证据](../governance/accepted_archive_candidate.json)。下方旧候选的版本、分支和待办保留为历史，不自动覆盖本次状态。
+
+# 2026-10-01 — Accepted-history rebuild for next chapter (candidate)
+
+- Rebuild continuity only from actually read, author-accepted chapter plan/draft records; recalculate Voice DNA and parseable plan structure instead of trusting stale session caches
+- Add stable accepted-history fingerprinting, explicit story/source mismatch rejection, and a next-chapter preflight that budget-selects exact accepted sources without truncating them
+- Fix a reproduced leak where a retained old draft candidate could remain in prompt context after the plan changed; it now enters only when bound to the current plan revision
+- Add `accepted-history` / `next-preflight` CLI paths with real file readback. Local focused state/review checks: 77 passed; executable commit `7f2b93367661b0038bab2885851fed607f047882` CI run 36856263295 is green with 1206 passed / 1 skipped on both Python 3.11 and 3.12
+- [Behavior, commands, evidence and limits](ACCEPTED_HISTORY_REBUILD.md)
+
+# 2026-10-01 — Final-text reports and bounded model output (candidate)
+
+- Share existing post-plan execution across single/routed/confirmed-plan writers; retain initial evidence and bind final diagnostics to delivered text
+- Reject blank/incomplete repair, contradictory verdicts, malformed hooks, mutable report rebinding and unbounded/ambiguous model output
+- Reuse installed HTTPX streaming and existing JSON/Pydantic validation; no new workflow framework or paid call
+- [Actual behavior, source pins and limits](FINAL_OUTPUT_GATES.md)
+
+# 2026-10-01 — Local semantic Recall integrity (candidate)
+
+- Reuse existing Pydantic strict finite validation and Novel Qdrant metadata contract; no new framework, model download or remote client
+- Coherent detached snapshots preserve old corpus/index after failed updates; scaled cosine handles huge/subnormal values and rejects invalid data
+- Explicit ContextAssembler option replaces the current-project historical corpus, verifies returned source identity, and carries bounded history through actual writing/review stages
+- Explicit history scope omits unbound legacy longform/voice guards, recording the omission instead of letting future/stale auxiliary facts bypass the selected summaries
+- [API, source pins and verification limits](RECALL_INTEGRITY.md)
+
+# 2026-10-01 — Project storage and benchmark evidence (candidate)
+
+- Reconcile existing Novel PR16 confinement with a licensed boltons atomic-write source port used by actual ProjectStore and benchmark writers
+- Preserve complete old/new files through publication failures, coordinate cooperating processes, and recover the fixed extraction/summary pair from checked intent
+- Refuse traversal/links/internal-file aliases and keep same-second runs and existing human scores separate
+- Linux CI matrix covers Python 3.11/3.12 with contents:read; Windows native acceptance, full vulnerability/lint gates and general cross-file/Drive transactions remain unclaimed
+- [Source pins, operational limits and tests](STORAGE_INTEGRITY.md)
+
+# 2026-10-01 — Author setting/style amendments (candidate)
+
+- Additive private journal preserves the complete v1 origin and accepted evidence; chapter revisions remain unchanged by amendments
+- Actual BSD-3-Clause eventsourcing source replay and identity/order guards drive restoration; no added runtime dependency
+- Explicit change approval invalidates unfinished candidates, queues every accepted chapter plus Active/Recall, and requires review/author resume/save/readback
+- Historical prose replacement and derived-memory rewriting remain blocked; exact reversal preserves all prior events
+- [Usage, source pins and limits](GPT_AUTHOR_AMENDMENTS.md)
+
+# 2026-10-01 — GPT-readable writing entry and genre-aware style prompts
+
+- Primary requested use is now GPT + GitHub file access: read this repository's instructions, load accessible private book state, plan/draft/review/repair in conversation, and save/verify private progress. No local-user installation or new service is required for the text workflow
+- [README](../README.md) → [GPT entry](GPT_WRITING_ENTRY.md) hooks the actual [three-stage natural-fiction prompts](prompts/natural-fiction/README.md) into writing, review and repair
+- Nine common genre profiles support a primary and optional secondary genre with stable narrative/character voices. They are configurable candidates, not a fixed user voice or exhaustive subgenre taxonomy
+- Licensed small prompt adaptations from pinned MIT Humanizer-zh/humanizer sources preserve meaning and style calibration; complete source/NOTICE/license records are included
+- The original public test chapter remains unchanged. Three local candidate edits show actual before/after factual checks and are separate from the canonical draft; no reader-quality improvement or detector result is claimed
+- Existing Streamlit/Python tools remain available for supported optional execution. A file-reading plugin is not a Python runner, and prompts do not install a service
+- Real manuscripts/characters/private memory stay in authorized private storage; only blank templates, rules, code and this explicitly public original test belong in the public repository
+
+# 2026-10-01 — Author workflow connected (published draft #45)
+
+- Added actual licensed LangChain Markdown header-stack/fence source reuse to import an author's explicit five-level outline without fabricating missing scene fields
+- Connected selected hierarchy context to the existing writer, persisted plan/text identity, chapter-specific overwrite approval and revision-bound memory extraction
+- Connected explicit 3/20 saved-chapter selection to existing human market scoring and local deterministic review-candidate ZIP; stale text/audience/genre scores are rejected
+- Saved outline/release workspaces survive restart; unsaved changes remain project-scoped within the session; export retries reuse byte-identical immutable files
+- Published as draft [PR #45](https://github.com/Jvust1/Novel/pull/45), head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`; [CI run 36826620415](https://github.com/Jvust1/Novel/actions/runs/36826620415) reports 413 passed, 1 skipped. No merge, deployment, real model call, private manuscript import, platform submission or story-quality conclusion
+- [Usage, schema compatibility and limits](AUTHOR_WORKFLOW.md)
+
+# 2026-09-30 — Canon field reconciliation (local only)
+
+- Reused PR16's separate locked-facts editor and current_bible mapping; distinct stored locked facts no longer get replaced by world rules in the workbench
+- Verified original synthetic facts through load/edit/save/fresh restart and the actual captured planning prompt, plus project-scoped unsaved fact restoration
+- No migration, automatic value deletion, model call, new dependency or remote publication
+- [Exact source and verification scope](CANON_FIELD_RECONCILIATION.md)
+
+# 2026-09-30 — Existing workflow reconciliation (local only)
+
+- Reused PR13's stable summary updates: editing an old chapter no longer moves it into the recent-memory window; duplicate same-ID rows collapse in place and nonpositive recent limits return empty
+- Reused/adapted PR16's project-session cache so characters, plans, results, styles and MMR controls stay with their book while unsaved work survives A→B→A switching
+- Added failed-target-load recovery after reproducing Streamlit widget cleanup losing an unsaved chapter goal on return; blank project names and unsubmitted character-form drafts are also covered
+- This is reconciliation of existing Novel code, not another qualifying external upstream integration. The original PRs and reviewed combined snapshot remain intact
+- [Source pins, tests and limits](WORKFLOW_RECONCILIATION.md)
+
+# 2026-09-30 — Combined continuity pilot (local review only)
+
+- Combined the LangChain MMR and spaCy speaker-span ports in a separate local test branch; original source branches remain intact
+- The same-project synthetic pilot exercises recall → draft → consistency review → local repair/re-review → simulated acceptance → memory application/persistence → fresh character reload and next-chapter recall
+- Fixed a reproduced workbench gap: extraction updated only session-state character cards, losing learned knowledge on restart. Writeback now also saves `memory/characters.json`; locked cards remain protected
+- Brought the confirmed-plan UI's review/repair checks to engine parity: reference overlap, revised voice metrics/drift, Story DNA and behavior checks re-enter the review contract
+- Regression tests reproduced the prior failures before the fixes: disk knowledge remained empty, repaired wrong-speaker dialogue received pass, and reference overlap stayed outside review
+- This is provider-mocked, same-project engineering verification. It does not assert transactional multi-file saves, general project-switch correctness or real-model story quality
+- [Combined test and review boundaries](upstream/combined-continuity-pilot-2026-09-30.md)
+
+# 2026-09-30 — spaCy speaker-span pilot (local draft branch)
+
+- Fixed a demonstrated Voice DNA error: `林舟明` speaking was also credited to `林舟`
+- Reused spaCy's MIT `filter_spans` loop at the exact existing pin `26b4d1dc04a812f426e4bef3e8a1b6f159d6f048`; GitHub verified 33,931 stars
+- Longest registered name spans feed conservative explicit speaker attribution and the existing voice-drift review/repair path in both engines and the workbench
+- New metrics carry `attribution_version=2`; legacy history is retained but excluded from the new aggregate baseline until compatible evidence accumulates
+- No spaCy runtime/model dependency, network call, manuscript copy or frozen benchmark change. Synthetic engineering tests do not prove real-story quality
+- [Source, compatibility and limitations](upstream/spacy-speaker-spans-2026-09-30.md)
+
+# 2026-09-30 — LangChain MMR continuity pilot (draft branch)
+
+- Ported the MIT-licensed LangChain `maximal_marginal_relevance` selection loop from the existing pinned upstream `a9780cd3dd73135d21d7130b08711685f2700d51`; 147,315 stars verified through GitHub on this date
+- Added an explicit, default-off “多样化历史召回（实验）” workbench control. It scores accepted historical summaries against the chapter goal, diversifies the top 64 candidates, and includes at most eight bounded rows. Canon and Active retain their priority and content
+- Selected context now reaches planning, drafting, continuity review, one local repair and re-review. The role-routed engine also performs its previously missing post-repair review with the same reviewer role and deterministic checks
+- No LangChain install, NumPy requirement for the port, vector service, model download, or external call is introduced by retrieval. Routed auto-repair now adds one reviewer-provider call for post-repair checking, matching the normal engine. Existing chronological recall remains the default
+- Synthetic offline/provider-mocked tests establish routing, budget and selection behavior only. They do not establish better prose, semantic recall, or publishability. Frozen benchmark cases and past run evidence are unchanged
+- Exact provenance, runtime entry points and limitations: [LangChain recall pilot](upstream/langchain-mmr-continuity-2026-09-30.md)
+
 # 2026-09-30 — 长篇小说工程融合分支
 
 本轮在 `feat/longform-engineering-fusion-20260930` 直接收口此前分散在多个功能分支的成熟实现，并以 `feat/vendor-book-to-skill-20260930` 为最新基线，未直接修改 `main`。

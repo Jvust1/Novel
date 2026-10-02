@@ -1,0 +1,115 @@
+{
+  "source_path": "chapter-001.md",
+  "source_sha256": "b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e",
+  "candidate_path": "chapter-001.style-candidate.md",
+  "candidate_sha256": "18b269a3e417bd8a41c3b09b714effccd69e5dc1777bf22b8810bb8c43f993cc",
+  "canonical_advanced": false,
+  "author_accepted": null,
+  "human_quality_comparison": null,
+  "style_profile": "style_profile.demo.json",
+  "prompt_sources": [
+    "../../docs/prompts/natural-fiction/01-writing-before.md",
+    "../../docs/prompts/natural-fiction/02-editorial-review.md",
+    "../../docs/prompts/natural-fiction/03-local-repair.md"
+  ],
+  "patches": [
+    {
+      "patch_id": "STYLE-01",
+      "issue": "连贯动作的观察信息较集中，可按移动/停步分开落点",
+      "before": "陶青沿岸往南跑。桥裙挡住了下面，只有绕到卸货坡道，才能斜着看到外侧一截。坡底全是绿苔，她扶着粗糙的墙停在干处，把手电对准第二根墩柱。",
+      "after": "陶青沿岸往南跑。桥裙挡住了下面，只有绕到卸货坡道，才能斜着看到外侧一截。\n\n坡底全是绿苔。她扶着粗糙的墙停在干处，把手电对准第二根墩柱。",
+      "protected": [
+        "只有绕到卸货坡道，才能斜着看到外侧一截",
+        "粗糙的墙",
+        "陶青",
+        "卸货坡道",
+        "桥裙",
+        "外侧一截",
+        "坡底全是绿苔",
+        "干处",
+        "手电",
+        "第二根墩柱"
+      ],
+      "reason": "保留原有词语、只有/才能条件范围与墙面触感，仅在移动/停步处调整句段边界；未添加或删除事实",
+      "fact_lock_review": "保持：主体、动作次序、已有方向与物件、关键金额与承诺均未改变；人工/作者尚未验收",
+      "adjacent_context_review": "已在本章相邻段连读；未把孟川身份、纸条经过或韩平未知内容提升为真相",
+      "author_accepted": null
+    },
+    {
+      "patch_id": "STYLE-02",
+      "issue": "可试用一次有功能的停顿凸显同事对现实成本的关注",
+      "before": "“回来车就没了。包车一百六，找谁报？”",
+      "after": "“回来车就没了。包车一百六。”老邓问，“找谁报？”",
+      "protected": [
+        "回来车就没了",
+        "包车一百六",
+        "找谁报"
+      ],
+      "reason": "对白实词保持原样，只调整停顿并明示既有说话人；不把实用口吻换成金句",
+      "fact_lock_review": "保持：主体、动作次序、已有方向与物件、关键金额与承诺均未改变；人工/作者尚未验收",
+      "adjacent_context_review": "已在本章相邻段连读；未把孟川身份、纸条经过或韩平未知内容提升为真相",
+      "author_accepted": null
+    },
+    {
+      "patch_id": "STYLE-03",
+      "issue": "救援后段落同时承担动作、工作压力和交接，允许有限节奏变速",
+      "before": "担架停在坡顶，救援人员要给他固定腿。陶青往后让了两步。手机里，宾馆老板问她明天能不能准时到。她回了“能”，关掉屏幕，又看了看柜台方向。老邓正在远处等她，铁门还留着一道缝。",
+      "after": "担架停在坡顶，救援人员要给他固定腿。陶青往后让了两步。\n\n手机里，宾馆老板问她明天能不能准时到。\n\n她回了“能”，关掉屏幕。再往柜台那边看，老邓还在远处等着，铁门留着一道缝。",
+      "protected": [
+        "担架停在坡顶",
+        "固定腿",
+        "两步",
+        "明天",
+        "“能”",
+        "屏幕",
+        "老邓",
+        "铁门",
+        "一道缝"
+      ],
+      "reason": "保留时间承诺与人员位置，靠信息落点变速；没有解释她的情绪或新增灯光细节",
+      "fact_lock_review": "保持：主体、动作次序、已有方向与物件、关键金额与承诺均未改变；人工/作者尚未验收",
+      "adjacent_context_review": "已在本章相邻段连读；未把孟川身份、纸条经过或韩平未知内容提升为真相",
+      "author_accepted": null
+    }
+  ],
+  "actual_checks": {
+    "source_slices_exist_exactly_once": true,
+    "only_declared_slices_changed": true,
+    "protected_literals_present_before_and_after": true,
+    "original_r1_unchanged": true,
+    "formal_acceptance_unchanged_null": true
+  },
+  "before_metrics": {
+    "non_whitespace_characters": 3228,
+    "paragraph_count": 129,
+    "sentence_length_mean": 14.81,
+    "sentence_length_std": 8.98,
+    "heuristic_issue_categories": [
+      "词汇重复偏高"
+    ],
+    "tokenizer": {
+      "tokenizer": "char-fallback",
+      "token_count": 2659,
+      "unique_token_count": 580,
+      "type_token_ratio": 0.2181,
+      "lexicalrichness": 0
+    }
+  },
+  "after_metrics": {
+    "non_whitespace_characters": 3232,
+    "paragraph_count": 132,
+    "sentence_length_mean": 14.69,
+    "sentence_length_std": 8.94,
+    "heuristic_issue_categories": [
+      "词汇重复偏高"
+    ],
+    "tokenizer": {
+      "tokenizer": "char-fallback",
+      "token_count": 2660,
+      "unique_token_count": 580,
+      "type_token_ratio": 0.218,
+      "lexicalrichness": 0
+    }
+  },
+  "interpretation": "计数变化不是质量提升证明；词汇重复启发式在字符回退下受篇幅影响，不据此机械替换名字、物件或同义词。三段仅供比较，作者可保留原稿。"
+}

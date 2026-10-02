@@ -1,3 +1,59 @@
+# 2026-10-01 — 历史来源同标识冲突检查
+
+当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 第一章预检身份保护
+
+当前候选 `fix/initial-preflight-identity-20261001` 叠加已验证 #64。仅补上 revision 0 空历史分支原先遗漏的显式故事身份/历史指纹检查，保留原默认输出和空历史指纹，不新增历史机制。真实 API/CLI 反例、来源预算与候选隔离控制见 [说明](INITIAL_PREFLIGHT_IDENTITY.md) 和 [本轮记录](../governance/initial_preflight_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 风格资料一致保存候选
+
+当前分支 `fix/style-save-consistency-20261001` 叠加已验证 #63。实际复现 Style Lab 第二文件失败后会话与重启状态分歧，现通过固定三文件恢复、独立操作标识、版本检查和真实读回接入现有原子保存。人物、章纲、正文接受、记忆确认及私有来源边界保持原协议。见 [能力与边界](STYLE_SAVE_INTEGRITY.md) 和 [本轮记录](../governance/style_save_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 当前参考文本完整读取候选
+
+当前分支 `fix/reference-text-decoding-20261001` 叠加已验证 #62。TXT/MD 不再忽略坏字节；BOM/UTF-8 严格读取，其他编码先提出候选并要求明确选择，全部字节可逆后才进入风格和原创性检查。当前工程入口以 [公开指针](../governance/current_candidate.json) 为准。见 [能力与边界](REFERENCE_DECODING.md) 和 [本轮记录](../governance/reference_decoding_candidate.json)。下方保留历史。
+
+# 2026-10-01 — 当前质量门禁与公开入口
+
+当前分支 `chore/quality-gates-integrated-20261001` 叠加已验证 #61。当前工程指针为 [current_candidate.json](../governance/current_candidate.json)，其指定的候选记录与 README、AGENTS 顶部、GPT 写作入口共同核对；旧 project_state / artifact_manifest 保留为历史，不作为当前分支或私有交付权限。
+本轮只移入 #60 已验证的 CI 门禁与脚本启动修复，沿用本分支全部历史/日志/记忆/导出功能。见 [质量门禁说明](QUALITY_GATES.md)。下方记录保留历史。
+
+# 2026-10-01 — 当前已接受稿审阅包候选
+
+当前分支 `feat/accepted-review-export-20261001` 叠加已验证 [#56](https://github.com/Jvust1/Novel/pull/56)，尚未合入 main。实际读回 v1 接受档案或归属明确且已完成影响复审的作者日志后，将明确选择的 3/20 章原字节交给已有审阅打包器；保存、重复保存与竞争复用均重新核对来源。
+读 [接受稿导出](ACCEPTED_REVIEW_EXPORT.md) 和 [当前工程记录](../governance/accepted_export_candidate.json)。下方历史记录继续保留。外部 #55/#57–#60 是另一条旧 #50 基线候选，未在本分支合并或宣称兼容。
+
+# 2026-10-01 — 当前作者日志续写候选
+
+当前分支 `feat/journal-continuation-20261001` 叠加已验证 #54。作者接受设定/文风变化、完成影响复审并真实保存读回后，可经日志自己的身份进入实际预算续写；不剥离日志归属，不自动追加作者接受。
+读 [日志续写说明](JOURNAL_CONTINUATION.md) 与 [当前工程记录](../governance/journal_continuation_candidate.json)。下方 #54 及更早范围与分支保留为历史。
+
+# 2026-10-01 — 当前档案绑定续写候选
+
+当前集成候选在 `feat/accepted-archive-continuation-20261001`，叠加已发布 #53；尚未合入 main。
+本次把 #51 的已接受历史预检、#52 的共享请求预算与实际下一章写作相连，支持每次 HTTP 尝试前/响应后重新读回来源。#53 的记忆候选和作者确认独立保留。
+读取 [GPT 写作入口](GPT_WRITING_ENTRY.md) → [本次能力与边界](ACCEPTED_ARCHIVE_CONTINUATION.md) → [当前工程证据](../governance/accepted_archive_candidate.json)。下方旧候选的版本、分支和待办保留为历史，不自动覆盖本次状态。
+
+# 当前交接 — 2026-10-01
+
+当前工程候选：`fix/accepted-history-rebuild-20261001`，直接叠在 Draft PR #50 的 head `35208537aa1fb830a2325ec1dd8870bdf0564190` 上。新增范围只处理[已接受历史重建与下一章预检](ACCEPTED_HISTORY_REBUILD.md)；#50 的最终稿审校、输出额度与严格 JSON 保持为冻结基线。执行代码提交 `7f2b93367661b0038bab2885851fed607f047882` 的 CI run 36856263295 已验证 Python 3.11/3.12 均为 1206 passed / 1 skipped；以下旧候选记录继续保留。
+
+当前用户使用路径：GPT 通过 GitHub 插件读规则 → 读取可访问的私有 Drive 故事状态 → 按作品类型规划、起草、审校和局部修订 → 作者按版本接受 → 私有保存并读回 → 下次对话恢复。先读 [GPT_WRITING_ENTRY.md](GPT_WRITING_ENTRY.md) 和 `AGENTS.md` 顶部；不要求本地安装。North Star 与既有代码保留。
+
+- 当前本地 Recall 完整性候选入口为 `fix/recall-integrity-20261001`，叠在已验证 [Draft PR #48](https://github.com/Jvust1/Novel/pull/48) 上；#48 head `78cb607a8b4ae9cade68a62b7065a8f08e85ace0` 保留不动，精确提交双版本 CI 成功且各 632 passed / 1 skipped。各候选均未合入 `main`。
+- [本地语义 Recall 完整性](RECALL_INTEGRITY.md) 修复失败更新的文本/向量错配，并作为显式本地选项接入实际写作上下文；默认召回保持不变；显式历史范围会省略尚未绑定目标章节/状态版本的旧长篇告警，并记录原因。未指定范围的旧调用不构成旧章改写安全入口，真实模型/加速器质量未验证。
+- [存稿与评测证据保护](STORAGE_INTEGRITY.md) 接入实际 ProjectStore 和 benchmark：保留旧文件、固定两文件恢复意图、合作进程锁、独占评测目录及人工评分不覆盖。
+- 新增 [作者设定/文风变更日志](GPT_AUTHOR_AMENDMENTS.md)：保留旧稿与接受历史，明确确认、影响复审、保存读回后继续；历史正文替换与记忆重算仍未实现。
+- 现有本地作者工作流已发布为 [Draft PR #45](https://github.com/Jvust1/Novel/pull/45)，head `d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90`。[该提交 CI](https://github.com/Jvust1/Novel/actions/runs/36826620415) 成功，413 passed / 1 skipped；未合并。用法见 [AUTHOR_WORKFLOW.md](AUTHOR_WORKFLOW.md)。
+- [原创插件演示](../writing_demos/plugin-first-chapter-20261001/README.md) 已在提交 `badcfab4d925a1fbe464b4a314cf9abf004a675b` 发布并通过插件读回；它仍是待作者审阅的公开测试候选，不代表真实用户作品可公开或已被接受。
+- 文件读取不代表 Python 执行；GPT 入口是对话与归档协议，不是自动运行的新后端。真实故事质量、独立真人评测和平台结果仍需各自的证据。
+- CURRENT_STATE / EVALUATION_LEDGER 中此前的 local-only、未推送描述是对应阶段的历史快照，不能覆盖以上已发布状态。旧 PR #33 不是本轮的接受记录。
+
+本地作者候选的历史起点保留为连续性快照 tree `2c910626a27a3cc14393af91e6dd6aae6ee3a2b9`，源于当时 main `bf37f1906636791f03c6a6ce1eecd3cc81a6a803` 加先前本地成果；它不是当前分支 head。
+
+以下旧交接与恢复清单保留供追溯；其中全项目启动、本地 CI 优先级等不再作为当前 GPT 写作的默认要求。
+
 # Handoff
 
 ## Novel v0.1-dev

@@ -1,10 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from copy import deepcopy
+import re
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 import httpx
+
+from .request_budget import RequestBudget, bounded_request_bytes
+
+from .output_policy import (
+    DEFAULT_MAX_OUTPUT_BYTES,
+    DEFAULT_MAX_RESPONSE_BYTES,
+    DEFAULT_MAX_TOKENS,
+    OutputValidationError,
+    completion_text,
+    positive_int,
+    strict_json_object,
+)
 
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
@@ -29,13 +43,113 @@ class ProviderConfig:
     model: str
     api_key: str = ""
     timeout: float = 180.0
+    default_max_tokens: int = DEFAULT_MAX_TOKENS
+    max_response_bytes: int = DEFAULT_MAX_RESPONSE_BYTES
+    max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES
+
+    def __post_init__(self) -> None:
+        positive_int(self.default_max_tokens, name="default_max_tokens")
+        positive_int(self.max_response_bytes, name="max_response_bytes")
+        positive_int(self.max_output_bytes, name="max_output_bytes")
+
+
+def _read_bounded_response(response: httpx.Response, max_bytes: int) -> bytes:
+    """Bound accepted body bytes before JSON parsing, including error bodies.
+
+    Request identity encoding and reject compressed responses before iteration
+    so HTTPX cannot inflate an unbounded compressed chunk ahead of our check.
+    This is a body-size bound, not a universal transport/process-memory limit.
+    """
+    positive_int(max_bytes, name="max_response_bytes")
+    encoding = response.headers.get("content-encoding", "identity").strip().lower()
+    if encoding not in {"", "identity"}:
+        raise OutputValidationError("compressed model HTTP responses are not supported")
+    declared = response.headers.get("content-length", "")
+    if declared.isascii() and declared.isdecimal():
+        # Avoid converting an arbitrarily long, untrusted integer header.
+        normalized = declared.lstrip("0") or "0"
+        if len(normalized) > len(str(max_bytes)) or int(normalized) > max_bytes:
+            raise OutputValidationError("model HTTP response exceeds its byte allowance")
+    content = bytearray()
+    for chunk in response.iter_bytes(chunk_size=min(65536, max_bytes + 1)):
+        if len(content) + len(chunk) > max_bytes:
+            raise OutputValidationError("model HTTP response exceeds its byte allowance")
+        content.extend(chunk)
+    return bytes(content)
+
+
+def _unsupported_response_format(status: int, content: bytes) -> bool:
+    """Only an explicit unsupported-format error permits one downgrade."""
+    if status not in {400, 422}:
+        return False
+    try:
+        data = strict_json_object(content.decode("utf-8"), max_bytes=len(content))
+    except (ValueError, UnicodeError):
+        return False
+    error = data.get("error")
+    if not isinstance(error, dict):
+        return False
+    parameter = error.get("param")
+    code = error.get("code")
+    message = error.get("message")
+    parameter_matches = isinstance(parameter, str) and (
+        parameter == "response_format" or parameter.startswith("response_format.")
+    )
+    if parameter is not None and not parameter_matches:
+        return False
+    if parameter_matches and isinstance(code, str) and code in {
+        "unsupported_parameter", "unsupported_value", "not_supported", "unknown_parameter"
+    }:
+        return True
+    if not isinstance(message, str):
+        return False
+    # Match an unsupported statement about this exact option. Mentioning it
+    # elsewhere in a model/schema/auth error does not authorize a downgrade.
+    return bool(re.search(
+        r"(?:\b(?:unsupported|unknown|unrecognized)\s+(?:parameter|argument|field|value)\s*[:=]?\s*[\"'`]?response_format\b"
+        r"|\bresponse_format[\"'`]?\s+(?:(?:is|parameter is)\s+)?(?:not supported|unsupported)\b"
+        r"|\b(?:does not support|doesn't support)\s+(?:the\s+)?[\"'`]?response_format\b)",
+        message,
+        re.I,
+    ))
+
 
 
 class OpenAICompatibleProvider:
-    """Small provider adapter for OpenAI-compatible chat completion APIs."""
+    """Bounded chat adapter; missing/unknown finish_reason fails closed.
 
-    def __init__(self, config: ProviderConfig):
-        self.config = config
+    A legacy server must supply an affirmative ``stop`` completion. Responses
+    are streamed under an identity-encoded body-byte limit, then validated without
+    clipping. Only explicit response_format-unsupported errors are retried.
+    """
+
+    def __init__(self, config: ProviderConfig, *, request_budget: RequestBudget | None = None,
+                 request_guard: Callable[[], None] | None = None):
+        if request_budget is not None and type(request_budget) is not RequestBudget:
+            raise TypeError("request_budget must be RequestBudget")
+        if request_budget is not None and type(config) is not ProviderConfig:
+            raise TypeError("bounded provider requires ProviderConfig")
+        if request_guard is not None and not callable(request_guard):
+            raise TypeError("request_guard must be callable")
+        self.config = deepcopy(config) if request_budget is not None else config
+        self._budget_config = deepcopy(config) if request_budget is not None else None
+        self._request_budget = request_budget
+        self._request_guard = request_guard
+
+    def guarded(self, request_guard: Callable[[], None]) -> OpenAICompatibleProvider:
+        """A source-checked view sharing this exact live budget, never resetting it."""
+        if type(self) is not OpenAICompatibleProvider or self.request_budget is None:
+            raise TypeError("guarded writing requires the owned bounded HTTP transport")
+        if self.config != self._budget_config:
+            raise ValueError("bounded provider configuration changed")
+        if self._request_guard is not None:
+            raise ValueError("a source-bound provider cannot be rebound")
+        return OpenAICompatibleProvider(self._budget_config, request_budget=self.request_budget,
+                                        request_guard=request_guard)
+
+    @property
+    def request_budget(self) -> RequestBudget | None:
+        return self._request_budget
 
     def chat(
         self,
@@ -45,42 +159,87 @@ class OpenAICompatibleProvider:
         max_tokens: int | None = None,
         response_format: dict[str, Any] | None = None,
     ) -> str:
-        base = self.config.base_url.rstrip("/")
+        if self.request_budget is not None:
+            if self.config != self._budget_config:
+                raise ValueError("bounded provider configuration changed; create an explicitly configured session")
+            config = deepcopy(self._budget_config)
+        else:
+            config = self.config
+        base = config.base_url.rstrip("/")
         if not base:
             raise ValueError("Base URL 不能为空")
         endpoint = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
 
         payload: dict[str, Any] = {
-            "model": self.config.model,
+            "model": config.model,
             "messages": messages,
             "temperature": temperature,
         }
-        if max_tokens:
-            payload["max_tokens"] = max_tokens
-        if response_format:
+        payload["max_tokens"] = positive_int(
+            config.default_max_tokens if max_tokens is None else max_tokens,
+            name="max_tokens",
+        )
+        positive_int(config.max_output_bytes, name="max_output_bytes")
+        positive_int(config.max_response_bytes, name="max_response_bytes")
+        if response_format is not None:
             payload["response_format"] = response_format
 
-        headers = {"Content-Type": "application/json"}
-        if self.config.api_key:
-            headers["Authorization"] = f"Bearer {self.config.api_key}"
+        headers = {"Content-Type": "application/json", "Accept-Encoding": "identity"}
+        if config.api_key:
+            headers["Authorization"] = f"Bearer {config.api_key}"
 
+        budget = self.request_budget
         with httpx.Client(
-            timeout=self.config.timeout,
+            timeout=config.timeout,
             trust_env=not is_loopback_url(endpoint),
         ) as client:
-            response = client.post(endpoint, json=payload, headers=headers)
-            if response.status_code >= 400 and response_format:
-                fallback = dict(payload)
-                fallback.pop("response_format", None)
-                response = client.post(endpoint, json=fallback, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-
-        try:
-            return data["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise RuntimeError(f"模型返回格式无法识别: {data}") from exc
-
+            # Each request is independent and bounded. No auth/rate-limit/
+            # service/transport retry, or repeat after the single downgrade.
+            for attempt in range(2):
+                if self._request_guard is not None:
+                    self._request_guard()
+                ticket = None
+                succeeded = False
+                if budget is None:
+                    request_kwargs = {"json": payload}
+                else:
+                    # These are the exact bytes sent; role/content, schema,
+                    # model and all request fields are included, not just a
+                    # clipped prompt estimate. Each format fallback reserves
+                    # another entire attempt before any network dispatch.
+                    body = bounded_request_bytes(payload, max_bytes=budget.limits.max_request_bytes)
+                    ticket = budget.admit(body, max_tokens=payload["max_tokens"])
+                    request_kwargs = {"content": body}
+                try:
+                    with client.stream("POST", endpoint, **request_kwargs, headers=headers) as response:
+                        content = _read_bounded_response(response, config.max_response_bytes)
+                        if self._request_guard is not None:
+                            self._request_guard()
+                        if (attempt == 0 and response_format is not None
+                                and _unsupported_response_format(response.status_code, content)):
+                            payload = dict(payload)
+                            payload.pop("response_format", None)
+                            continue
+                        if not response.is_success:
+                            raise httpx.HTTPStatusError(
+                                f"model endpoint returned HTTP {response.status_code}",
+                                request=response.request,
+                                response=response,
+                            )
+                        try:
+                            data = strict_json_object(
+                                content.decode("utf-8"), max_bytes=config.max_response_bytes
+                            )
+                        except UnicodeError:
+                            raise OutputValidationError("model HTTP response is not valid UTF-8") from None
+                        text = completion_text(data, max_bytes=config.max_output_bytes,
+                                               max_tokens=payload["max_tokens"])
+                        succeeded = True
+                        return text
+                finally:
+                    if ticket is not None:
+                        budget.finish(ticket, succeeded=succeeded)
+        raise RuntimeError("model request did not produce a completion")
 
 
 @dataclass(frozen=True)
@@ -89,8 +248,12 @@ class LiteLLMConfig:
     api_key: str = ""
     api_base: str = ""
     timeout: float = 180.0
+    default_max_tokens: int = DEFAULT_MAX_TOKENS
+    max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES
 
     def __post_init__(self) -> None:
+        positive_int(self.default_max_tokens, name="default_max_tokens")
+        positive_int(self.max_output_bytes, name="max_output_bytes")
         if not self.models or any(not model.strip() for model in self.models):
             raise ValueError("LiteLLM 至少需要一个非空模型名")
 
@@ -99,7 +262,9 @@ class LiteLLMProvider:
     """Optional LiteLLM adapter using Novel's existing provider chat contract.
 
     The first model is primary; remaining models are passed as LiteLLM fallbacks.
-    LiteLLM stays optional and is imported lazily.
+    LiteLLM stays optional and is imported lazily. Its SDK buffers responses:
+    only returned content bytes are bounded here, not transport allocation.
+    Missing finish_reason is rejected just as in the HTTPX adapter.
     """
 
     def __init__(self, config: LiteLLMConfig, *, completion_func: Any | None = None):
@@ -128,6 +293,7 @@ class LiteLLMProvider:
             "messages": messages,
             "temperature": temperature,
             "timeout": self.config.timeout,
+            "num_retries": 0,
         }
         if len(self.config.models) > 1:
             kwargs["fallbacks"] = list(self.config.models[1:])
@@ -135,24 +301,22 @@ class LiteLLMProvider:
             kwargs["api_key"] = self.config.api_key
         if self.config.api_base:
             kwargs["api_base"] = self.config.api_base
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs["max_tokens"] = positive_int(
+            self.config.default_max_tokens if max_tokens is None else max_tokens,
+            name="max_tokens",
+        )
+        positive_int(self.config.max_output_bytes, name="max_output_bytes")
         if response_format is not None:
             kwargs["response_format"] = response_format
 
-        response = self._completion(**kwargs)
         try:
-            if isinstance(response, dict):
-                content = response["choices"][0]["message"]["content"]
-            else:
-                choices = getattr(response, "choices")
-                message = choices[0].message
-                content = message["content"] if isinstance(message, dict) else message.content
-        except (KeyError, IndexError, TypeError, AttributeError) as exc:
-            raise RuntimeError(f"LiteLLM 返回格式无法识别: {response!r}") from exc
-        if not isinstance(content, str):
-            raise RuntimeError("LiteLLM 返回 content 不是字符串")
-        return content
+            response = self._completion(**kwargs)
+        except Exception as exc:
+            # SDK exceptions can contain request bodies, credentials and raw
+            # completions; retain only the exception class as a safe diagnostic.
+            raise RuntimeError(f"LiteLLM completion failed ({type(exc).__name__})") from None
+        return completion_text(response, max_bytes=self.config.max_output_bytes,
+                               max_tokens=kwargs["max_tokens"])
 
 
 def sglang_provider_config(

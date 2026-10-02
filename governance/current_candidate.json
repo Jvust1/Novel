@@ -1,0 +1,43 @@
+{
+  "schema": "novel-public-current-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "main",
+  "status": "public_main_entry",
+  "entry_files": [
+    "README.md",
+    "AGENTS.md",
+    "docs/GPT_WRITING_ENTRY.md"
+  ],
+  "candidate_record": "governance/main_release_candidate.json",
+  "verified_base": {
+    "pr": 75,
+    "head": "50f9ba2da535e985cefe9685ec3470f2e38fc862",
+    "tree": "c93e5ebdf4ce98e852bbb497e5c4d86ac405ca86",
+    "ci_run": 36979681848,
+    "tests_by_job": {
+      "ubuntu_3_11": {
+        "passed": 2248,
+        "skipped": 9
+      },
+      "ubuntu_3_12": {
+        "passed": 2248,
+        "skipped": 9
+      },
+      "windows_3_11": {
+        "passed": 2240,
+        "skipped": 17
+      },
+      "windows_3_12": {
+        "passed": 2240,
+        "skipped": 17
+      }
+    }
+  },
+  "authority": "Public main entry. Resolve the actual GitHub ref and exact-tree CI; this file is not a merge receipt.",
+  "historical_records": [
+    "governance/project_state.json",
+    "governance/artifact_manifest.json"
+  ],
+  "historical_scope": "retained archival inventories, not current branch authority or automatic access to private artifacts",
+  "private_story_state": "author-designated private storage; not represented in this engineering pointer"
+}

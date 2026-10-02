@@ -8,9 +8,9 @@ from statistics import mean
 from typing import Any, Sequence
 
 from .reference_similarity import fuzzy_similarity
+from .dialogue_attribution import ATTRIBUTION_VERSION, attributed_dialogue
 
 
-_SPEECH_VERBS = r"(?:说|问|答|道|喊|叫|嘀咕|低声说|轻声说|冷笑道|笑道|反问)"
 _PARTICLES = tuple("吧呢啊呀嘛呗哦嗯吗啦")
 _CURVE_HIGH = ("高潮", "爆发", "峰", "climax", "peak", "surge", "high")
 _CURVE_RISE = ("上升", "升温", "推进", "rise", "rising")
@@ -34,36 +34,23 @@ def _compact(text: str) -> str:
 
 
 def _dialogue_for_character(text: str, name: str) -> list[str]:
-    if not name.strip():
-        return []
-    n = re.escape(name.strip())
-    patterns = [
-        rf"{n}[^。！？\n]{{0,8}}{_SPEECH_VERBS}[：:]?[“\"]([^”\"]+)[”\"]",
-        rf'[“"]([^”"]+)[”"][，,]?[^。！？\\n]{{0,8}}{n}[^。！？\\n]{{0,6}}{_SPEECH_VERBS}',
-    ]
-    rows: list[str] = []
-    for pattern in patterns:
-        rows.extend(m.strip() for m in re.findall(pattern, text or "") if m.strip())
-    seen: set[str] = set()
-    result: list[str] = []
-    for row in rows:
-        if row not in seen:
-            seen.add(row)
-            result.append(row)
-    return result
+    return attributed_dialogue(text, [name]).get(name, [])
 
 
 def character_voice_dna(text: str, character_names: Sequence[str]) -> dict[str, Any]:
     """Extract durable per-character dialogue metrics without storing raw dialogue."""
     result: dict[str, Any] = {}
+    dialogue = attributed_dialogue(text, character_names)
     for name in character_names:
-        lines = _dialogue_for_character(text, str(name))
+        name = str(name).strip()
+        lines = dialogue.get(name, [])
         if not lines:
             continue
         lengths = [len(_compact(line)) for line in lines]
         total = max(1, len(lines))
         ending = Counter(line[-1] for line in lines if line and line[-1] in _PARTICLES)
         result[str(name)] = {
+            "attribution_version": ATTRIBUTION_VERSION,
             "line_count": len(lines),
             "avg_line_chars": round(mean(lengths), 2),
             "short_line_ratio": round(sum(x <= 8 for x in lengths) / total, 4),
@@ -83,7 +70,9 @@ def aggregate_voice_baseline(history: Sequence[dict[str, Any]]) -> dict[str, Any
     for row in history:
         voices = row.get("voice_dna") or row.get("characters") or {}
         for name, metrics in voices.items():
-            if isinstance(metrics, dict) and int(metrics.get("line_count", 0) or 0) > 0:
+            if (isinstance(metrics, dict)
+                    and metrics.get("attribution_version") == ATTRIBUTION_VERSION
+                    and int(metrics.get("line_count", 0) or 0) > 0):
                 buckets[str(name)].append(metrics)
     result: dict[str, Any] = {}
     numeric = (
@@ -94,7 +83,8 @@ def aggregate_voice_baseline(history: Sequence[dict[str, Any]]) -> dict[str, Any
         total_lines = sum(int(x.get("line_count", 0) or 0) for x in rows)
         if not total_lines:
             continue
-        result[name] = {"line_count": total_lines, "chapter_count": len(rows)}
+        result[name] = {"line_count": total_lines, "chapter_count": len(rows),
+                        "attribution_version": ATTRIBUTION_VERSION}
         for key in numeric:
             result[name][key] = round(
                 sum(float(x.get(key, 0) or 0) * int(x.get("line_count", 0) or 0) for x in rows) / total_lines,

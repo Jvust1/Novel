@@ -21,6 +21,14 @@
     "Raw manuscripts and reference novels belong in Google Drive, not GitHub.",
     "For copyrighted reference texts, prefer derived style fingerprints and non-reversible signatures in GitHub.",
     "Add sha256, Drive file ID/path, version, source, purpose and status when a persistent artifact is archived.",
-    "Latest Drive snapshot verified in 04_Snapshots on 2026-09-28; existing 2026-09-25 Windows delivery ZIP was not duplicated."
-  ]
+    "Historical listed Drive snapshot verified in 04_Snapshots on 2026-09-28; existing 2026-09-25 Windows delivery ZIP was not duplicated."
+  ],
+  "scope": "Historical archive inventory; not an assertion of current branch HEAD or latest private delivery",
+  "current_candidate": {
+    "branch": "fix/recall-integrity-20261001",
+    "base_verified_pr": 48,
+    "base_verified_head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
+    "source_of_truth": "Resolve the current branch/PR head through GitHub; exact packaged source and CI receipts are delivered separately",
+    "guide": "docs/HANDOFF.md"
+  }
 }

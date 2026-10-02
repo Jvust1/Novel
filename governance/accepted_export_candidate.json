@@ -1,0 +1,49 @@
+{
+  "schema": "novel-accepted-export-candidate-v1",
+  "branch": "feat/accepted-review-export-20261001",
+  "base_pr": 56,
+  "base_head": "3de006f36faacfbe2c06deaf94f620ee0b9eb5fb",
+  "base_tree": "66b71083cde2e125aa61c75984cdc8eedffa315d",
+  "entry": [
+    "restore_source",
+    "restore_journal_source",
+    "build_accepted_review_bundle",
+    "save_accepted_review_bundle",
+    "scripts/export_accepted_review.py"
+  ],
+  "docs": "docs/ACCEPTED_REVIEW_EXPORT.md",
+  "reuse_trace": "docs/upstream/accepted-export-2026-10-01.md",
+  "validation": {
+    "python_3_11": {
+      "passed": 1766,
+      "skipped": 1,
+      "seconds": 180.75
+    },
+    "python_3_12": {
+      "passed": 1766,
+      "skipped": 1,
+      "seconds": 178.31
+    },
+    "new_cases": 96,
+    "owner_cases": 33,
+    "independent_cases": 63,
+    "independent_combined_matrix": "96 passed on each Python 3.11 and 3.12",
+    "compileall": "passed both interpreters",
+    "ruff": "0.16.9 F821 app/novel_ai/scripts/new tests and full new module/CLI passed",
+    "document_links": "90 local targets checked",
+    "source_hashes": "5 retained eventsourcing license/source/runtime hashes match fixed provenance",
+    "remote_ci": "see exact published PR and packaged verification receipt",
+    "skip": "optional qdrant-client absent",
+    "data": "original synthetic state/confirmation fixtures, no paid models",
+    "legacy_compatibility": "4 deterministic legacy review ZIP golden hashes unchanged"
+  },
+  "authority": "actual current v1 archive or owning reviewed journal; exact embedded accepted text, native history identity and explicit selection",
+  "non_goals": [
+    "no new author acceptance or canonical write",
+    "no external-source freshness or human authentication",
+    "no automatic upload, publishing decision or platform submission",
+    "3/20 review stages, not arbitrary whole-book layout",
+    "no hostile-race, directory-fsync or Drive-transaction claim"
+  ],
+  "other_candidates": "external #55/#57-#60 use another baseline; not merged or asserted compatible"
+}

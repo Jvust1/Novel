@@ -1,0 +1,63 @@
+{
+  "schema_version": "upstream-adaptation-v1",
+  "repository": "PenglongHuang/chinese-novelist-skill",
+  "url": "https://github.com/PenglongHuang/chinese-novelist-skill",
+  "commit": "cb6c3e7d0563c6a685e6539ea642642ab98855d7",
+  "commit_date": "2026-09-06T05:26:15Z",
+  "observed_at": "2026-10-01",
+  "stars_observed": 3258,
+  "license": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2026 PenglongHuang",
+    "source_path": "LICENSE",
+    "git_blob_sha": "2f6b7e59b8c5af624617520313285dcfe0b47c28",
+    "bytes": 1070,
+    "preserved_at": "third_party/chinese-novelist-skill/LICENSE",
+    "sha256": "27315737dd6b5dd75d99eb148fa32fc3cafdeb1e51ea0b8b6242e88acf9a2117",
+    "sha256_method": "Python hashlib.sha256 over exact staged LICENSE bytes, verified 2026-10-01"
+  },
+  "adapted_sections": [
+    {
+      "source_path": "references/guides/outline-template.md",
+      "section": "设定词典",
+      "lines": [
+        22,
+        30
+      ],
+      "git_blob_sha": "73644ec9d2fc1375ee2f2795332e773af4f3d05e",
+      "adaptation": "Five source-derived semantic columns; example omitted"
+    },
+    {
+      "source_path": "references/guides/chapter-guide.md",
+      "section": "新名词首现管理",
+      "lines": [
+        519,
+        529
+      ],
+      "git_blob_sha": "cb1d4d1c369bc9f90a820eaee9e546516a817b25",
+      "adaptation": "First-appearance cues and reader reveal boundaries; scheduled reveal becomes advisory"
+    }
+  ],
+  "adapted_into": [
+    "docs/READER_REVEAL_LEDGER.md",
+    "writing_templates/reader_reveal_ledger.template.json"
+  ],
+  "novel_owned_extensions": [
+    "stable term ID",
+    "candidate/confirmed separation",
+    "source/version references",
+    "existing chapter and memory acceptance references",
+    "revision invalidation",
+    "idempotency",
+    "private persistence/readback/export boundaries"
+  ],
+  "not_adopted": [
+    "automatic full-book completion without author confirmation",
+    "silent user-preference accumulation",
+    "mechanical banned-word replacement",
+    "fixed chapter length requirements",
+    "upstream story examples",
+    "application runtime"
+  ],
+  "reuse_status": "Selected sections adapted; workflow hooks and runtime tests handled separately"
+}

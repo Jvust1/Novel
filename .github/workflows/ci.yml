@@ -5,15 +5,40 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.12']
     steps:
+      - name: Preserve exact pinned source and frozen artifact bytes
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -r requirements-dev.txt
-      - run: python -m compileall app.py novel_ai
+      - name: Verify installed dependency consistency
+        run: python -m pip check
+      - name: Reject high-risk static errors
+        run: ruff check app.py novel_ai scripts tests --select E9,F63,F7,F82
+      - name: Report default Ruff maintenance baseline
+        run: |
+          ruff check app.py novel_ai scripts tests --output-format json --exit-zero > ruff-default.json
+          python -c "import collections,json; rows=json.load(open('ruff-default.json',encoding='utf-8')); counts=collections.Counter(row['code'] for row in rows); print('Default Ruff diagnostics:',len(rows)); print('Top rules:',dict(counts.most_common(12)))"
+      - run: python -m compileall app.py novel_ai scripts
+      - name: Report optional integration availability
+        run: python scripts/check_integrations.py
+      - name: Check current public entry
+        run: python scripts/check_current_entry.py
       - run: pytest -q

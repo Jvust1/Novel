@@ -79,7 +79,7 @@ def test_litellm_provider_passes_primary_and_fallback_models():
 
     def completion(**kwargs):
         seen.update(kwargs)
-        return {"choices": [{"message": {"content": "完成"}}]}
+        return {"choices": [{"message": {"content": "完成"}, "finish_reason": "stop"}]}
 
     provider = LiteLLMProvider(
         LiteLLMConfig(

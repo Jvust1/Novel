@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from pydantic import BaseModel, Field
 
 from .models import StyleFingerprint
-from .reading import extract_reference_text_with_backend
+from .reading import extract_reference
 from .style_engine import analyze_style, blend_styles, build_reference_signature
-
 
 _CHAPTER_RE = re.compile(r"(?m)^\s*第[0-9一二三四五六七八九十百千万零〇两]+[章节卷回]\s*[^\n]*")
 
@@ -26,6 +25,7 @@ class ReferenceSourceProfile(BaseModel):
     signature_hashes: list[str] = Field(default_factory=list)
     token_stats: dict[str, float | int] = Field(default_factory=dict)
     extraction_backend: str = ""
+    decoding: dict | None = None
 
 
 class ReferencePack(BaseModel):
@@ -53,9 +53,11 @@ def _jieba_stats(text: str) -> dict[str, float | int]:
     }
 
 
-def build_reference_source(filename: str, data: bytes, *, weight: float = 1.0) -> ReferenceSourceProfile:
+def build_reference_source(filename: str, data: bytes, *, weight: float = 1.0,
+                           encoding: str | None = None) -> ReferenceSourceProfile:
     """Turn one uploaded novel/reference into non-reversible derived features."""
-    text, extraction_backend = extract_reference_text_with_backend(filename, data)
+    extracted = extract_reference(filename, data, encoding=encoding)
+    text, extraction_backend = extracted.text, extracted.backend
     compact_chars = len(re.sub(r"\s+", "", text))
     paragraphs = [p for p in re.split(r"\n\s*\n|\n", text) if p.strip()]
     source_id = hashlib.sha256(data).hexdigest()[:24]
@@ -72,15 +74,22 @@ def build_reference_source(filename: str, data: bytes, *, weight: float = 1.0) -
         signature_hashes=sorted(build_reference_signature(text)),
         token_stats=_jieba_stats(text),
         extraction_backend=extraction_backend,
+        decoding=extracted.decoding,
     )
 
 
 def build_reference_pack(
-    sources: Iterable[tuple[str, bytes, float]],
+    sources: Iterable[tuple[str, bytes, float] | tuple[str, bytes, float, str | None]],
     *,
     name: str = "reference-pack",
 ) -> ReferencePack:
-    profiles = [build_reference_source(filename, data, weight=weight) for filename, data, weight in sources]
+    profiles = []
+    for source in sources:
+        if len(source) not in {3, 4}:
+            raise ValueError("参考条目需要文件名、原字节、权重及可选编码")
+        filename, data, weight = source[:3]
+        encoding = source[3] if len(source) == 4 else None
+        profiles.append(build_reference_source(filename, data, weight=weight, encoding=encoding))
     if not profiles:
         raise ValueError("Reference Pack 至少需要一个参考文件")
 

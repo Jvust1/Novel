@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from copy import deepcopy
 
 from .models import Character, MemoryExtraction
 
@@ -74,13 +75,11 @@ def apply_extraction(
     removed from `does_not_know`, and cleared misconceptions leave
     `false_beliefs`.
     """
-    state = {
-        "facts": list(story_state.get("facts", [])),
-        "timeline": list(story_state.get("timeline", [])),
-        "foreshadowing": [dict(item) for item in story_state.get("foreshadowing", [])],
-        "open_threads": list(story_state.get("open_threads", [])),
-        "unapplied_updates": list(story_state.get("unapplied_updates", [])),
-    }
+    # A candidate must not mutate Canon merely by being calculated. Preserve
+    # author extension fields and detach every nested record, not just its list.
+    state = deepcopy(story_state)
+    for key in ("facts", "timeline", "foreshadowing", "open_threads", "unapplied_updates"):
+        state.setdefault(key, [])
     known_misses = {
         (str(row.get("chapter_id")), str(row.get("name")), str(row.get("reason")))
         for row in state["unapplied_updates"]
@@ -146,7 +145,7 @@ def apply_extraction(
             )
         updated[update.name] = Character.model_validate(data)
 
-    new_characters = [updated.get(c.name, c) for c in characters]
+    new_characters = [deepcopy(updated.get(c.name, c)) for c in characters]
     for name, char in updated.items():
         if name not in by_name:
             new_characters.append(char)

@@ -1,11 +1,20 @@
 {
   "project": "Novel",
   "repository": "Jvust1/Novel",
-  "stage": "haystack-recall-v0.12",
-  "version": "0.12.0-dev",
+  "stage": "final-text-evidence-and-bounded-output-candidate",
+  "version": "0.13.0-dev",
   "status": "active",
   "north_star": "Learn high-level Style DNA and Story DNA from multiple reference novels, combine them with target-platform Market DNA, and produce original long-form Chinese web fiction that is human-feeling, continuity-safe, publishable, and commercially optimized without copying references or relying on detector-gaming tricks.",
   "current_focus": [
+    "Rebuild next-chapter continuity only from actually read author-accepted versions; reject stale/cross-story history and prevent retained old candidates from leaking after replanning",
+    "Unify actual final-text diagnostics and review/hook paths; apply bounded complete model output without changing explicit author acceptance",
+    "Validate failure-atomic local semantic Recall and exact-source bounded history in the real ContextAssembler writing path",
+    "Protect manuscripts, chapter summaries and benchmark evidence through confined atomic writes and bounded recovery; then close verified provider/vector/final-report gaps",
+    "Validate explicit author setting/style amendment migration, affected-source reviews and private save/readback before continuing GPT writing",
+    "Use GPT + GitHub repository instructions as the primary writing entry; adapt style to genre/reader/scene and preserve private version-bound book state without requiring a local UI",
+    "Validate local author workflow: explicit Markdown hierarchy → confirmed chapter writing → revision-bound human review → local release candidate; real story-quality evidence still pending",
+    "Validate conservative speaker attribution with overlapping registered character names and fresh version-2 Voice DNA baselines",
+    "Evaluate opt-in LangChain MMR historical-summary recall with continuity evidence carried through drafting, review, local repair and re-review; engineering pilot only",
     "A/B Haystack BM25 recall against LlamaIndex, local semantic, Qdrant and GraphRAG on frozen long-form cases",
     "A/B local Sentence Transformers recall against lexical/FAISS/Qdrant on frozen long-form memory cases",
     "A/B LlamaIndex VectorStoreIndex recall against local semantic, Qdrant and GraphRAG on frozen long-form cases",
@@ -141,28 +150,286 @@
     "RapidFuzz entity alias/name drift adapter layered after canonical/spaCy extraction and fused into longform health",
     "LlamaIndex VectorStoreIndex RecallBackend behind Novel's shared recall contract",
     "local-first Sentence Transformers RecallBackend factory preserving RecallDocument provenance",
-    "Haystack BM25/document-store RecallBackend behind Novel's shared recall contract"
+    "Haystack BM25/document-store RecallBackend behind Novel's shared recall contract",
+    "Licensed dependency-free LangChain MMR source port for opt-in goal-relevant/diverse historical-summary selection, with bounded prompts and five-stage continuity-context propagation",
+    "Licensed spaCy longest-span algorithm used directly by character Voice DNA to prevent overlapping canonical-name misattribution; versioned baselines exclude incompatible legacy metrics without deleting history",
+    "Combined same-project continuity pilot with confirmed-plan UI reference/voice re-review parity and character-card persistence across app restarts",
+    "Local reconciliation of existing PR13 stable summary order and PR16 project-scoped unsaved-state cache, adapted for MMR and failed-load widget recovery",
+    "Local PR16 Canon-field reconciliation preserving world_rules and locked_facts independently through workbench storage, project switching and generation inputs",
+    "Licensed LangChain Markdown header/fence source port used by the Streamlit hierarchical author-outline import",
+    "Explicit local saved-chapter 3/20 market-review and release-candidate workflow with versioned corpus/review-context identity and restart persistence",
+    "Chapter-specific overwrite protection, saved plan/text identity and revision-bound memory writeback controls",
+    "GPT-readable README and ordered writing entry with explicit read/write/execution boundaries and private empty state template",
+    "Pinned MIT humanizer prompt adaptations actually hooked into writing-before/editorial-review/local-repair instructions; nine composable genre style profiles",
+    "Original public plugin-written chapter with verified remote readback and three fact-locked, separately saved style comparison candidates",
+    "Whole unmodified MIT pytransitions core used by optional GPT story-state Machine with Pydantic validation, exact-source confirmations, idempotent operations and private save/readback",
+    "Licensed chinese-novelist-skill term/reveal ledger adapted and connected to GPT writing/review; drafting projection separates confirmed reader-known from author full truth",
+    "Additive private author-change journal using pinned BSD-3-Clause eventsourcing immutable replay/version guards, original v1 evidence retention, conservative chapter/derived-context review and explicit author resume",
+    "Pinned boltons atomic-write source port in ProjectStore and eval writers, PR16 path confinement reconciliation, cooperating-process project locks, fixed extraction-summary intent recovery, exclusive benchmark evidence and scoring no-clobber",
+    "Existing Pydantic TypeAdapter/FiniteFloat runtime reuse for validated finite vectors, coherent local Recall snapshots and explicit exact-source semantic history in ContextAssembler"
   ],
   "frozen": false,
-  "blocking_issues": [],
+  "blocking_issues": [
+    "Before general release: output budgets and response-format fallback still need hardening",
+    "Before general release: all repaired-text result reports and external review hooks need parity",
+    "Independent human literary-quality evaluation and production security/dependency/lint acceptance remain unestablished"
+  ],
   "pending_sync": [],
   "next_steps": [
-    "run full pytest/CI for the 1000-star final-fusion branch before release-candidate tagging",
-    "run full pytest/CI on the fusion branch and fix any integration regressions",
-    "add frozen longform benchmark cases with known voice, timeline, foreshadow and tension failures",
-    "calibrate Voice DNA thresholds per character sample size and intentional character-state shifts",
-    "upgrade timeline checks from time-order heuristics to entity/event constraints where evidence is available",
-    "add foreshadow planted/touched/resolved transition provenance and per-arc statistics",
-    "A/B local semantic recall vs Qdrant before any backend becomes default",
-    "wire hierarchical outline + market review + release pack into the Streamlit author workflow",
-    "keep originality and human-feel quality as publishability gates rather than detector-gaming targets"
+    "Add exact input-token accounting and cumulative multi-attempt budgets without silently dropping required Canon, knowledge-boundary or accepted-history context",
+    "Separate model-extracted memory candidates from formal author acceptance/application with stale/retry/failure recovery tests",
+    "Close remaining static/dependency/governance gates, prioritizing real risks before formatting-only diagnostics",
+    "Run real long-form author sessions and cross-chat recovery before making literary or market-quality claims",
+    "Prepare one unified delivery candidate after the remaining gates are verified"
   ],
-  "updated_at": "2026-09-30",
+  "updated_at": "2026-10-01",
   "last_sync": {
     "github_commit": "a84917cc6d637ccade3da4d721828c6613bfc92b",
     "github_ci": "success",
     "drive_snapshot_id": "1TB1zuPcKivw0D-2m9GS7XV7K0Se39hVQ2opIXPu7NEY",
     "drive_snapshot_path": "Novel/04_Snapshots/Novel_最新成果快照_2026-09-28",
-    "pending_sync_count": 0
+    "pending_sync_count": 0,
+    "scope": "historical_2026_09_28_archive_not_current_candidate"
+  },
+  "author_workflow_candidate": {
+    "status": "published_draft_PR_45",
+    "remote_publication": "https://github.com/Jvust1/Novel/pull/45",
+    "source_baseline_tree": "2c910626a27a3cc14393af91e6dd6aae6ee3a2b9",
+    "corpus_fingerprint_schema": "market-corpus-v2",
+    "browser_visual_acceptance": "blocked_ERR_BLOCKED_BY_CLIENT",
+    "story_quality_evidence": "not_established",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 413,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 413,
+        "skipped": 1
+      },
+      "skip_reason": "optional qdrant-client not installed",
+      "compileall": "passed",
+      "diff_check": "passed",
+      "real_provider_calls": 0,
+      "human_story_review": "not_run",
+      "windows_ui": "not_run",
+      "remote_ci": {
+        "status": "success",
+        "url": "https://github.com/Jvust1/Novel/actions/runs/36826620415",
+        "passed": 413,
+        "skipped": 1
+      }
+    },
+    "remote_head": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+    "remote_source_tree": "9223c7b97c5126b217eea7cff3632d318d4ff438"
+  },
+  "active_workflow": "gpt_github_readable_writing",
+  "gpt_entry": {
+    "path": "README.md",
+    "workflow": "docs/GPT_WRITING_ENTRY.md",
+    "prompts": "docs/prompts/natural-fiction/README.md",
+    "genre_profiles": "docs/prompts/natural-fiction/GENRE_PROFILES.md",
+    "private_state_template": "writing_templates/story_state.template.json",
+    "sample_only": "writing_demos/plugin-first-chapter-20261001",
+    "provider_service_required": false,
+    "repository_file_access_executes_python": false,
+    "reference_novels_supplied": false,
+    "human_style_improvement_validation": "not_run",
+    "optional_state_checks": "docs/GPT_STATE_CHECKS.md",
+    "reader_reveal_ledger": "docs/READER_REVEAL_LEDGER.md",
+    "upstream_trace": [
+      "pytransitions/transitions core → gpt_story_state Machine → state CLI → repeat/stale/interruption/multichapter tests",
+      "op7418/Humanizer-zh + blader/humanizer selected prompts → GPT entry stages → original chapter local before/after checks",
+      "PenglongHuang/chinese-novelist-skill reveal columns → private ledger + draft context projection → source/acceptance/redaction tests"
+    ],
+    "validation": {
+      "python_3_11_16": {
+        "passed": 503,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 503,
+        "skipped": 1
+      },
+      "skip_reason": "optional qdrant-client absent",
+      "focused_state_tests": 49,
+      "independent_review_tests": 23,
+      "entry_source_style_tests": 18,
+      "synthetic_long_progression_chapters": 32,
+      "first_chapter_r1_unchanged": true,
+      "north_star_unchanged": true,
+      "real_human_quality_evidence": "not_established"
+    }
+  },
+  "author_amendment_candidate": {
+    "branch": "feat/author-reconcile-20261001",
+    "base_pr": 46,
+    "base_head": "76e5c9433039bb8a607854e17ebf8115f75b6f58",
+    "format": "gpt-author-journal-v1",
+    "docs": "docs/GPT_AUTHOR_AMENDMENTS.md",
+    "source_reuse": "pyeventsourcing/eventsourcing@575d42c10a821828639b90178ed56703abe9c9f1 BSD-3-Clause → frozen events/order guards → actual journal projector → author change/review/save/restore/next chapter",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 534,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 534,
+        "skipped": 1
+      },
+      "independent_adversarial_tests": 11,
+      "skip_reason": "optional qdrant-client absent",
+      "real_author_acceptance": "not_claimed",
+      "old_manuscript_rewrite": "not_implemented",
+      "real_human_quality_evidence": "not_established",
+      "journal_tests": 31
+    }
+  },
+  "storage_integrity_candidate": {
+    "branch": "fix/storage-evidence-20261001",
+    "base_pr": 47,
+    "base_head": "601c2f71b003425481552aec5554aee5945b19a8",
+    "docs": "docs/STORAGE_INTEGRITY.md",
+    "source_reuse": "mahmoud/boltons@4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d → AtomicSaver → ProjectStore/eval → crash/recovery/concurrency/no-clobber tests",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 632,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 632,
+        "skipped": 1
+      },
+      "atomic_port_tests": 21,
+      "independent_recovery_tests": 35,
+      "skip_reason": "optional qdrant-client absent",
+      "compileall": "passed",
+      "diff_check": "Novel edits pass; byte-exact upstream LICENSE/source snapshots retain original CRLF/trailing whitespace",
+      "native_windows": "not_run",
+      "human_quality": "not_established"
+    },
+    "limitations": [
+      "trusted project directories and cooperating writers",
+      "no Drive/general multi-file transaction",
+      "forked lock lineage refused; use spawned interpreter",
+      "native Windows and hardware power-loss tests not run"
+    ]
+  },
+  "latest_verified_candidate": {
+    "pr": 51,
+    "url": "https://github.com/Jvust1/Novel/pull/51",
+    "head": "7f2b93367661b0038bab2885851fed607f047882",
+    "ci": "https://github.com/Jvust1/Novel/actions/runs/36856263295",
+    "status": "success",
+    "tests": "1206 passed, 1 skipped on each Linux Python 3.11/3.12 job",
+    "scope": "accepted-history executable candidate; verification-metadata-only follow-up may move branch head without changing executable code"
+  },
+  "recall_integrity_candidate": {
+    "branch": "fix/recall-integrity-20261001",
+    "base_pr": 48,
+    "base_head": "78cb607a8b4ae9cade68a62b7065a8f08e85ace0",
+    "docs": "docs/RECALL_INTEGRITY.md",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 879,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 879,
+        "skipped": 1
+      },
+      "new_backend_integrity_tests": 107,
+      "independent_context_tests": 85,
+      "workflow_and_source_tests": 14,
+      "skip_reason": "optional qdrant-client absent",
+      "compileall": "passed",
+      "diff_check": "passed",
+      "real_embedding_and_native_faiss": "not_run; packages absent; synthetic stubs only",
+      "human_quality": "not_established",
+      "independent_scoped_guard_tests": 41
+    },
+    "native_faiss_and_real_embedding": "not_run; packages absent; synthetic stubs only",
+    "authoritative_story_storage": false,
+    "unbound_longform_cache": "omitted for every explicit history scope; legacy unscoped use remains disclosed; whole overlong legacy guards omitted"
+  },
+  "final_output_candidate": {
+    "branch": "fix/final-output-gates-20261001",
+    "base_pr": 49,
+    "base_head": "fe2fa274ad27a4ca9a67ea1a93ce5387ced60f39",
+    "docs": "docs/FINAL_OUTPUT_GATES.md",
+    "reuse": "existing HTTPX 0.28.1 runtime APIs, Python JSON and Pydantic; no new framework/source port",
+    "validation": {
+      "python_3_11_16": {
+        "passed": 1201,
+        "skipped": 1
+      },
+      "python_3_12_14": {
+        "passed": 1201,
+        "skipped": 1
+      },
+      "independent_final_text_tests": 100,
+      "skip_reason": "optional qdrant-client absent",
+      "compileall": "passed",
+      "diff_check": "passed",
+      "live_models_optional_sdks": "not_run; MockTransport and stubs only",
+      "literary_quality": "not_established",
+      "ruff": {
+        "version": "0.16.9",
+        "undefined_names": "passed; app.py novel_ai scripts; F821",
+        "isolated_default_scope": [
+          "app.py",
+          "novel_ai",
+          "scripts",
+          "tests"
+        ],
+        "isolated_default_diagnostics": 320,
+        "status": "full static gate not passed; copied upstream sources excluded"
+      }
+    },
+    "remaining_boundaries": [
+      "input context/tokenizer/cumulative cost not unified",
+      "plan DNA is not final prose event extraction",
+      "historical voice/state provenance rebuild pending",
+      "local memory extraction/application separation pending; GPT author confirmations remain required",
+      "full lint/dependency security gates and real human quality evaluation pending"
+    ]
+  },
+  "accepted_history_rebuild_candidate": {
+    "branch": "fix/accepted-history-rebuild-20261001",
+    "base_pr": 50,
+    "base_head": "35208537aa1fb830a2325ec1dd8870bdf0564190",
+    "docs": "docs/ACCEPTED_HISTORY_REBUILD.md",
+    "scope": "actual-readback accepted_chapters -> accepted source fingerprints + rebuilt Voice/plan structure -> next-chapter preflight; current unaccepted candidates excluded from historical sources",
+    "validation": {
+      "local_python": "3.13.5",
+      "focused_state_and_candidate_review": "77 passed",
+      "new_history_checks": "5 passed",
+      "compileall_changed_python": "passed",
+      "full_local_suite": "not claimed; current container lacks streamlit and differs from CI Python 3.11/3.12",
+      "exact_head_ci": {
+        "status": "success",
+        "code_head": "7f2b93367661b0038bab2885851fed607f047882",
+        "run_id": 36856263295,
+        "url": "https://github.com/Jvust1/Novel/actions/runs/36856263295",
+        "python_3_11": {
+          "passed": 1206,
+          "skipped": 1,
+          "duration": "59.20s"
+        },
+        "python_3_12": {
+          "passed": 1206,
+          "skipped": 1,
+          "duration": "62.80s"
+        },
+        "compileall": "passed",
+        "pytest": "passed"
+      }
+    },
+    "boundaries": [
+      "UTF-8 byte budgeting remains approximate for model token limits",
+      "structured Story DNA is rebuilt from accepted plans, not final-prose event extraction",
+      "author acceptance is evidence supplied by the caller, not identity authentication",
+      "real manuscript continuity and literary quality still require actual author/reader validation"
+    ]
   }
 }

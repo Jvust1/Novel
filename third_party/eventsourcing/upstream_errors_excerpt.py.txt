@@ -1,0 +1,14 @@
+class OriginatorIDError(EventSourcingError):
+    """Raised when a domain event can't be applied to
+    an aggregate due to an ID mismatch indicating
+    the domain event is not in the aggregate's
+    sequence of events.
+    """
+
+
+class OriginatorVersionError(EventSourcingError):
+    """Raised when a domain event can't be applied to
+    an aggregate due to version mismatch indicating
+    the domain event is not the next in the aggregate's
+    sequence of events.
+    """

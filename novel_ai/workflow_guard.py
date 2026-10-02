@@ -28,6 +28,8 @@ def validate_plan_stage(plan: ChapterPlan) -> WorkflowCheck:
             issues.append(f"场景 {scene.scene_no} 缺少阻力")
         if not scene.choice.strip():
             issues.append(f"场景 {scene.scene_no} 缺少选择")
+        if not scene.cost.strip():
+            issues.append(f"场景 {scene.scene_no} 缺少代价")
         if not scene.state_change.strip():
             issues.append(f"场景 {scene.scene_no} 缺少状态变化")
     return WorkflowCheck("planning", not issues, issues)
