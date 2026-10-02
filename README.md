@@ -1,6 +1,6 @@
-当前候选：`fix/story-settings-source-20261002`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
+当前候选：`fix/settings-save-recovery-20261002`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
 
-旧会话不能覆盖新故事设定：[保存来源核对与保留编辑](docs/STORY_SETTINGS_SOURCE.md)。
+故事设定与总纲保存中断后可核对恢复：[两个来源比较、固定原操作重试与完整读回](docs/SETTINGS_SAVE_RECOVERY.md)。
 
 旧人物来源不能继续写作：[核对两版、保留编辑与明确重新载入](docs/CHARACTER_SOURCE_BINDINGS.md)。
 
@@ -45,7 +45,7 @@ PDF 参考读取依赖已升级：[修复已知解析资源风险与验证范围
 
 可直接告诉 GPT：
 
-> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/story-settings-source-20261002 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
+> 通过 GitHub 插件读取 Jvust1/Novel 的 fix/settings-save-recovery-20261002 分支，先读 README.md、AGENTS.md 和 docs/GPT_WRITING_ENTRY.md，再读取我指定的私有 Drive 故事档案。已有作品恢复到当前阶段；新书先确定类型、主角与核心冲突。先给场景计划，等我确认后写正文；未接受的候选不进入正式记忆。
 
 如果插件没有读到该分支或 Drive 文件，GPT 应说明缺少哪个来源，请作者提供可访问的位置；不能假装已加载。上述分支入口尚未合入 `main`，默认分支内容未必相同。
 

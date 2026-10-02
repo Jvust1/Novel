@@ -238,7 +238,7 @@ def _parse_intent(store, project, raw):
 
 
 def _no_other_intent(store, project):
-    for name in (".memory-commit-transaction.json", ".extraction-transaction.json"):
+    for name in (".memory-commit-transaction.json", ".extraction-transaction.json", ".settings-commit-transaction.json"):
         if _read(store._path(project, name, internal=True)) is not None:
             raise StyleCommitError("另一个项目保存尚未恢复，先核对其状态")
 

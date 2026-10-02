@@ -1,0 +1,26 @@
+{
+  "schema": "novel-fixed-settings-save-candidate-v1",
+  "branch": "fix/settings-save-recovery-20261002",
+  "base_pr": 70,
+  "base_head": "42d3fa9007100531ae8bd78ee7eadf77025cd176",
+  "base_tree": "bd0c635450fc255e87122183e9a3f3cd39212103",
+  "docs": "docs/SETTINGS_SAVE_RECOVERY.md",
+  "scope": "fixed local story Bible and flat outline compare-before-save, recoverable publication and existing request/plan source binding",
+  "reuse": [
+    "ProjectStore atomic writer and licensed boltons implementation",
+    "existing native project_lock",
+    "Style Lab fixed-image intent and immutable receipt pattern",
+    "memory recovery validation and explicit conflict boundaries"
+  ],
+  "validation": {
+    "receipt": "exact published PR head CI and actual extracted delivery verification; no inferred result from this static pointer",
+    "transport": "original synthetic fixtures, actual Streamlit AppTest, spawned processes and HTTPX MockTransport"
+  },
+  "boundaries": [
+    "cooperating local readers and writers only",
+    "arbitrary raw-file readers can observe intermediate individual files",
+    "no distributed or Drive transaction, hostile-directory sandbox, or universal power-loss guarantee",
+    "no automatic author acceptance, model calls during recovery, or fresh request invented from a historical receipt",
+    "original dependency, static, compilation, entry and full-test gates retained"
+  ]
+}

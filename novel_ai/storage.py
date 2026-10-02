@@ -14,7 +14,9 @@ from .storage_guard import project_lock, reject_links
 _INTENT = ".extraction-transaction.json"
 _MEMORY_COMMIT_INTENT = ".memory-commit-transaction.json"
 _STYLE_COMMIT_INTENT = ".style-commit-transaction.json"
-_RESERVED = {".store.lock", _INTENT, _MEMORY_COMMIT_INTENT, _STYLE_COMMIT_INTENT}
+_SETTINGS_COMMIT_INTENT = ".settings-commit-transaction.json"
+_COMMIT_INTENTS = (_INTENT, _MEMORY_COMMIT_INTENT, _STYLE_COMMIT_INTENT, _SETTINGS_COMMIT_INTENT)
+_RESERVED = {".store.lock", *_COMMIT_INTENTS}
 _MAX_INTENT_BYTES = 64 * 1024 * 1024
 
 
@@ -103,6 +105,12 @@ class ProjectStore:
     def _guard(self, project: str):
         lock = self._path(project, ".store.lock", internal=True)
         with project_lock(lock):
+            pending = [name for name in _COMMIT_INTENTS if self._path(project, name, internal=True).exists()]
+            if len(pending) > 1:
+                raise StorageIntegrityError("多个项目保存意图并存，请保留原件并分别核对；未恢复任何文件")
+            if _SETTINGS_COMMIT_INTENT in pending:
+                from .settings_commit import recover_settings_commit
+                recover_settings_commit(self, self.slugify(project))
             if self._path(project, _STYLE_COMMIT_INTENT, internal=True).exists():
                 from .style_commit import recover_style_commit
                 recover_style_commit(self, self.slugify(project))

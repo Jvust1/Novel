@@ -128,26 +128,18 @@ def require_saved_story_bible(store: ProjectStore, project: str, expected_sha256
     return source["bible"]
 
 
-def save_workbench_story_settings(store: ProjectStore, project: str, bible: dict,
-                                  outline: str, expected_sha256: str | None) -> str:
-    """CAS the existing Bible save; retain the original two-file failure boundary.
+def save_workbench_story_settings(store: ProjectStore, project: str, *, files: dict,
+                                  expected_before: dict, request_id: str) -> dict:
+    """Save the frozen pair using both actually loaded sources and one request ID.
 
-    The Bible and flat outline remain separate atomic writes. A later failure
-    may leave the Bible published; do not advance the UI baseline until readback.
-    This does not add a flat-outline version check or multi-file transaction.
+    The former Bible-only positional helper cannot establish outline authority.
+    Callers must now pass both byte baselines and retain this exact request on
+    failure; it is never safe to discover the expected outline at save time.
     """
-    expected_after = story_bible_digest(bible)
-    detached = json.loads(json.dumps(bible, ensure_ascii=False, allow_nan=False))
-    if not isinstance(outline, str):
-        raise TypeError("总纲必须是文本。")
-    with store._guard(project):
-        require_saved_story_bible(store, project, expected_sha256)
-        store.write_json(project, "memory/story_bible.json", detached)
-        store.write_json(project, "memory/outline.json", {"outline": outline})
-        actual = load_story_bible_source(store, project)["sha256"]
-        if actual != expected_after:
-            raise ValueError("故事设定保存读回不一致；可能已写入文件，请保留编辑并重新读取核对。")
-    return actual
+    from .settings_commit import commit_settings_bundle
+
+    return commit_settings_bundle(store, project, files=files,
+        expected_before=expected_before, request_id=request_id)
 
 
 def _outline_path(outline: HierarchicalOutline, node_id: str) -> tuple[HierarchicalOutline, list[OutlineNode]]:
