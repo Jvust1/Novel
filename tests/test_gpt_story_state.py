@@ -264,7 +264,11 @@ def test_save_readback_restore_and_next_chapter(tmp_path):
     assert state.model_dump() == original
     assert saved.state.progress.phase == "awaiting_readback"
     assert saved.sha256 == hashlib.sha256(path.read_bytes()).hexdigest()
-    assert os.stat(path).st_mode & 0o777 == 0o600
+    if os.name == 'nt':
+        from private_file_assertions import assert_windows_private_file
+        assert_windows_private_file(path)
+    else:
+        assert os.stat(path).st_mode & 0o777 == 0o600
     disk = validate_state(path.read_bytes())
     assert disk.readback_receipt["status"] == "pending"
     restored = load_state(path, expected_story_id="story-A", expected_revision=1, expected_sha256=saved.sha256)

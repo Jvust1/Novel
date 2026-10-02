@@ -9,7 +9,6 @@ import copy
 import hashlib
 import json
 import os
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
@@ -19,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .longform_consistency import aggregate_voice_baseline, character_voice_dna
 from .models import ChapterPlan
 from .story_dna import story_dna_from_plan
+from .private_files import private_mkstemp
 
 from novel_ai._vendor.transitions import Machine, MachineError
 
@@ -736,7 +736,7 @@ def save_state(path: str | Path, state: StoryState | dict, *, expected_disk_revi
     state.readback_receipt = {"status": "pending"}
     raw = _json(state.model_dump(mode="json")) + b"\n"
     # Temp file is on the same filesystem, private before any story bytes are written.
-    fd, temporary = tempfile.mkstemp(prefix="." + path.name + ".", suffix=".tmp", dir=path.parent)
+    fd, temporary = private_mkstemp(prefix="." + path.name + ".", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(raw)

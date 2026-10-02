@@ -1,0 +1,14 @@
+{
+  "schema": "novel-windows-private-permissions-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "candidate_branch": "fix/windows-private-files-20261002",
+  "base_branch": "fix/export-fixtures-postclose-20261002",
+  "base_head": "9290f4e6fea6c44d143ba35af4f240161fbaf896",
+  "scope": "protected owner-only ACL at creation for new Windows story JSON and default 0600 atomic parts; unchanged POSIX assertions",
+  "native_focused_observation": "Python 3.12: 11 passed; independent PowerShell ACL readback",
+  "full_cross_platform_ci": "pending exact candidate run, not inherited from PR74",
+  "public_current_candidate_pointer_changed": false,
+  "author_acceptance_changed": false,
+  "merged": false,
+  "limits": ["trusted parent directories", "no retroactive old-file/lock/Drive ACL edits", "no privileged-account or universal power-loss protection", "no whole-novel completion claim"]
+}

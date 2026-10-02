@@ -54,6 +54,8 @@ from __future__ import annotations
 import errno
 import os
 
+from ..private_files import create_private_file
+
 __all__ = ["AtomicSaver", "atomic_save", "sync_directory"]
 
 # Adapted from upstream _TEXT_OPENFLAGS/_BIN_OPENFLAGS. O_EXCL also refuses
@@ -187,7 +189,11 @@ class AtomicSaver:
                 self.dest_dir, ".novel-" + os.urandom(16).hex() + ".tmp"
             )
             try:
-                descriptor = os.open(self.part_path, _OPEN_FLAGS, self.file_perms)
+                descriptor = (
+                    create_private_file(self.part_path)
+                    if os.name == "nt" and self.file_perms == 0o600
+                    else os.open(self.part_path, _OPEN_FLAGS, self.file_perms)
+                )
             except FileExistsError:
                 continue
             self._owns_part = True

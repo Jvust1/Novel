@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 import threading
 
@@ -92,7 +93,11 @@ def test_complete_batch_receipt_and_exact_retry_do_not_rewrite_newer_state(tmp_p
     assert commit.recover_memory_commit(store, project) is None
     receipt_path = root / 'memory/memory_commits' / (args['proposal_id'] + '.json')
     original_receipt = receipt_path.read_bytes()
-    assert receipt_path.stat().st_mode & 0o777 == 0o600
+    if os.name == 'nt':
+        from private_file_assertions import assert_windows_private_file
+        assert_windows_private_file(receipt_path)
+    else:
+        assert receipt_path.stat().st_mode & 0o777 == 0o600
     receipt['confirmation']['memory_accepted'] = False
     assert receipt_path.read_bytes() == original_receipt
     (root / 'memory/characters.json').write_text('[{"name":"Newer author"}]')
