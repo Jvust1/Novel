@@ -8,6 +8,9 @@ import streamlit as st
 
 from novel_ai.author_ui import outline_digest, render_outline_editor, render_release_workbench
 from novel_ai.author_workflow import save_chapter_plan, validate_chapter_target, chapter_revision_matches, write_author_chapter, require_saved_outline
+from novel_ai.author_workflow import (
+    character_context_binding, load_character_source, require_saved_characters, save_workbench_characters,
+)
 from novel_ai.workflow_guard import validate_plan_stage
 from novel_ai.context import ContextAssembler
 from novel_ai.project_session import switch_project, preserve_project_fields
@@ -196,15 +199,50 @@ with char_tab:
             default=[c["name"] for c in st.session_state.characters if c.get("locked")],
         )
         if st.button("应用锁定"):
-            for c in st.session_state.characters:
-                c["locked"] = c["name"] in locked_names
-            store.write_json(project_name, "memory/characters.json", st.session_state.characters)
-            st.success("锁定状态已应用并保存。")
+            try:
+                cards = deepcopy(st.session_state.characters)
+                for c in cards:
+                    c["locked"] = c["name"] in locked_names
+                saved_sha = save_workbench_characters(store, project_name, cards,
+                    st.session_state.get("characters_source_sha256", "unavailable"))
+                st.session_state.characters = cards
+                st.session_state.characters_source_sha256 = saved_sha
+                st.success("锁定状态已应用并保存。")
+            except (ValueError, TypeError, OSError) as exc:
+                st.error(str(exc))
         if st.button("保存人物到本地"):
-            store.write_json(project_name, "memory/characters.json", st.session_state.characters)
-            st.success("人物已保存。")
+            try:
+                saved_sha = save_workbench_characters(store, project_name, st.session_state.characters,
+                    st.session_state.get("characters_source_sha256", "unavailable"))
+                st.session_state.characters_source_sha256 = saved_sha
+                st.success("人物已保存。")
+            except (ValueError, TypeError, OSError) as exc:
+                st.error(str(exc))
     else:
         st.info("还没有人物。")
+
+    try:
+        current_cards = load_character_source(store, project_name)
+        if current_cards["sha256"] != st.session_state.get("characters_source_sha256", "unavailable"):
+            st.warning("已保存人物已更新，旧会话不能继续写作或覆盖人物。当前会话编辑仍保留；请先对照两版，必要时下载草案。")
+            with st.expander("核对当前会话与已保存人物", expanded=True):
+                st.json({"当前会话人物（含未保存编辑）": st.session_state.characters,
+                         "当前已保存人物": current_cards["cards"]})
+                st.download_button("下载当前会话人物草案", json.dumps(st.session_state.characters,
+                    ensure_ascii=False, indent=2).encode("utf-8"), file_name="character-session-draft.json",
+                    mime="application/json", key="download_character_session")
+                reload_binding = character_context_binding(st.session_state.characters, current_cards["sha256"])
+                replace_cards = st.checkbox("我已核对两版，同意用已保存人物替换当前会话人物",
+                    key="character_reload_" + project_name + "_" + reload_binding)
+                if st.button("重新载入当前已保存人物", key="btn_reload_characters", disabled=not replace_cards) and replace_cards:
+                    with store._guard(project_name):
+                        cards = require_saved_characters(store, project_name, current_cards["sha256"])
+                        st.session_state.characters = cards
+                        st.session_state.characters_source_sha256 = current_cards["sha256"]
+                    st.success("已明确载入当前人物；待写计划和其他编辑仍保留，请重新生成或载入计划。此操作不接受正文或记忆。")
+                    st.rerun()
+    except (ValueError, TypeError, OSError) as exc:
+        st.error(str(exc))
 
 with style_tab:
     st.subheader("Style Lab · 多来源文风 DNA")
@@ -365,7 +403,7 @@ with write_tab:
     def _validate_chapter_target():
         validate_chapter_target(store, project_name, chapter_id, allow_overwrite=allow_overwrite)
 
-    def _plan_binding():
+    def _plan_binding(*, check_characters=True):
         meta = deepcopy(st.session_state.pending_plan_meta)
         if meta.get("project", project_name) != project_name or meta.get("chapter_id", chapter_id) != chapter_id:
             raise ValueError("待确认计划属于另一章，请重新载入或生成本章计划。")
@@ -373,21 +411,32 @@ with write_tab:
             raise ValueError("层级大纲已变化，请重新载入章节并确认计划。")
         if meta.get("outline_sha256") or meta.get("outline_node_id"):
             require_saved_outline(store, project_name, meta.get("outline_sha256"))
+        if (check_characters and meta.get("character_context_sha256")
+                and meta["character_context_sha256"] != character_context_binding(st.session_state.characters,
+                    st.session_state.get("characters_source_sha256", "unavailable"))):
+            raise ValueError("人物背景已变化，旧计划不能继续写正文；请重新生成场景计划，或载入章节后重新核对。")
         return meta
 
-    def _engine_and_inputs():
+    def _engine_and_inputs(*, replan_characters=False):
         style_snapshot = require_current_style(st.session_state, store, project_name)
-        bound_meta = _plan_binding()
+        bound_meta = _plan_binding(check_characters=not replan_characters)
+        character_source = st.session_state.get("characters_source_sha256", "unavailable")
+        require_saved_characters(store, project_name, character_source)
+        character_binding = character_context_binding(st.session_state.characters, character_source)
 
         def current_sources():
             require_current_style({"style_snapshot": style_snapshot}, store, project_name)
+            require_saved_characters(store, project_name, character_source)
+            if character_context_binding(st.session_state.characters,
+                    st.session_state.get("characters_source_sha256", "unavailable")) != character_binding:
+                raise ValueError("本次请求的人物编辑已变化，请核对当前版本后重新生成。")
             if bound_meta.get("outline_sha256") or bound_meta.get("outline_node_id"):
                 require_saved_outline(store, project_name, bound_meta.get("outline_sha256"))
 
         engine = NovelEngine(make_provider(request_guard=current_sources))
         bible = current_bible()
         characters = [Character.model_validate(c) for c in st.session_state.characters]
-        return engine, bible, characters, current_sources
+        return engine, bible, characters, current_sources, character_binding
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -419,8 +468,8 @@ with write_tab:
 
     if make_plan:
         try:
-            meta = _plan_binding()
-            engine, bible, characters, current_sources = _engine_and_inputs()
+            meta = _plan_binding(check_characters=False)
+            engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )
@@ -435,7 +484,7 @@ with write_tab:
             plan = engine.plan(
                 bible, outline, chapter_goal, characters, context.recent_summaries, planning_context
             )
-            _plan_binding()
+            _plan_binding(check_characters=False)
             current_sources()
             st.session_state.pending_plan_json = plan.model_dump_json(indent=2)
             st.session_state.pending_plan_meta = {
@@ -443,6 +492,7 @@ with write_tab:
                 "recent": context.recent_summaries,
                 "extra": context.prompt_sections(),
                 "recall_report": context.recall_report,
+                "character_context_sha256": character_binding,
             }
             st.session_state.plan_new = True
             st.rerun()
@@ -459,7 +509,7 @@ with write_tab:
                 check = validate_plan_stage(plan)
                 if not check.ok:
                     raise ValueError("请先补全场景计划：" + "；".join(check.issues))
-            engine, bible, characters, current_sources = _engine_and_inputs()
+            engine, bible, characters, current_sources, character_binding = _engine_and_inputs()
             context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
@@ -487,6 +537,7 @@ with write_tab:
             st.session_state.last_result_meta = {
                 "project": project_name, "chapter_id": chapter_id,
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
+                "character_context_sha256": character_binding,
             }
             st.session_state.last_extraction = None
             st.session_state.memory_candidate_json = None
@@ -498,8 +549,8 @@ with write_tab:
     if one_shot:
         try:
             _validate_chapter_target()
-            meta = _plan_binding()
-            engine, bible, characters, current_sources = _engine_and_inputs()
+            meta = _plan_binding(check_characters=False)
+            engine, bible, characters, current_sources, character_binding = _engine_and_inputs(replan_characters=True)
             context = ContextAssembler(store, project_name).assemble(
                 recall_query=chapter_goal if diverse_recall else ""
             )
@@ -530,7 +581,7 @@ with write_tab:
             ]
             with store._guard(project_name):
                 current_sources()
-                _plan_binding()
+                _plan_binding(check_characters=False)
                 write_author_chapter(store, project_name, chapter_id, final_text, allow_overwrite=allow_overwrite)
                 save_chapter_plan(store, project_name, chapter_id, result.plan, final_text)
             st.session_state.last_result = result
@@ -539,6 +590,7 @@ with write_tab:
             st.session_state.last_result_meta = {
                 "project": project_name, "chapter_id": chapter_id,
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
+                "character_context_sha256": character_binding,
             }
             st.session_state.last_extraction = None
             st.session_state.memory_candidate_json = None

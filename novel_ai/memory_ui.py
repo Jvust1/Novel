@@ -5,7 +5,9 @@ import hashlib
 import json
 from typing import Any
 
-from .author_workflow import chapter_revision_matches
+from .author_workflow import (
+    chapter_revision_matches, load_character_source, character_context_binding, require_saved_characters,
+)
 from .memory_proposals import (
     MemoryProposal, apply_memory_proposal, author_context, capture_memory_source,
     extract_memory_proposal, list_memory_proposals, load_memory_proposal, save_memory_proposal,
@@ -121,19 +123,33 @@ def render_memory_proposals(st, store, project: str, chapter_id: str, result, en
         historical_receipt = memory_proposal_receipt(store, proposal)
         if historical_receipt is not None:
             ensure_view()
-            current_cards = store.read_json(project, "memory/characters.json", [])
+            current_source = load_character_source(store, project)
+            current_cards = current_source["cards"]
             ensure_view()
             pending_readback = state.get("memory_ui_readback_pending")
             if (isinstance(pending_readback, dict) and pending_readback.get("proposal_id") == proposal.proposal_id
                     and pending_readback.get("context") == live()):
                 state.characters = current_cards
+                state.characters_source_sha256 = current_source["sha256"]
                 state.memory_ui_readback_pending = None
             elif state.get("characters", []) != current_cards:
                 st.warning("这份记忆已有提交回执，但当前界面人物与已保存版本不同；未覆盖未保存编辑。请先核对或明确重新载入。")
-                if st.button("重新载入当前已保存人物", key="btn_memory_reload_cards"):
-                    ensure_view()
-                    state.characters = current_cards
-                    state.memory_ui_readback_pending = None
+                st.json({"当前会话人物": state.get("characters", []), "当前已保存人物": current_cards})
+                st.download_button("下载记忆读回前的会话人物草案", json.dumps(state.get("characters", []),
+                    ensure_ascii=False, indent=2).encode("utf-8"), file_name="character-session-draft.json",
+                    mime="application/json", key="download_memory_character_session")
+                reload_binding = character_context_binding(state.get("characters", []), current_source["sha256"])
+                replace_cards = st.checkbox("我已核对，同意替换记忆读回前的会话人物",
+                    key="memory_character_reload_" + project + "_" + reload_binding)
+                if st.button("重新载入当前已保存人物", key="btn_memory_reload_cards", disabled=not replace_cards) and replace_cards:
+                    with store._guard(project):
+                        current_cards = require_saved_characters(store, project, current_source["sha256"])
+                        ensure_view()
+                        if character_context_binding(state.get("characters", []), current_source["sha256"]) != reload_binding:
+                            raise ValueError("人物编辑已变化，请重新核对后再载入。")
+                        state.characters = current_cards
+                        state.characters_source_sha256 = current_source["sha256"]
+                        state.memory_ui_readback_pending = None
             state.last_memory_commit = historical_receipt
             if not chapter_revision_matches(store, project, chapter_id, preview["source_text_sha256"]):
                 st.warning("这是已经提交的历史版本；磁盘正文随后发生变化，旧接受记录不能认可新稿，需要历史修订对账。")
@@ -164,10 +180,12 @@ def render_memory_proposals(st, store, project: str, chapter_id: str, result, en
                 chapter_accepted=ack_text, memory_accepted=ack_memory,
                 confirmation_source="explicit-workbench-memory-confirmation:" + proposal.proposal_id)
             # Only publish UI state after the committed files have read back.
-            saved_cards = store.read_json(project, "memory/characters.json", [])
+            saved_source = load_character_source(store, project)
+            saved_cards = saved_source["cards"]
             ensure_view()
             if live() == context:
                 state.characters = saved_cards
+                state.characters_source_sha256 = saved_source["sha256"]
                 state.memory_ui_readback_pending = None
             else:
                 st.warning("记忆已提交；界面出现新的作者修改，未覆盖这些未保存编辑，请核对。")

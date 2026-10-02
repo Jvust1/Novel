@@ -10,6 +10,7 @@ import streamlit as st
 from .author_workflow import (
     chapter_plan_from_outline, load_author_corpus, list_author_chapter_ids, outline_chapter_context,
     release_bundle_bytes, save_release_bundle, outline_digest, load_saved_outline, require_saved_outline,
+    character_context_binding, require_saved_characters,
 )
 from .market_eval import aggregate_market_scores, market_scoring_csv, parse_market_scores
 from .outline import HierarchicalOutline, validate_outline
@@ -74,6 +75,9 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
             st.text_input("本章保存编号（可改为 001、002 等）", key="hierarchy_target_id")
             if st.button("载入本章到写作工作台", key="btn_load_hierarchy"):
                 require_saved_outline(store, project, outline_digest(data))
+                require_saved_characters(store, project, st.session_state.get("characters_source_sha256", "unavailable"))
+                character_binding = character_context_binding(st.session_state.characters,
+                    st.session_state.get("characters_source_sha256", "unavailable"))
                 plan = chapter_plan_from_outline(outline, selected)
                 node = chapters[selected]
                 chapter_id = st.session_state.hierarchy_target_id
@@ -87,6 +91,7 @@ def render_outline_editor(store, project: str, title: str, premise: str) -> None
                     "project": project, "chapter_id": chapter_id,
                     "outline_node_id": selected, "outline_sha256": outline_digest(data),
                     "outline_context": outline_chapter_context(outline, selected),
+                    "character_context_sha256": character_binding,
                 }
                 st.session_state.last_result = None
                 st.session_state.last_result_meta = {}

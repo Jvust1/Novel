@@ -38,6 +38,11 @@ class UI:
         self.warnings = []
         self.jsons = []
         self.buttons = {}
+        self.downloads = {}
+
+    def download_button(self, label, data, *, key, **kwargs):
+        self.downloads[key] = data
+        return False
 
     def button(self, label, *, key, disabled=False, **kwargs):
         self.buttons[key] = disabled
@@ -257,6 +262,8 @@ def test_historical_receipt_never_replays_old_after_images_over_newer_canon(scen
     render_memory_proposals(ui, store, "River", "c01", result, lambda: None)
     assert not ui.errors and ui.buttons["btn_memory_apply"]
     assert state.characters == unsaved
+    assert json.loads(ui.downloads["download_memory_character_session"]) == unsaved
+    assert ui.buttons["btn_memory_reload_cards"]
     assert canonical_bytes(store) == before
     assert state.last_memory_commit == receipt
 

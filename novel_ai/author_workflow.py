@@ -20,7 +20,7 @@ from .market_eval import (
     MarketChapter, MarketCorpus, MarketScore, Stage, STAGE_SIZES,
     aggregate_market_scores, market_scoring_csv,
 )
-from .models import ChapterPlan, SceneBeat
+from .models import Character, ChapterPlan, SceneBeat
 from .outline import HierarchicalOutline, OutlineNode, validate_outline
 from .release_pack import ReleasePack
 from .storage import ProjectStore
@@ -54,6 +54,54 @@ def require_saved_outline(store: ProjectStore, project: str, expected_sha256: st
             or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256)
             or outline_digest(load_saved_outline(store, project)) != expected_sha256):
         raise ValueError("层级大纲已变化，请重新读取已保存大纲，再载入章节并确认计划。")
+
+
+def character_digest(cards: list[dict]) -> str:
+    """Identity for the full saved cards, including unknown author extensions."""
+    if not isinstance(cards, list) or any(not isinstance(row, dict) for row in cards):
+        raise ValueError("人物资料必须是人物卡列表；请保留原件并核对。")
+    for row in cards:
+        Character.model_validate(row, strict=True)
+    return _digest(json.dumps(cards, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8"))
+
+
+def load_character_source(store: ProjectStore, project: str) -> dict:
+    missing = object()
+    with store._guard(project):
+        cards = store.read_json(project, "memory/characters.json", missing)
+        if cards is missing:
+            return {"cards": [], "sha256": None}
+        return {"cards": cards, "sha256": character_digest(cards)}
+
+
+def load_saved_characters(store: ProjectStore, project: str) -> list[dict]:
+    return load_character_source(store, project)["cards"]
+
+
+def require_saved_characters(store: ProjectStore, project: str, expected_sha256: str | None) -> list[dict]:
+    source = load_character_source(store, project)
+    if source["sha256"] != expected_sha256:
+        raise ValueError("已保存人物已变化；当前会话编辑已保留，请先核对并明确载入当前人物，再重新生成或载入计划。")
+    return source["cards"]
+
+
+def character_context_binding(cards: list[dict], saved_sha256: str | None) -> str:
+    if saved_sha256 is not None and (not isinstance(saved_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", saved_sha256)):
+        raise ValueError("人物来源绑定不可用，请明确重新读取已保存人物。")
+    return _digest(json.dumps([saved_sha256, character_digest(cards)]).encode("utf-8"))
+
+
+def save_workbench_characters(store: ProjectStore, project: str, cards: list[dict], expected_sha256: str | None) -> str:
+    """Use the existing project lock and atomic file; never overwrite a newer source."""
+    expected_after = character_digest(cards)
+    detached = json.loads(json.dumps(cards, ensure_ascii=False, allow_nan=False))
+    with store._guard(project):
+        require_saved_characters(store, project, expected_sha256)
+        store.write_json(project, "memory/characters.json", detached)
+        actual = character_digest(load_saved_characters(store, project))
+        if actual != expected_after:
+            raise ValueError("人物保存读回不一致，请保留当前编辑并核对；未更新会话来源绑定。")
+    return actual
 
 
 def _outline_path(outline: HierarchicalOutline, node_id: str) -> tuple[HierarchicalOutline, list[OutlineNode]]:
