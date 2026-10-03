@@ -115,3 +115,7 @@ Legacy cross-project startup, safety, and sync rules below are historical refere
 - 完成后报告 `NEW / CHANGED / SKIP_IDENTICAL / HISTORICAL_DUPLICATE_PRESERVED / CONFLICT_NEEDS_REVIEW` 计数，以及 GitHub commit、Drive 新建/原位更新数量。
 - 同样输入连续执行两次，第二次必须产生 **0 个 GitHub 新提交、0 个 Drive 新对象**。
 - 不得因内容重复而自动删除历史快照、冻结证据或具有独立 provenance 的版本。
+
+## 项目启动前置检查
+
+开始任何项目工作前，必须先检查当前可用的插件、技能（Skills）和可复用且许可证兼容的 GitHub 开源项目，优先复用成熟能力后再继续项目实现。
