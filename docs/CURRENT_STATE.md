@@ -1,3 +1,9 @@
+# 2026-10-02 — 首个完整原创长篇样本已归档（待作者验收）
+
+已完成原创长篇候选《有人还没搬走》r1：四部、60章。Markdown 原档为 96,964 个 Unicode 字符（含 Markdown/空白），90,507 个非空白字符。正文、EPUB、TXT、含剧透创作档案和 ZIP 均已归档到作者私有 Drive；两份参考 EPUB 与双书参考分析也已归档并记录 SHA-256 / Drive ID。
+
+本轮只把**成果索引和证据边界**写入 GitHub，不公开参考原文或小说正文。该样本仍是 `draft_candidate_author_acceptance_pending`：尚未获得作者逐章/全书接受、独立真人盲评、番茄实际数据或发布批准。它现在可作为 Novel 下一阶段真实长篇审校、前三章/前20章评测、连续性/伏笔/人物声线检查和局部修订的实际材料。详见 [样本记录](ORIGINAL_LONGFORM_SAMPLE_20261002.md) 与 [artifact manifest](../governance/artifact_manifest.json)。
+
 # 2026-10-01 — 历史来源同标识冲突检查
 
 当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
