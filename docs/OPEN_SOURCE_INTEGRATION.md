@@ -154,3 +154,6 @@ The registry + adapter model gives Novel access to the same capabilities while k
 - `novel_ai/mcp_readonly.py`: read-only MCP adapter using Novel's verified state and context APIs.
 
 Each port keeps an upstream commit, license file, provenance record, focused tests, and an advisory-only boundary in the author-confirmed workflow.
+
+
+- `novel_ai/document_sanitizer.py`: book-to-skill 的 MIT 清洗逻辑移植到参考文档提取入口，移除不可见 Unicode、双向控制、标签块和变体选择符，并记录移除数量；可见正文保持不变。
