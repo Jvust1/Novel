@@ -4,7 +4,9 @@ Independent branch `fix/voice-occurrences-20261004` starts from current `main` a
 `e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96`. Repeated speech at distinct source
 spans now retains its frequency, and sentence-final punctuation no longer hides
 speech particles. New v3 measurements exclude incompatible cached baselines;
-accepted-source bytes and author confirmations remain unchanged. See
+accepted-source bytes and author confirmations remain unchanged. The default
+GPT entry now connects occurrence evidence and version-bound re-review directly
+to the review/local-repair prompts, with honest text-only capability labels. See
 [behavior and limits](VOICE_OCCURRENCES.md) and
 [verification record](../governance/voice_occurrences_candidate.json).
 The public entry remains `main`; this is a review candidate, not a merge receipt.

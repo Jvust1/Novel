@@ -4,7 +4,9 @@ Deduplicate attribution by exact quote span, never by equal dialogue text at
 different positions. Reuse the existing MIT spaCy longest-span port, preserving
 its conservative speaker rules. Count final particles after sentence terminators
 without changing other metrics. Version these measurements as v3 rather than
-silently comparing them with v2 caches. No new dependency, automatic archive
+silently comparing them with v2 caches. The primary GPT/GitHub reading flow uses
+the same occurrence-evidence discipline in its actual stage prompts; it does not
+claim that reading a file executes those numeric diagnostics. No new dependency, automatic archive
 migration, acceptance shortcut or threshold change. See [scope](VOICE_OCCURRENCES.md).
 
 # 2026-10-01 — 历史来源同标识冲突检查

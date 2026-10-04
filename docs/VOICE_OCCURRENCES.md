@@ -4,6 +4,20 @@ This independent candidate starts from `main` commit
 `e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96`. The public entry remains
 `governance/current_candidate.json`; this document is not a merge receipt.
 
+## GPT plugin reading is the primary path
+
+The live [GPT entry](GPT_WRITING_ENTRY.md) now carries these rules into
+[02 review](prompts/natural-fiction/02-editorial-review.md) and
+[03 local repair](prompts/natural-fiction/03-local-repair.md): cite each quote by
+chapter, draft revision, paragraph and occurrence; preserve intentional repeats;
+apply a patch only to its approved occurrence; review the changed draft afresh.
+
+With GitHub file access alone, GPT performs text review and labels it as not
+having run Voice DNA. Reading this repository does not execute Python or spaCy,
+register an MCP server, or require the author to install an application. Numeric
+v3 diagnostics below are only for an actual executor or a genuinely obtained,
+source-bound report. They are not prerequisites for the plugin writing workflow.
+
 ## Reproduced defects
 
 - Two separate occurrences of `林舟问：“你来吗？”` were reduced to one
@@ -66,6 +80,11 @@ those known derived fields back to v2 for the original hash assertion. In that
 fixture the corrected history JSON is exactly 30 bytes longer. No source
 fingerprint, selection decision, blocked result or other response field is
 normalized away. Revision-zero snapshots remain byte-identical.
+
+The entry/prompt content contracts and source-link checks are tested separately
+from Python execution. Actual connected GitHub file reads are reported with their
+exact commit and blob identities on the PR; they prove retrieval, not that an
+independent GPT session will obey the prompts or produce better fiction.
 
 Results and remote CI receipts belong to the candidate record and its draft PR.
 The normal minimum-sample thresholds and advisory review behavior are retained.

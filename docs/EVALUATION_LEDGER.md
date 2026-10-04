@@ -1,5 +1,15 @@
 # 2026-10-04 — Voice occurrence regression
 
+GPT plugin-first alignment adds occurrence evidence and explicit text-only
+verification to the actual review/local-repair prompts. Its affected entry,
+source, state and voice suite passed 179 tests; the final complete local suite
+passed **2290 tests with 9 skips in 219.62 seconds**. Real connected GitHub
+retrieval is verified separately at the published commit; neither these content
+contracts nor file reads establish independent GPT obedience or literary quality.
+The preceding executable head `af9a4c929d4011d7de0a106123ee5b53bfbfe790`
+passed all four CI jobs after one identical-head Windows 3.12 retry; its first
+five-second completion-timeout failure remains recorded, with no relaxed guard.
+
 On unmodified `main` `e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96`, the complete
 Python 3.12.14 suite passed 2248 tests with 9 skips in 220.66 seconds, but the new
 independent voice regression reproduced 24 failures with 9 passing controls.
