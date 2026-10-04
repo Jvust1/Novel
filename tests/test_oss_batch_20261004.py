@@ -1,6 +1,6 @@
 import unittest
 
-from novel_ai.oss_batch_20261004 import PROJECTS, adoption_plan, list_projects
+from novel_ai.oss_batch_20261004 import PROJECTS, adoption_plan, choose_backend, list_projects
 
 class OssBatchTests(unittest.TestCase):
     def test_snapshot_has_twenty_projects(self):
@@ -11,6 +11,9 @@ class OssBatchTests(unittest.TestCase):
         plan = adoption_plan()
         self.assertIn("optional-adapter", plan)
         self.assertIn("external-runtime", plan)
+
+    def test_unknown_backend_falls_back_to_native(self):
+        self.assertEqual(choose_backend(("missing_backend",)), "native")
 
 if __name__ == "__main__":
     unittest.main()

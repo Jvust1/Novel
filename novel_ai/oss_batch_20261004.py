@@ -42,6 +42,14 @@ PROJECTS: tuple[OSSProject, ...] = (
 
 PERMISSIVE_LICENSES = frozenset(["MIT","Apache-2.0","BSD-2-Clause","BSD-3-Clause","ISC","MPL-2.0"])
 
+RUNTIME_TARGETS = {
+    "openai_python": "provider:openai",
+    "llama_index": "retrieval:llama_index",
+    "haystack": "retrieval:haystack",
+    "transformers": "runtime:transformers",
+    "vllm": "runtime:vllm",
+}
+
 def list_projects(*, safe_only: bool = False, mode: str | None = None) -> list[OSSProject]:
     """Return the immutable 20-project snapshot with optional policy filters."""
     items = list(PROJECTS)
@@ -55,6 +63,17 @@ def available_projects(*, safe_only: bool = False) -> list[OSSProject]:
     """Return projects whose declared optional module is installed."""
     return [item for item in list_projects(safe_only=safe_only) if find_spec(item.module) is not None]
 
+def choose_backend(preferred: tuple[str, ...] = ("openai_python", "llama_index", "haystack")) -> str:
+    """Choose the first installed, permissively licensed Novel backend."""
+    by_key = {item.key: item for item in PROJECTS}
+    for key in preferred:
+        project = by_key.get(key)
+        if project is None or project.license not in PERMISSIVE_LICENSES:
+            continue
+        if find_spec(project.module) is not None:
+            return RUNTIME_TARGETS.get(key, project.key)
+    return "native"
+
 def adoption_plan() -> dict[str, list[str]]:
     """Group projects by adoption mode for review and rollback."""
     plan: dict[str, list[str]] = {}
@@ -62,4 +81,4 @@ def adoption_plan() -> dict[str, list[str]]:
         plan.setdefault(item.mode, []).append(item.key)
     return plan
 
-__all__ = ["OSSProject", "PROJECTS", "PERMISSIVE_LICENSES", "list_projects", "available_projects", "adoption_plan"]
+__all__ = ["OSSProject", "PROJECTS", "PERMISSIVE_LICENSES", "RUNTIME_TARGETS", "list_projects", "available_projects", "choose_backend", "adoption_plan"]
