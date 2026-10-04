@@ -9,8 +9,8 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 63,
-    "p0": 17,
+    "total": 64,
+    "p0": 18,
     "p1": 31,
     "no_license": 2,
     "agpl": 2
@@ -639,6 +639,20 @@
       ],
       "local_path": "novel_ai/mcp_readonly.py",
       "provenance": "third_party/mcp-python-sdk/provenance.json",
+      "checked_at_utc": "2026-10-04"
+    },
+    {
+      "key": "lexicalrichness_mtld",
+      "repo": "LSYS/LexicalRichness",
+      "category": "style_quality",
+      "license": "MIT",
+      "mode": "licensed-source-port",
+      "priority": "P0",
+      "use": "Actual dependency-free TTR/MATTR/MTLD diagnostics merged into Draft→Review report and advisory ReviewIssue payload; mixed Chinese-English tokenization",
+      "upstream_commit": "69e6b8f381d6b86ec826911c3f0bb2fb298aac25",
+      "upstream_path": "lexicalrichness/lexicalrichness.py",
+      "local_path": "novel_ai/lexical_richness.py",
+      "provenance": "third_party/lexicalrichness/provenance.json",
       "checked_at_utc": "2026-10-04"
     }
   ]
