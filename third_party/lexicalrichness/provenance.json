@@ -1,0 +1,17 @@
+{
+  "upstream": {
+    "repository": "LSYS/LexicalRichness",
+    "commit": "69e6b8f381d6b86ec826911c3f0bb2fb298aac25",
+    "path": "lexicalrichness/lexicalrichness.py",
+    "symbols": ["LexicalRichness.ttr", "LexicalRichness.mattr", "LexicalRichness.mtld"],
+    "license": "MIT",
+    "license_file": "third_party/lexicalrichness/LICENSE"
+  },
+  "local_port": {
+    "path": "novel_ai/lexical_richness.py",
+    "mode": "licensed-source-port",
+    "adaptation": "Retained deterministic TTR/MATTR/MTLD formulas and added mixed Chinese-English tokenization, bounded JSON report and advisory ReviewIssue payload.",
+    "wired_into": "novel_ai/engine.py"
+  },
+  "checked_at_utc": "2026-10-04"
+}
