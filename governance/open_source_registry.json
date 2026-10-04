@@ -120,9 +120,16 @@
       "repo": "huggingface/sentence-transformers",
       "category": "embeddings",
       "license": "Apache-2.0",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+optional-adapter+tested",
       "priority": "P1",
-      "use": "通用 embedding 备选"
+      "use": "sentence-transformers encode 适配到 Novel 本地语义 Recall；强制本地模型路径优先，保留 FAISS/Flat 回退",
+      "stars_observed": 19150,
+      "adapter_provenance": {
+        "upstream_commit": "4a3b5cd6ec718e421f57e824a41ed3fd99595df6",
+        "local_path": "novel_ai/recall_backends.py",
+        "provenance": "third_party/sentence-transformers/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "rapidfuzz",
@@ -205,9 +212,16 @@
       "repo": "mem0ai/mem0",
       "category": "memory_retrieval",
       "license": "Apache-2.0",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "记忆抽取/检索模式参考"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "Mem0 记忆抽取/检索适配到 Novel RecallBackend；infer=false 保持 Novel 结构化记忆为权威",
+      "stars_observed": 66563,
+      "adapter_provenance": {
+        "upstream_commit": "abb81c88e1f738a8117d8293530fbc31a5ef8fd9",
+        "local_path": "novel_ai/upstream_adapters.py",
+        "provenance": "third_party/mem0/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "graphiti",
@@ -223,9 +237,16 @@
       "repo": "run-llama/llama_index",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "索引/检索抽象，不替换 Novel 核心管线"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "LlamaIndex VectorStoreIndex/retriever 适配到 Novel RecallBackend；实验开关下启用，不替换核心管线",
+      "stars_observed": 52408,
+      "adapter_provenance": {
+        "upstream_commit": "7e2c60a78ec27e8d146dfdd596778aea83c041d5",
+        "local_path": "novel_ai/llamaindex_recall.py",
+        "provenance": "third_party/llama-index/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "langchain",
@@ -262,9 +283,16 @@
       "repo": "deepset-ai/haystack",
       "category": "orchestration",
       "license": "Apache-2.0",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "可组合 pipeline 组件模式"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "Haystack DocumentStore/retriever 适配到 Novel RecallBackend；实验开关下启用",
+      "stars_observed": 26650,
+      "adapter_provenance": {
+        "upstream_commit": "0499239e66f515feab503a2768ba785cace6de91",
+        "local_path": "novel_ai/haystack_recall.py",
+        "provenance": "third_party/haystack/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "chroma",
@@ -280,9 +308,18 @@
       "repo": "qdrant/qdrant",
       "category": "vector_store",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+optional-adapter+tested",
       "priority": "P1",
-      "use": "长篇项目向量库候选"
+      "use": "Qdrant 语义 Recall 适配器；通过 qdrant-client 固定 API 接入，保留 Novel 的本地 Recall 作为默认回退",
+      "stars_observed": 34930,
+      "adapter_provenance": {
+        "upstream_repository": "qdrant/qdrant-client",
+        "upstream_commit": "cf747f4b6fa71ba35dfb467931f3fa65f2cdf263",
+        "client_license": "Apache-2.0",
+        "local_path": "novel_ai/qdrant_recall.py",
+        "provenance": "third_party/qdrant-client/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "litellm",
@@ -379,9 +416,16 @@
       "repo": "stanfordnlp/dspy",
       "category": "prompt_optimization",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "用冻结 benchmark 优化 prompt/program，而非凭感觉调 Prompt"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "DSPy-style review program 适配到 Novel 外部审校 payload；结果仍需通过核心 Review gate",
+      "stars_observed": 38498,
+      "adapter_provenance": {
+        "upstream_commit": "6f0aacfa5ed68511ac10c66dbbe53eaf02fc66ec",
+        "local_path": "novel_ai/upstream_adapters.py",
+        "provenance": "third_party/dspy/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "openai_evals",
