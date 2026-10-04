@@ -148,12 +148,17 @@ The registry + adapter model gives Novel access to the same capabilities while k
 
 ## Current source ports in PR #80
 
-- `novel_ai/spindle_temporal.py`: Spindle temporal coherence tripwire.
-- `novel_ai/lexical_richness.py`: LexicalRichness TTR/MATTR/MTLD diagnostics.
-- `novel_ai/minhash_similarity.py`: Datasketch MinHash/Jaccard adaptation over irreversible shingle hashes.
-- `novel_ai/mcp_readonly.py`: read-only MCP adapter using Novel's verified state and context APIs.
+This PR now contains ten focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
 
-Each port keeps an upstream commit, license file, provenance record, focused tests, and an advisory-only boundary in the author-confirmed workflow.
+- LangChain: `novel_ai/_vendor/langchain_mmr.py` and `novel_ai/_vendor/langchain_markdown.py` — opt-in continuity selection and outline import.
+- spaCy: `novel_ai/_vendor/spacy_spans.py` — overlap-safe span filtering.
+- pytransitions: workflow state transition core — deterministic writer/review/release transitions.
+- Spindle: `novel_ai/spindle_temporal.py` — temporal coherence tripwire.
+- MCP Python SDK: `novel_ai/mcp_readonly.py` — read-only story status, lookup and context tools.
+- LexicalRichness: `novel_ai/lexical_richness.py` — TTR/MATTR/MTLD diagnostics.
+- Datasketch: `novel_ai/minhash_similarity.py` — MinHash/Jaccard over irreversible shingle hashes.
+- book-to-skill: `novel_ai/document_sanitizer.py` — invisible Unicode and bidi-control sanitization at reference ingestion.
+- RapidFuzz: `novel_ai/rapidfuzz_similarity.py` — normalized Levenshtein fallback for reference similarity.
+- NetworkX: `novel_ai/story_graph_rank.py` — bounded PageRank centrality in GraphRAG export.
 
-
-- `novel_ai/document_sanitizer.py`: book-to-skill 的 MIT 清洗逻辑移植到参考文档提取入口，移除不可见 Unicode、双向控制、标签块和变体选择符，并记录移除数量；可见正文保持不变。
+Every port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. No upstream runtime dependency is required for these local algorithm ports.
