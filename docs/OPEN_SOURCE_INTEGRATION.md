@@ -148,7 +148,7 @@ The registry + adapter model gives Novel access to the same capabilities while k
 
 ## Current source ports in PR #80
 
-This PR now contains thirteen focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
+This PR now contains fourteen focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
 
 - LangChain: `novel_ai/_vendor/langchain_mmr.py` and `novel_ai/_vendor/langchain_markdown.py` — opt-in continuity selection and outline import.
 - spaCy: `novel_ai/_vendor/spacy_spans.py` — overlap-safe span filtering.
@@ -163,5 +163,6 @@ This PR now contains thirteen focused, license-preserving source ports or algori
 - jieba: `novel_ai/jieba_tokenizer.py` — bounded prefix-DAG segmentation using the story's character vocabulary.
 - OpenCC: `novel_ai/opencc_maxmatch.py` — bounded maximal-match segmentation for caller-owned conversion maps.
 - scikit-learn: `novel_ai/sklearn_cosine.py` — dependency-free cosine matrix wired into semantic similarity.
+- FAISS: `novel_ai/faiss_flat_search.py` — FlatIP/L2 exhaustive search fallback wired into LocalSemanticRecall.
 
 Every port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. No upstream runtime dependency is required for these local algorithm ports.
