@@ -115,9 +115,22 @@
       "repo": "rapidfuzz/RapidFuzz",
       "category": "originality",
       "license": "MIT",
-      "mode": "git-submodule+direct-optional",
+      "mode": "git-submodule+direct-optional+licensed-source-port",
       "priority": "P0",
-      "use": "人名/短语/事件摘要近似匹配与去重"
+      "use": "人名/短语/事件摘要近似匹配与去重；本地保留规范化 Levenshtein 兜底，避免可选依赖缺失时退化为粗粒度匹配",
+      "source_port": {
+        "upstream_commit": "db6e504539a9c895180b266a06b36a32cb6029ee",
+        "upstream_path": "src/rapidfuzz/distance/Levenshtein_py.py",
+        "source_symbols": [
+          "distance",
+          "normalized_distance",
+          "normalized_similarity"
+        ],
+        "local_path": "novel_ai/rapidfuzz_similarity.py",
+        "license_path": "third_party/rapidfuzz/LICENSE",
+        "provenance": "third_party/rapidfuzz/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "docling",
@@ -521,9 +534,20 @@
       "repo": "networkx/networkx",
       "category": "story_structure",
       "license": "BSD-3-Clause",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P1",
-      "use": "人物/事件/伏笔 Story Graph"
+      "use": "人物/事件/伏笔 Story Graph；用 PageRank 为 GraphRAG 导出提供可复现的故事节点中心性",
+      "source_port": {
+        "upstream_commit": "31b74e96903d7f873b30c8ff36d71a4c9252b107",
+        "upstream_path": "networkx/algorithms/link_analysis/pagerank_alg.py",
+        "source_symbols": [
+          "_pagerank_python"
+        ],
+        "local_path": "novel_ai/story_graph_rank.py",
+        "license_path": "third_party/networkx/LICENSE.txt",
+        "provenance": "third_party/networkx/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "qdrant_client",
