@@ -37,7 +37,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P1 | `spacy` | [explosion/spaCy](https://github.com/explosion/spaCy) | MIT | git-submodule | 成熟 NLP pipeline；结构/实体/句法/风格特征分析 |
 | P0 | `pycorrector` | [shibing624/pycorrector](https://github.com/shibing624/pycorrector) | Apache-2.0 | git-submodule | 中文错别字/语病诊断与局部修订信号 |
 | P1 | `texthero` | [jbesomi/texthero](https://github.com/jbesomi/texthero) | MIT | git-submodule | 文本清洗、向量化和探索分析 |
-| P0 | `opencc` | [BYVoid/OpenCC](https://github.com/BYVoid/OpenCC) | Apache-2.0 | git-submodule | 中文简繁/词汇规范统一 |
+| P0 | `opencc` | [BYVoid/OpenCC](https://github.com/BYVoid/OpenCC) | Apache-2.0 | licensed-source-port | 受控词典的最大匹配分段与中文规范化 |
 | P0 | `lexicalrichness` | [LSYS/LexicalRichness](https://github.com/LSYS/LexicalRichness) | MIT | git-submodule | 词汇丰富度、重复度和词汇变化诊断 |
 | P1 | `textstat` | [textstat/textstat](https://github.com/textstat/textstat) | MIT | git-submodule | 可读性与句子复杂度统计 |
 | P1 | `proselint` | [amperser/proselint](https://github.com/amperser/proselint) | BSD-3-Clause | git-submodule | prose lint；英文规则为主，只作可选/参考层 |
@@ -148,7 +148,7 @@ The registry + adapter model gives Novel access to the same capabilities while k
 
 ## Current source ports in PR #80
 
-This PR now contains eleven focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
+This PR now contains thirteen focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
 
 - LangChain: `novel_ai/_vendor/langchain_mmr.py` and `novel_ai/_vendor/langchain_markdown.py` — opt-in continuity selection and outline import.
 - spaCy: `novel_ai/_vendor/spacy_spans.py` — overlap-safe span filtering.
@@ -161,5 +161,7 @@ This PR now contains eleven focused, license-preserving source ports or algorith
 - RapidFuzz: `novel_ai/rapidfuzz_similarity.py` — normalized Levenshtein fallback for reference similarity.
 - NetworkX: `novel_ai/story_graph_rank.py` — bounded PageRank centrality in GraphRAG export.
 - jieba: `novel_ai/jieba_tokenizer.py` — bounded prefix-DAG segmentation using the story's character vocabulary.
+- OpenCC: `novel_ai/opencc_maxmatch.py` — bounded maximal-match segmentation for caller-owned conversion maps.
+- scikit-learn: `novel_ai/sklearn_cosine.py` — dependency-free cosine matrix wired into semantic similarity.
 
 Every port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. No upstream runtime dependency is required for these local algorithm ports.
