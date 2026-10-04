@@ -9,6 +9,7 @@ from typing import Iterable, Sequence
 
 from .recall import RecallDocument, RecallHit
 from .qdrant_recall import _json_safe_metadata
+from .faiss_flat_search import flat_search
 from .semantic import Encoder, _normalize_vector, _ordered_values, _unit_cosine, _validated_vectors
 
 
@@ -211,8 +212,12 @@ class LocalSemanticRecall:
         if state.index is not None:
             scores = self._accelerated_scores(state, unit_query)
         else:
-            scores = {i: _unit_cosine(unit_query, vector)
-                      for i, vector in enumerate(state.unit_vectors)}
+            scores = dict(flat_search(
+                unit_query,
+                state.unit_vectors,
+                k=len(state.unit_vectors),
+                metric="inner_product",
+            ))
         rows = [
             RecallHit(document_id=document.document_id, score=scores[i], text=document.text,
                       metadata=deepcopy(document.metadata))
