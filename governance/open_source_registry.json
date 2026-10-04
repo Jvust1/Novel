@@ -9,8 +9,8 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 62,
-    "p0": 16,
+    "total": 63,
+    "p0": 17,
     "p1": 31,
     "no_license": 2,
     "agpl": 2
@@ -623,6 +623,19 @@
       "upstream_path": "crates/spindle-core/src/temporal/mod.rs",
       "local_path": "novel_ai/spindle_temporal.py",
       "provenance": "third_party/spindle/provenance.json",
+      "checked_at_utc": "2026-10-04"
+    },
+    {
+      "key": "mcp_python_sdk_readonly",
+      "repo": "modelcontextprotocol/python-sdk",
+      "category": "context_tools",
+      "license": "MIT",
+      "mode": "optional-adapter",
+      "priority": "P0",
+      "use": "Optional stdio MCP adapter for verified story status, canonical character lookup, accepted-history rebuild and UTF-8 context preflight; read-only handlers only",
+      "upstream_reference": "examples/stories/tools/server.py",
+      "local_path": "novel_ai/mcp_readonly.py",
+      "provenance": "third_party/mcp-python-sdk/provenance.json",
       "checked_at_utc": "2026-10-04"
     }
   ]
