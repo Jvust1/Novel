@@ -1,0 +1,11 @@
+{
+  "upstream_repository": "qdrant/qdrant-client",
+  "upstream_commit": "cf747f4b6fa71ba35dfb467931f3fa65f2cdf263",
+  "observed_stars": 1369,
+  "checked_at_utc": "2026-10-04",
+  "license": "Apache-2.0",
+  "mode": "optional-adapter-only",
+  "local_path": "novel_ai/qdrant_recall.py",
+  "integration": "QdrantRecallBackend",
+  "adaptation": "Maps Novel RecallDocument/RecallHit to the qdrant-client collection, point, payload and query contract while validating dimensions, metadata and collection names. No qdrant source is vendored."
+}
