@@ -590,9 +590,21 @@
       "repo": "facebookresearch/faiss",
       "category": "memory_retrieval",
       "license": "MIT",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P1",
-      "use": "本地高性能向量 Recall；LocalSemanticRecall 可选加速"
+      "use": "本地高性能向量 Recall；LocalSemanticRecall 在无 FAISS 运行时使用同语义的 FlatIP/L2 本地回退",
+      "stars_observed": 41058,
+      "source_port": {
+        "upstream_commit": "b0074a3fa426027d9ff8575b44386d5922859ac9",
+        "upstream_path": "faiss/IndexFlat.cpp",
+        "source_symbols": [
+          "IndexFlat::search"
+        ],
+        "local_path": "novel_ai/faiss_flat_search.py",
+        "license_path": "third_party/faiss/LICENSE",
+        "provenance": "third_party/faiss/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "paddlenlp",
