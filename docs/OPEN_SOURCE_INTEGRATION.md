@@ -45,7 +45,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `book_to_skill` | [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill) | MIT | git-submodule | 把参考书/文档转换为按需加载的 Agent Skill，为 Reference Pack / Story DNA 提供结构化知识层 |
 | P2 | `booknlp` | [booknlp/booknlp](https://github.com/booknlp/booknlp) | MIT | research-port | 人物/对白/叙事分析思想；英文中心，不作为中文默认后端 |
 | P1 | `hanlp` | [hankcs/HanLP](https://github.com/hankcs/HanLP) | Apache-2.0 | direct-optional | 中文分词、词性、NER 等深层文本特征 |
-| P0 | `jieba` | [fxsjy/jieba](https://github.com/fxsjy/jieba) | MIT | direct-optional | 轻量中文分词与 Reference Pack 词汇统计 |
+| P0 | `jieba` | [fxsjy/jieba](https://github.com/fxsjy/jieba) | MIT | licensed-source-port | Jieba DAG 分词移植，用故事人物词表稳定词汇统计 |
 | P0 | `text2vec` | [shibing624/text2vec](https://github.com/shibing624/text2vec) | Apache-2.0 | adapter | 中文语义向量、相似度、原创性/Recall 检索 |
 | P0 | `flagembedding` | [FlagOpen/FlagEmbedding](https://github.com/FlagOpen/FlagEmbedding) | MIT | adapter | BGE 向量/重排器；Reference similarity 与 Recall |
 | P1 | `sentence_transformers` | [huggingface/sentence-transformers](https://github.com/huggingface/sentence-transformers) | Apache-2.0 | adapter | 通用 embedding 备选 |
@@ -148,7 +148,7 @@ The registry + adapter model gives Novel access to the same capabilities while k
 
 ## Current source ports in PR #80
 
-This PR now contains ten focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
+This PR now contains eleven focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
 
 - LangChain: `novel_ai/_vendor/langchain_mmr.py` and `novel_ai/_vendor/langchain_markdown.py` — opt-in continuity selection and outline import.
 - spaCy: `novel_ai/_vendor/spacy_spans.py` — overlap-safe span filtering.
@@ -160,5 +160,6 @@ This PR now contains ten focused, license-preserving source ports or algorithm a
 - book-to-skill: `novel_ai/document_sanitizer.py` — invisible Unicode and bidi-control sanitization at reference ingestion.
 - RapidFuzz: `novel_ai/rapidfuzz_similarity.py` — normalized Levenshtein fallback for reference similarity.
 - NetworkX: `novel_ai/story_graph_rank.py` — bounded PageRank centrality in GraphRAG export.
+- jieba: `novel_ai/jieba_tokenizer.py` — bounded prefix-DAG segmentation using the story's character vocabulary.
 
 Every port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. No upstream runtime dependency is required for these local algorithm ports.
