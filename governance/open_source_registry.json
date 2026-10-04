@@ -79,9 +79,23 @@
       "repo": "fxsjy/jieba",
       "category": "chinese_nlp",
       "license": "MIT",
-      "mode": "direct-optional",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "轻量中文分词与 Reference Pack 词汇统计"
+      "use": "中文分词与 Reference Pack 词汇统计；使用故事人物词表保留多字人名和术语，提升词汇重复诊断的稳定性",
+      "source_port": {
+        "upstream_commit": "67fa2e36e72f69d9134b8a1037b83fbb070b9775",
+        "upstream_path": "jieba/__init__.py",
+        "source_symbols": [
+          "Tokenizer.get_DAG",
+          "Tokenizer.calc",
+          "Tokenizer.__cut_DAG_NO_HMM"
+        ],
+        "local_path": "novel_ai/jieba_tokenizer.py",
+        "license_path": "third_party/jieba/LICENSE",
+        "provenance": "third_party/jieba/provenance.json",
+        "stars_checked": 35175,
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "text2vec",
