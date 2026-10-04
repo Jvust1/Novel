@@ -6,6 +6,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from .document_sanitizer import sanitize_extracted_text
 from .text_decoding import decode_reference_text
 
 SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf", ".epub")
@@ -95,11 +96,15 @@ def extract_reference(filename: str, data: bytes, *, encoding: str | None = None
     if (filename or "").lower().endswith((".txt", ".md")):
         decoded = decode_reference_text(data, encoding=encoding)
         backend = "utf8" if decoded.encoding == "utf-8" and not decoded.had_bom else "text:" + decoded.encoding
-        return ReferenceExtraction(decoded.text, backend, decoded.report())
+        clean, removed = sanitize_extracted_text(decoded.text)
+        decoding = decoded.report()
+        decoding["invisible_codepoints_removed"] = removed
+        return ReferenceExtraction(clean, backend, decoding)
     if encoding is not None:
         raise ValueError("显式文本编码仅适用于 TXT/MD 文件")
     text, backend = _extract_reference_text_with_backend(filename, data)
-    return ReferenceExtraction(text, backend)
+    clean, removed = sanitize_extracted_text(text)
+    return ReferenceExtraction(clean, backend, {"invisible_codepoints_removed": removed})
 
 
 def extract_reference_text_with_backend(filename: str, data: bytes, *, encoding: str | None = None) -> tuple[str, str]:
