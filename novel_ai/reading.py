@@ -3,10 +3,12 @@ from __future__ import annotations
 import importlib.util
 import io
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
 from .document_sanitizer import sanitize_extracted_text
+from .opencc_maxmatch import convert_with_dictionary
 from .text_decoding import decode_reference_text
 
 SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf", ".epub")
@@ -92,11 +94,14 @@ class ReferenceExtraction:
     decoding: dict | None = None
 
 
-def extract_reference(filename: str, data: bytes, *, encoding: str | None = None) -> ReferenceExtraction:
+def extract_reference(filename: str, data: bytes, *, encoding: str | None = None,
+                      normalization_map: Mapping[str, str] | None = None) -> ReferenceExtraction:
     if (filename or "").lower().endswith((".txt", ".md")):
         decoded = decode_reference_text(data, encoding=encoding)
         backend = "utf8" if decoded.encoding == "utf-8" and not decoded.had_bom else "text:" + decoded.encoding
         clean, removed = sanitize_extracted_text(decoded.text)
+        if normalization_map:
+            clean = convert_with_dictionary(clean, normalization_map)
         decoding = decoded.report()
         decoding["invisible_codepoints_removed"] = removed
         return ReferenceExtraction(clean, backend, decoding)
@@ -104,6 +109,8 @@ def extract_reference(filename: str, data: bytes, *, encoding: str | None = None
         raise ValueError("显式文本编码仅适用于 TXT/MD 文件")
     text, backend = _extract_reference_text_with_backend(filename, data)
     clean, removed = sanitize_extracted_text(text)
+    if normalization_map:
+        clean = convert_with_dictionary(clean, normalization_map)
     # Preserve the long-standing non-text reader contract: decoding metadata is
     # only populated for text codecs. Advanced readers may still report a
     # sanitization count when they actually remove hidden codepoints.
@@ -111,10 +118,12 @@ def extract_reference(filename: str, data: bytes, *, encoding: str | None = None
     return ReferenceExtraction(clean, backend, decoding)
 
 
-def extract_reference_text_with_backend(filename: str, data: bytes, *, encoding: str | None = None) -> tuple[str, str]:
-    result = extract_reference(filename, data, encoding=encoding)
+def extract_reference_text_with_backend(filename: str, data: bytes, *, encoding: str | None = None,
+                                         normalization_map: Mapping[str, str] | None = None) -> tuple[str, str]:
+    result = extract_reference(filename, data, encoding=encoding, normalization_map=normalization_map)
     return result.text, result.backend
 
 
-def extract_reference_text(filename: str, data: bytes, *, encoding: str | None = None) -> str:
-    return extract_reference(filename, data, encoding=encoding).text
+def extract_reference_text(filename: str, data: bytes, *, encoding: str | None = None,
+                           normalization_map: Mapping[str, str] | None = None) -> str:
+    return extract_reference(filename, data, encoding=encoding, normalization_map=normalization_map).text
