@@ -1,3 +1,21 @@
+# 2026-10-04 — Voice occurrence regression
+
+On unmodified `main` `e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96`, the complete
+Python 3.12.14 suite passed 2248 tests with 9 skips in 220.66 seconds, but the new
+independent voice regression reproduced 24 failures with 9 passing controls.
+The focused correction is evaluated through source-span attribution, metrics,
+all three writer entries and repair/re-review, and saved/read-back accepted
+history. Synthetic fixtures and fake providers only; no literary-quality or
+live-model result. The first full corrected run exposed five old whole-response
+snapshots containing v2 measurements. Exact field comparison confines the change
+to versioned Voice DNA and its 30-byte fixture context expansion; all original
+frozen hashes and source fixtures are retained through a strict test-only
+compatibility projection. Final full Python 3.12.14 verification passed 2287 tests
+with 9 skips in 216.97 seconds; fatal Ruff, dependency, compile and public-entry
+checks passed. Default Ruff remains advisory at the unchanged 449 findings.
+Exact-commit CI receipts are recorded in
+[the candidate record](../governance/voice_occurrences_candidate.json) and its PR.
+
 # 2026-10-01 — 历史来源同标识冲突检查
 
 当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
