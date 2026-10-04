@@ -229,7 +229,7 @@ class LocalSemanticRecall:
         return self.search(text, limit)
 
 
-def recall_backend_capabilities() -> dict[str, bool]:
+def recall_backend_capabilities() -> dict[str, bool | str]:
     modules = {
         "faiss": "faiss",
         "qdrant": "qdrant_client",
@@ -238,7 +238,16 @@ def recall_backend_capabilities() -> dict[str, bool]:
         "lightrag": "lightrag",
         "graphiti": "graphiti_core",
     }
-    return {key: importlib.util.find_spec(module) is not None for key, module in modules.items()}
+    capabilities: dict[str, bool | str] = {
+        key: importlib.util.find_spec(module) is not None
+        for key, module in modules.items()
+    }
+    # The capability probe is a live runtime entry point: route the selected
+    # optional backend through the validated registry without importing it.
+    from .oss_batch_20261004 import choose_recall_backend
+
+    capabilities["selected_backend"] = choose_recall_backend()
+    return capabilities
 
 
 

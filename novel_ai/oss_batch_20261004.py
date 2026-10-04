@@ -49,6 +49,7 @@ RUNTIME_TARGETS = {
     "transformers": "runtime:transformers",
     "vllm": "runtime:vllm",
 }
+RECALL_TARGETS = ("llama_index", "haystack", "qdrant", "sentence_transformers")
 
 def list_projects(*, safe_only: bool = False, mode: str | None = None) -> list[OSSProject]:
     """Return the immutable 20-project snapshot with optional policy filters."""
@@ -74,6 +75,20 @@ def choose_backend(preferred: tuple[str, ...] = ("openai_python", "llama_index",
             return RUNTIME_TARGETS.get(key, project.key)
     return "native"
 
+def choose_recall_backend(
+    preferred: tuple[str, ...] = RECALL_TARGETS,
+) -> str:
+    """Choose the first installed safe backend for the live recall capability path."""
+    by_key = {item.key: item for item in PROJECTS}
+    for key in preferred:
+        project = by_key.get(key)
+        if project is None or project.license not in PERMISSIVE_LICENSES:
+            continue
+        if find_spec(project.module) is not None:
+            return key
+    return "native"
+
+
 def adoption_plan() -> dict[str, list[str]]:
     """Group projects by adoption mode for review and rollback."""
     plan: dict[str, list[str]] = {}
@@ -81,4 +96,4 @@ def adoption_plan() -> dict[str, list[str]]:
         plan.setdefault(item.mode, []).append(item.key)
     return plan
 
-__all__ = ["OSSProject", "PROJECTS", "PERMISSIVE_LICENSES", "RUNTIME_TARGETS", "list_projects", "available_projects", "choose_backend", "adoption_plan"]
+__all__ = ["OSSProject", "PROJECTS", "PERMISSIVE_LICENSES", "RUNTIME_TARGETS", "RECALL_TARGETS", "list_projects", "available_projects", "choose_backend", "choose_recall_backend", "adoption_plan"]
