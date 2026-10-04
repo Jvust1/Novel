@@ -41,6 +41,7 @@ from .reference_similarity import analyze_reference_similarity, similarity_revie
 from .style_engine import detect_ai_flavor
 from .story_dna import story_dna_from_plan
 from .story_dna_memory import compare_story_dna, story_dna_review_payload
+from .spindle_temporal import temporal_coherence_report, temporal_review_payload
 from .workflow_guard import workflow_summary
 
 
@@ -454,6 +455,7 @@ class NovelEngine:
                 "quality_report": quality_review_payload(analyze_prose_quality(text)),
                 "similarity_report": similarity_payload,
                 "workflow_report": workflow_summary(plan, text, target_chars=target_chars),
+                "temporal_report": temporal_coherence_report(text),
                 "voice": {"current": voice_current, "baseline": voice_baseline, "alerts": alerts,
                           "baseline_provenance": "caller supplied; not accepted-manuscript revision validation"},
                 "plan_evidence": deepcopy(plan_evidence),
@@ -470,7 +472,7 @@ class NovelEngine:
                     selected_review, max_bytes=self.output_policy.max_output_bytes))
             for payload in (report["quality_report"], similarity_payload,
                             story_dna_review_payload(dna_similarity), behavior_review_payload(behavior_report),
-                            voice_review_payload(alerts)):
+                            voice_review_payload(alerts), temporal_review_payload(report["temporal_report"])):
                 selected_review = merge_quality_issues(selected_review, payload)
             selected_review = apply_external_review_hooks(
                 selected_review, hooks, draft=text, plan=plan, bible=bible, characters=characters,
