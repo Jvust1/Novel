@@ -1,0 +1,14 @@
+{
+  "upstream": {
+    "repository": "modelcontextprotocol/python-sdk",
+    "license": "MIT",
+    "upstream_reference": "examples/stories/tools/server.py",
+    "checked_at_utc": "2026-10-04"
+  },
+  "local_port": {
+    "path": "novel_ai/mcp_readonly.py",
+    "mode": "optional-adapter",
+    "adaptation": "Uses the SDK's read-only tool annotations and stdio server shape; handlers call Novel's verified readback, accepted-history rebuild and context-budget APIs. No upstream SDK source is vendored.",
+    "write_tools": false
+  }
+}
