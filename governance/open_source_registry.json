@@ -508,9 +508,22 @@
       "repo": "BYVoid/OpenCC",
       "category": "chinese_normalization",
       "license": "Apache-2.0",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port+optional-adapter",
       "priority": "P0",
-      "use": "中文简繁与词汇规范转换，统一参考文本和生成文本的中文字符体系"
+      "use": "中文简繁与词汇规范转换；移植最大匹配分段算法，供调用方提供受控转换词典，不内置 OpenCC 词典",
+      "stars_observed": 10027,
+      "source_port": {
+        "upstream_commit": "3ac34aa439a9908dd49fa92b5174b46314787ac2",
+        "upstream_path": "src/MaxMatchSegmentation.cpp",
+        "source_symbols": [
+          "SegmentText",
+          "MaxMatchSegmentation::Segment"
+        ],
+        "local_path": "novel_ai/opencc_maxmatch.py",
+        "license_path": "third_party/opencc/LICENSE",
+        "provenance": "third_party/opencc/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "deepke",
@@ -604,9 +617,21 @@
       "repo": "scikit-learn/scikit-learn",
       "category": "longform_analytics",
       "license": "BSD-3-Clause",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "Story DNA 聚类、长期套路统计"
+      "use": "Story DNA 聚类、长期套路统计；本地余弦矩阵移植接入 semantic embedding 相似度",
+      "stars_observed": 67470,
+      "source_port": {
+        "upstream_commit": "a442e4bb39551feb7b0af4c00075e2cb91cf9b77",
+        "upstream_path": "sklearn/metrics/pairwise.py",
+        "source_symbols": [
+          "cosine_similarity"
+        ],
+        "local_path": "novel_ai/sklearn_cosine.py",
+        "license_path": "third_party/scikit-learn/COPYING",
+        "provenance": "third_party/scikit-learn/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "river",
