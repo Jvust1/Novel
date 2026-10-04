@@ -16,3 +16,12 @@ def test_empty_and_invalid_inputs_are_explicit():
         pass
     else:
         raise AssertionError("text must be validated")
+
+
+def test_reference_reader_accepts_explicit_normalization_map():
+    from novel_ai.reading import extract_reference_text
+
+    assert extract_reference_text(
+        "ref.txt", "繁體 電話".encode("utf-8"),
+        normalization_map={"繁體": "简体", "電話": "电话"},
+    ) == "简体 电话"
