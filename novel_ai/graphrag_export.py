@@ -13,6 +13,8 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
 
+from .story_graph_rank import story_pagerank
+
 
 _SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -40,6 +42,19 @@ class GraphRAGCorpusExporter:
     ) -> list[GraphRAGDocument]:
         nodes = list(story_graph.get("nodes") or [])
         edges = list(story_graph.get("edges") or [])
+        node_ids = [str(node.get("id") or "").strip() for node in nodes if isinstance(node, Mapping)]
+        rank_edges = []
+        for edge in edges:
+            if not isinstance(edge, Mapping):
+                continue
+            source, target = str(edge.get("source") or ""), str(edge.get("target") or "")
+            if source and target:
+                try:
+                    weight = float(edge.get("weight", 1.0))
+                except (TypeError, ValueError):
+                    weight = 1.0
+                rank_edges.append((source, target, max(weight, 0.0)))
+        centrality = story_pagerank(node_ids, rank_edges) if node_ids else {}
         docs: list[GraphRAGDocument] = []
 
         for node in nodes:
@@ -54,6 +69,7 @@ class GraphRAGCorpusExporter:
                 f"# {label or node_id}",
                 f"Novel node id: {node_id}",
                 f"Node type: {node_type}",
+                f"Graph centrality: {centrality.get(node_id, 0.0):.8f}",
             ]
             for key in sorted(node):
                 if key in {"id", "label", "type"}:
