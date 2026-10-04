@@ -1,6 +1,6 @@
 # Novel Open-Source Integration Map
 
-> Updated: 2026-09-27  
+> Updated: 2026-10-04  
 > Scope: public GitHub projects that materially help Novel reach the Reference Pack → Style DNA + Story DNA → original long-form generation → human-feel/originality/evaluation target.
 
 ## Integration policy
@@ -50,6 +50,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `flagembedding` | [FlagOpen/FlagEmbedding](https://github.com/FlagOpen/FlagEmbedding) | MIT | adapter | BGE 向量/重排器；Reference similarity 与 Recall |
 | P1 | `sentence_transformers` | [huggingface/sentence-transformers](https://github.com/huggingface/sentence-transformers) | Apache-2.0 | adapter | 通用 embedding 备选 |
 | P0 | `rapidfuzz` | [rapidfuzz/RapidFuzz](https://github.com/rapidfuzz/RapidFuzz) | MIT | direct-optional | 人名/短语/事件摘要近似匹配与去重 |
+| P0 | `datasketch` | [ekzhu/datasketch](https://github.com/ekzhu/datasketch) | MIT | licensed-source-port | 对不可逆 shingle hash 做低内存 MinHash overlap 诊断 |
 | P0 | `docling` | [docling-project/docling](https://github.com/docling-project/docling) | MIT | adapter | 复杂 PDF/DOCX/版面解析，增强参考小说导入 |
 | P1 | `markitdown` | [microsoft/markitdown](https://github.com/microsoft/markitdown) | MIT | adapter | 多文档统一转 Markdown |
 | P2 | `unstructured` | [Unstructured-IO/unstructured](https://github.com/Unstructured-IO/unstructured) | Apache-2.0 | adapter | 文档 partition/metadata 备用路径 |
@@ -143,3 +144,13 @@ The registry + adapter model gives Novel access to the same capabilities while k
 5. Add Qdrant/LightRAG/HippoRAG recall adapters behind the existing `ContextAssembler`.
 6. Add promptfoo/DeepEval configs for frozen chapter tests.
 7. Add Fanqie-specific opening/first-20-chapter benchmark and real-platform feedback import.
+
+
+## Current source ports in PR #80
+
+- `novel_ai/spindle_temporal.py`: Spindle temporal coherence tripwire.
+- `novel_ai/lexical_richness.py`: LexicalRichness TTR/MATTR/MTLD diagnostics.
+- `novel_ai/minhash_similarity.py`: Datasketch MinHash/Jaccard adaptation over irreversible shingle hashes.
+- `novel_ai/mcp_readonly.py`: read-only MCP adapter using Novel's verified state and context APIs.
+
+Each port keeps an upstream commit, license file, provenance record, focused tests, and an advisory-only boundary in the author-confirmed workflow.
