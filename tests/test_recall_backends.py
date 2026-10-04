@@ -1,4 +1,7 @@
+from novel_ai.context import ContextAssembler
 from novel_ai.recall_backends import LocalSemanticRecall, create_sentence_transformer_recall, recall_backend_capabilities
+from novel_ai.storage import ProjectStore
+from unittest.mock import patch
 
 class DummyEncoder:
     def encode(self,texts):
@@ -39,3 +42,26 @@ def test_sentence_transformer_recall_factory_is_local_first_and_preserves_docs()
     assert backend.name == "sentence-transformers-local"
     assert hits[0].document_id == "a"
     assert calls[0][1]["local_files_only"] is True
+
+
+def test_context_uses_registry_resolution_for_explicit_local_backend(tmp_path):
+    store = ProjectStore(tmp_path)
+    store.save_extraction(
+        "P",
+        {"chapter_id": "old", "chapter_title": "旧章", "summary": "雨落在旧桥。"},
+    )
+    backend = LocalSemanticRecall(DummyEncoder())
+    with patch(
+        "novel_ai.oss_batch_20261004.choose_recall_backend",
+        return_value="native",
+    ) as selector:
+        context = ContextAssembler(
+            store, "P", local_semantic_recall=backend,
+        ).assemble(
+            recent_limit=0,
+            recall_query="雨",
+            history_chapter_ids=["old"],
+        )
+    selector.assert_called_once_with()
+    assert context.recall_report["registry_selected_backend"] == "native"
+    assert "雨落在旧桥" in context.recall_block

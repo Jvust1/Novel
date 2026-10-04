@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 import importlib.util
@@ -227,6 +228,37 @@ class LocalSemanticRecall:
 
     def query(self, text: str, *, limit: int = 5) -> list[RecallHit]:
         return self.search(text, limit)
+
+ 
+def resolve_local_recall_backend(
+    configured: Mapping[str, LocalSemanticRecall],
+    *,
+    preferred: tuple[str, ...] | None = None,
+) -> tuple[str, LocalSemanticRecall | None]:
+    """Resolve only configured local backends through the validated registry.
+
+    The registry remains an allow-list and capability probe. An installed
+    optional package is never imported or started unless its matching backend
+    instance was explicitly supplied by the caller. If the selected optional
+    key is absent, an explicitly configured native backend is used.
+    """
+    if not isinstance(configured, Mapping):
+        raise TypeError("configured recall backends must be a mapping")
+    entries = dict(configured)
+    for key, backend in entries.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError("recall backend keys must be non-empty strings")
+        if not isinstance(backend, LocalSemanticRecall):
+            raise TypeError("configured recall backends must be LocalSemanticRecall instances")
+
+    from .oss_batch_20261004 import choose_recall_backend
+
+    selected = choose_recall_backend() if preferred is None else choose_recall_backend(tuple(preferred))
+    backend = entries.get(selected)
+    if backend is not None:
+        return selected, backend
+    fallback = entries.get("native")
+    return ("native", fallback) if fallback is not None else ("native", None)
 
 
 def recall_backend_capabilities() -> dict[str, bool | str]:
