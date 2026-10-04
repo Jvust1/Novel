@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-01",
+  "updated_at": "2026-10-04",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,8 +9,8 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 61,
-    "p0": 15,
+    "total": 62,
+    "p0": 16,
     "p1": 31,
     "no_license": 2,
     "agpl": 2
@@ -610,6 +610,20 @@
       "stars_observed": 53203,
       "provenance": "docs/prompts/natural-fiction/source-lock.json",
       "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "spindle_temporal",
+      "repo": "VerifiedOrganic/spindle",
+      "category": "longform_consistency",
+      "license": "MIT",
+      "mode": "licensed-source-port",
+      "priority": "P0",
+      "use": "Actual deterministic intra-scene temporal coherence scan merged into Draft→Review→Repair review payload; advisory only",
+      "upstream_commit": "d88500849b3561b78cd4a80e85443aa66122155d",
+      "upstream_path": "crates/spindle-core/src/temporal/mod.rs",
+      "local_path": "novel_ai/spindle_temporal.py",
+      "provenance": "third_party/spindle/provenance.json",
+      "checked_at_utc": "2026-10-04"
     }
   ]
 }
