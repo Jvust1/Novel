@@ -632,8 +632,11 @@
       "license": "MIT",
       "mode": "optional-adapter",
       "priority": "P0",
-      "use": "Optional stdio MCP adapter for verified story status, canonical character lookup, accepted-history rebuild and UTF-8 context preflight; read-only handlers only",
-      "upstream_reference": "examples/stories/tools/server.py",
+      "use": "Optional stdio MCP adapter for verified story status, canonical character lookup, accepted-history rebuild and UTF-8 context preflight; ranked lookup adapted from MIT Novel Writer English; read-only handlers only",
+      "upstream_reference": [
+        "modelcontextprotocol/python-sdk: examples/stories/tools/server.py",
+        "JeroTan/novel-writer-english: src/mcp/story-library.js (normalizeText/scoreEntry)"
+      ],
       "local_path": "novel_ai/mcp_readonly.py",
       "provenance": "third_party/mcp-python-sdk/provenance.json",
       "checked_at_utc": "2026-10-04"
