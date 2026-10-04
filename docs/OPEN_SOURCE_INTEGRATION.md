@@ -48,7 +48,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `jieba` | [fxsjy/jieba](https://github.com/fxsjy/jieba) | MIT | licensed-source-port | Jieba DAG 分词移植，用故事人物词表稳定词汇统计 |
 | P0 | `text2vec` | [shibing624/text2vec](https://github.com/shibing624/text2vec) | Apache-2.0 | adapter | 中文语义向量、相似度、原创性/Recall 检索 |
 | P0 | `flagembedding` | [FlagOpen/FlagEmbedding](https://github.com/FlagOpen/FlagEmbedding) | MIT | adapter | BGE 向量/重排器；Reference similarity 与 Recall |
-| P1 | `sentence_transformers` | [huggingface/sentence-transformers](https://github.com/huggingface/sentence-transformers) | Apache-2.0 | adapter | 通用 embedding 备选 |
+| P1 | `sentence_transformers` | [huggingface/sentence-transformers](https://github.com/huggingface/sentence-transformers) | Apache-2.0 | optional-adapter+tested | 归一化 embedding 工厂与本地 Recall 回退 |
 | P0 | `rapidfuzz` | [rapidfuzz/RapidFuzz](https://github.com/rapidfuzz/RapidFuzz) | MIT | direct-optional | 人名/短语/事件摘要近似匹配与去重 |
 | P0 | `datasketch` | [ekzhu/datasketch](https://github.com/ekzhu/datasketch) | MIT | licensed-source-port | 对不可逆 shingle hash 做低内存 MinHash overlap 诊断 |
 | P0 | `docling` | [docling-project/docling](https://github.com/docling-project/docling) | MIT | adapter | 复杂 PDF/DOCX/版面解析，增强参考小说导入 |
@@ -57,13 +57,13 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P1 | `graphrag` | [microsoft/graphrag](https://github.com/microsoft/graphrag) | MIT | experiment-candidate | 全局/局部图检索；仅在 A/B 证明收益后启用 |
 | P1 | `lightrag` | [HKUDS/LightRAG](https://github.com/HKUDS/LightRAG) | MIT | experiment-candidate | 轻量图+向量 Recall |
 | P1 | `hipporag` | [OSU-NLP-Group/HippoRAG](https://github.com/OSU-NLP-Group/HippoRAG) | MIT | experiment-candidate | 关联式检索，适合长篇跨章关系回忆实验 |
-| P2 | `mem0` | [mem0ai/mem0](https://github.com/mem0ai/mem0) | Apache-2.0 | experiment-candidate | 记忆抽取/检索模式参考 |
+| P1 | `mem0` | [mem0ai/mem0](https://github.com/mem0ai/mem0) | Apache-2.0 | optional-adapter+tested | infer=false 的结构化记忆 Recall 适配 |
 | P1 | `graphiti` | [getzep/graphiti](https://github.com/getzep/graphiti) | Apache-2.0 | experiment-candidate | 带时间维度的知识图谱；适合人物/事件历史 |
-| P2 | `llama_index` | [run-llama/llama_index](https://github.com/run-llama/llama_index) | MIT | experiment-candidate | 索引/检索抽象，不替换 Novel 核心管线 |
+| P1 | `llama_index` | [run-llama/llama_index](https://github.com/run-llama/llama_index) | MIT | optional-adapter+tested | VectorStoreIndex/retriever Recall 适配，不替换核心管线 |
 | P2 | `langchain` | [langchain-ai/langchain](https://github.com/langchain-ai/langchain) | MIT | experiment-candidate | 外部工具和 retriever 接入模式 |
-| P2 | `haystack` | [deepset-ai/haystack](https://github.com/deepset-ai/haystack) | Apache-2.0 | experiment-candidate | 可组合 pipeline 组件模式 |
+| P1 | `haystack` | [deepset-ai/haystack](https://github.com/deepset-ai/haystack) | Apache-2.0 | optional-adapter+tested | DocumentStore/retriever Recall 适配 |
 | P2 | `chroma` | [chroma-core/chroma](https://github.com/chroma-core/chroma) | Apache-2.0 | experiment-candidate | 本地向量库候选 |
-| P1 | `qdrant` | [qdrant/qdrant](https://github.com/qdrant/qdrant) | Apache-2.0 | experiment-candidate | 长篇项目向量库候选 |
+| P1 | `qdrant` | [qdrant/qdrant](https://github.com/qdrant/qdrant) | Apache-2.0 | optional-adapter+tested | Qdrant client Recall 适配；本地 Recall 为默认回退 |
 | P1 | `litellm` | [BerriAI/litellm](https://github.com/BerriAI/litellm) | MIT-core | adapter | 统一多模型 Provider；企业目录不纳入 |
 | P0 | `ollama` | [ollama/ollama](https://github.com/ollama/ollama) | MIT | external-runtime | 本地模型运行时；Novel 已兼容 OpenAI-like 端点 |
 | P1 | `vllm` | [vllm-project/vllm](https://github.com/vllm-project/vllm) | Apache-2.0 | external-runtime | GPU 高吞吐 OpenAI-compatible serving |
@@ -74,7 +74,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P1 | `story_eval_dataset` | [lars76/story-evaluation-llm](https://github.com/lars76/story-evaluation-llm) | MIT | research-port | 创意写作评价维度/数据集结构参考 |
 | P3 | `storybench` | [Nazuna-io/storybench](https://github.com/Nazuna-io/storybench) | NO_LICENSE_DETECTED | architecture-reference-only | 并行创作评测架构；不复制代码 |
 | P2 | `ai_novel_assistant` | [sf621128/AI-Novel-Writing-Assistant](https://github.com/sf621128/AI-Novel-Writing-Assistant) | NO_LICENSE_DETECTED | architecture-reference-only | Creative Hub/RAG/小说生产链路参考；不复制代码 |
-| P2 | `dspy` | [stanfordnlp/dspy](https://github.com/stanfordnlp/dspy) | MIT | experiment-candidate | 用冻结 benchmark 优化 prompt/program，而非凭感觉调 Prompt |
+| P1 | `dspy` | [stanfordnlp/dspy](https://github.com/stanfordnlp/dspy) | MIT | optional-adapter+tested | 结构化外部审校 hook；仍受核心 Review gate 约束 |
 | P2 | `openai_evals` | [openai/evals](https://github.com/openai/evals) | MIT | research-port | 可复现实验 registry 与 eval 结构 |
 | P3 | `sillytavern` | [SillyTavern/SillyTavern](https://github.com/SillyTavern/SillyTavern) | AGPL-3.0 | architecture-reference-only | Lorebook/World Info/上下文 UX 参考；不复制到 Novel |
 | P3 | `koboldcpp` | [LostRuins/koboldcpp](https://github.com/LostRuins/koboldcpp) | AGPL-3.0 | external-runtime | GGUF 外部运行时，可通过 API 使用，不嵌入源码 |
@@ -146,9 +146,9 @@ The registry + adapter model gives Novel access to the same capabilities while k
 7. Add Fanqie-specific opening/first-20-chapter benchmark and real-platform feedback import.
 
 
-## Current source ports in PR #80
+## Current high-star fusions in PR #80
 
-This PR now contains fourteen focused, license-preserving source ports or algorithm adapters. Each one is wired into a real Novel path and has a focused test:
+This PR now tracks twenty focused high-star integrations: fourteen license-preserving source ports or algorithm adapters plus six optional adapters. Every item is wired into a real Novel path, has a focused test, and keeps an upstream commit/license record.
 
 - LangChain: `novel_ai/_vendor/langchain_mmr.py` and `novel_ai/_vendor/langchain_markdown.py` — opt-in continuity selection and outline import.
 - spaCy: `novel_ai/_vendor/spacy_spans.py` — overlap-safe span filtering.
@@ -165,4 +165,13 @@ This PR now contains fourteen focused, license-preserving source ports or algori
 - scikit-learn: `novel_ai/sklearn_cosine.py` — dependency-free cosine matrix wired into semantic similarity.
 - FAISS: `novel_ai/faiss_flat_search.py` — FlatIP/L2 exhaustive search fallback wired into LocalSemanticRecall.
 
-Every port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. No upstream runtime dependency is required for these local algorithm ports.
+The six tested optional adapters complete the twenty-project wave:
+
+- Qdrant: `novel_ai/qdrant_recall.py` — Qdrant client collection/point/query adapter; pinned client commit and Qdrant ecosystem provenance.
+- LlamaIndex: `novel_ai/llamaindex_recall.py` — VectorStoreIndex/retriever adapter for Novel RecallBackend.
+- Haystack: `novel_ai/haystack_recall.py` — DocumentStore/retriever adapter for Novel RecallBackend.
+- sentence-transformers: `novel_ai/recall_backends.py` — normalized embedding factory with local-first fallback.
+- DSPy: `novel_ai/upstream_adapters.py` — bounded structured review hook behind the core Review gate.
+- Mem0: `novel_ai/upstream_adapters.py` — namespaced infer-disabled memory adapter preserving Novel document identity.
+
+Each source port keeps an upstream commit, license file, provenance record, focused tests, and a bounded/advisory integration boundary. Each optional adapter keeps a pinned upstream commit, license and adapter provenance record. No upstream runtime dependency is required for the local algorithm ports, and the optional adapters remain disabled unless explicitly configured.
