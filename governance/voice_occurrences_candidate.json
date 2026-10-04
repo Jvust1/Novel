@@ -1,0 +1,153 @@
+{
+  "schema": "novel-voice-occurrences-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "fix/voice-occurrences-20261004",
+  "base_head": "e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96",
+  "base_tree": "9c4a858606a630079217a27427fdea4294d29a0f",
+  "docs": "docs/VOICE_OCCURRENCES.md",
+  "scope": [
+    "retain distinct attributed quote occurrences",
+    "inspect sentence-final particles past punctuation",
+    "isolate incompatible v2 cached metrics using version 3"
+  ],
+  "reuse": {
+    "upstream": "explosion/spaCy",
+    "commit": "26b4d1dc04a812f426e4bef3e8a1b6f159d6f048",
+    "license": "MIT",
+    "retained_license_blob": "6cb7810c6ee4ca32c79e68b9f39fbbce2183243a",
+    "mode": "reuse existing filter_spans source port unchanged",
+    "verification_date": "2026-10-04",
+    "new_runtime_dependencies": []
+  },
+  "validation": {
+    "python": "3.12.14",
+    "baseline_full": {
+      "passed": 2248,
+      "skipped": 9,
+      "seconds": 220.66
+    },
+    "independent_regression": {
+      "cases": 33,
+      "baseline_failed": 24,
+      "baseline_passed": 9,
+      "fixed_passed": 33
+    },
+    "executable_rollback": {
+      "failed": 24,
+      "passed": 9,
+      "fixed_bytes_restored": true,
+      "restored_passed": 33
+    },
+    "focused_with_existing_voice_tests": {
+      "passed": 68
+    },
+    "final_full": {
+      "passed": 2287,
+      "skipped": 9,
+      "seconds": 216.97
+    },
+    "fatal_ruff": "passed",
+    "new_test_full_ruff": "passed",
+    "default_ruff_advisory_baseline": 449,
+    "default_ruff_advisory_final": 449,
+    "dependency_consistency": "passed",
+    "compileall": "passed",
+    "integration_availability_report": "passed; optional integrations remain absent",
+    "current_entry_check": "passed; public main pointer unchanged",
+    "diff_whitespace": "passed",
+    "remote_ci": "Prior head results retained separately; current post-alignment exact-head CI and actual connector retrieval receipts will be reported on the PR.",
+    "intermediate_full": {
+      "status": "interrupted",
+      "exit_code": 130,
+      "reason": "replaced suffix regex after independent review found quadratic backtracking; final suite restarted on backward scan"
+    },
+    "new_document_local_links": 4,
+    "first_final_full": {
+      "failed": 5,
+      "passed": 2276,
+      "skipped": 9,
+      "seconds": 215.04,
+      "reason": "frozen PR54 whole-response snapshots include intentionally changed derived Voice DNA; under compatibility review"
+    },
+    "journal_and_voice_regression": {
+      "passed": 91,
+      "seconds": 5.09
+    },
+    "frozen_compatibility": {
+      "original_pr54_hashes_retained": 7,
+      "source_fixtures_unchanged": 3,
+      "unexpected_value_guards": 6,
+      "fixture_context_byte_delta": 30,
+      "projection": "test-only; explicit v3 assertions precede exact reverse projection of known derived fields; canonical JSON and actual byte accounting required"
+    },
+    "compatibility_guard_rerun": {
+      "status": "previous run interrupted before completion for final canonical-JSON test guard",
+      "exit_code": 130
+    },
+    "prior_head_ci": {
+      "head": "af9a4c929d4011d7de0a106123ee5b53bfbfe790",
+      "run": 37193521067,
+      "final_attempt": 2,
+      "conclusion": "success",
+      "linux_3_11": {
+        "passed": 2287,
+        "skipped": 9,
+        "seconds": 186.85
+      },
+      "linux_3_12": {
+        "passed": 2287,
+        "skipped": 9,
+        "seconds": 346.24
+      },
+      "windows_3_11": {
+        "passed": 2279,
+        "skipped": 17,
+        "seconds": 911.12
+      },
+      "windows_3_12_first_attempt": {
+        "failed": 1,
+        "passed": 2278,
+        "skipped": 17,
+        "seconds": 1317.16,
+        "failure": "existing commit.result(timeout=5) completion deadline"
+      },
+      "windows_3_12_retry": {
+        "passed": 2279,
+        "skipped": 17,
+        "seconds": 1267.96
+      },
+      "retry_change": "none; same head, unchanged test timeout and assertions"
+    },
+    "plugin_alignment_full": {
+      "passed": 2290,
+      "skipped": 9,
+      "seconds": 219.62
+    }
+  },
+  "boundaries": [
+    "synthetic offline fixtures only; no paid model calls or private manuscript publication",
+    "conservative lexical speaker attribution; no literary-quality claim",
+    "no automatic old-cache migration or author acceptance",
+    "no main merge, deployment or workflow changes"
+  ],
+  "primary_use": "GPT reads repository rules and stage prompts through the connected GitHub plugin; Python diagnostics are optional execution evidence",
+  "plugin_alignment": {
+    "changed_paths": [
+      "docs/GPT_WRITING_ENTRY.md",
+      "docs/prompts/natural-fiction/02-editorial-review.md",
+      "docs/prompts/natural-fiction/03-local-repair.md"
+    ],
+    "contract": "source-addressed quote occurrences, intentional repetition preserved, exact local-patch scope, new-draft re-review, text-only capability honesty",
+    "affected_checks": {
+      "passed": 179,
+      "seconds": 14.04
+    },
+    "actual_connected_read_before_alignment": {
+      "commit": "af9a4c929d4011d7de0a106123ee5b53bfbfe790",
+      "files": 7,
+      "method": "GitHub MCP fetch_file with exact ref; complete text and blob SHA returned"
+    },
+    "postpublication_retrieval": "must verify exact new commit and blob identities; record receipts on PR",
+    "limits": "content tests and retrieval are not proof of independent GPT prompt obedience or literary quality; no Novel-hosted MCP server added"
+  }
+}

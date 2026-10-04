@@ -138,6 +138,41 @@ def test_reader_reveal_template_is_blank_and_source_licensed():
     assert template['entry_template']['reader_known'] == []
     for key in ('term_id', 'term', 'full_truth', 'accepted_draft_reference', 'memory_confirmation_reference'):
         assert template['entry_template'][key] is None
+
+
+def test_gpt_entry_routes_occurrence_review_to_live_stage_prompts():
+    entry = (ROOT / 'docs/GPT_WRITING_ENTRY.md').read_text(encoding='utf-8')
+    assert '[02 审校](prompts/natural-fiction/02-editorial-review.md)' in entry
+    assert '[03 局部修订](prompts/natural-fiction/03-local-repair.md)' in entry
+    assert '同文多次不合并，歧义归属不猜，重复不自动判错' in entry
+    assert '不自动替换其他同文' in entry
+    assert '不能把读取源码当成已执行检查' in entry
+
+
+def test_text_voice_review_requires_position_evidence_and_honest_capability():
+    review = (PROMPTS / '02-editorial-review.md').read_text(encoding='utf-8')
+    for contract in (
+        '章节 ID / 正文版本 / 段号 / 本段对白出现序号',
+        '不能按句子文字去重', '同一处对白的前后标签只归为一次',
+        '归属不明', '相同措辞本身不是声线漂移',
+        '文本审读，未运行 Voice DNA', '不能伪造哈希或重算回执',
+        '旧 v2 与新 v3 指标不能混成同一基线',
+        '不要求作者安装或运行程序',
+    ):
+        assert contract in review
+
+
+def test_text_repair_keeps_other_occurrences_and_requires_fresh_review():
+    repair = (PROMPTS / '03-local-repair.md').read_text(encoding='utf-8')
+    for contract in (
+        '章节 ID / 正文版本 / 段号 / 本段对白出现序号',
+        '不得全局替换或自动扩大到其他出现处',
+        '保留作者有意重复', '未获准的同文出现处保持原样',
+        '新正文版本不得沿用旧声线结论',
+        '文本审读，未运行 Voice DNA', '绑定新正文版本的真实报告',
+        '未明确授权写回时不覆盖原稿',
+    ):
+        assert contract in repair
     record = json.loads((ROOT / 'third_party/chinese-novelist-skill/provenance.json').read_text())
     assert record['stars_observed'] >= 1000
     data = (ROOT / record['license']['preserved_at']).read_bytes()

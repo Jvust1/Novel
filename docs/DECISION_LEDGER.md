@@ -1,3 +1,14 @@
+# 2026-10-04 — Measure voice by source occurrence
+
+Deduplicate attribution by exact quote span, never by equal dialogue text at
+different positions. Reuse the existing MIT spaCy longest-span port, preserving
+its conservative speaker rules. Count final particles after sentence terminators
+without changing other metrics. Version these measurements as v3 rather than
+silently comparing them with v2 caches. The primary GPT/GitHub reading flow uses
+the same occurrence-evidence discipline in its actual stage prompts; it does not
+claim that reading a file executes those numeric diagnostics. No new dependency, automatic archive
+migration, acceptance shortcut or threshold change. See [scope](VOICE_OCCURRENCES.md).
+
 # 2026-10-01 — 历史来源同标识冲突检查
 
 当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。

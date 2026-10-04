@@ -14,7 +14,7 @@ from typing import Sequence
 from ._vendor.spacy_spans import filter_spans
 
 
-ATTRIBUTION_VERSION = 2
+ATTRIBUTION_VERSION = 3
 _SPEECH_VERBS = r"(?:冷笑道|笑道|说道|回答|反问|嘀咕|说|问|答|道|喊|叫)"
 _SPEECH_ADVERB = r"(?:(?:低声|轻声|小声|大声|高声|沉声|厉声|缓缓|轻轻|冷冷|平静|笑着|冷笑着|叹息着)(?:地)?)?"
 
@@ -27,7 +27,7 @@ class NameSpan:
 
 
 def attributed_dialogue(text: str, names: Sequence[str]) -> dict[str, list[str]]:
-    """Assign a quote only when exactly one registered name matches its tag."""
+    """Assign each quote occurrence to one unambiguous registered speaker."""
     canonical = list(dict.fromkeys(str(name).strip() for name in names if str(name).strip()))
     spans = filter_spans(
         NameSpan(match.start(), match.end(), name)
@@ -64,6 +64,8 @@ def attributed_dialogue(text: str, names: Sequence[str]) -> dict[str, list[str]]
             continue
         name = next(iter(speakers))
         dialogue = text[start:end].strip()
-        if dialogue and dialogue not in result[name]:
+        # Candidate keys already coalesce multiple tags for the same source
+        # span. Equal text at different spans is a distinct voice sample.
+        if dialogue:
             result[name].append(dialogue)
     return dict(result)

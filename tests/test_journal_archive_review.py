@@ -19,6 +19,62 @@ def stable_hash(data):
     return hashlib.sha256(json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
 
+def _pr54_voice_v2_projection(voices):
+    """Reverse only the independently audited v3 delta in this frozen fixture.
+
+    This is a test-only projection, not a production metric conversion. Exact
+    current values are checked before projecting; every other field is retained.
+    """
+    assert set(voices) == {"林青", "木禾"}
+    expected = {"林青": (2, {"吧": 1, "吗": 1}), "木禾": (1, {})}
+    projected = deepcopy(voices)
+    for name, (line_count, particles) in expected.items():
+        assert voices[name]["attribution_version"] == 3
+        assert voices[name]["line_count"] == line_count
+        assert voices[name]["ending_particles"] == particles
+        projected[name]["attribution_version"] = 2
+        projected[name]["ending_particles"] = {}
+    return projected
+
+
+def _pr54_history_v2_projection(history):
+    projected = deepcopy(history)
+    # Reconstruct each collection independently: accepted/recent entries can
+    # share objects in the real result, which this helper must never mutate.
+    for key in ("accepted_chapters", "recent_chapters"):
+        if key in history:
+            assert len(history[key]) == 1
+            projected[key] = [
+                {**deepcopy(row), "voice_dna": _pr54_voice_v2_projection(row["voice_dna"])}
+                for row in history[key]
+            ]
+    projected["voice_baseline"] = _pr54_voice_v2_projection(history["voice_baseline"])
+    return projected
+
+
+def _pr54_result_v2_projection(result, variant):
+    if variant == "history":
+        return _pr54_history_v2_projection(result)
+    marker = "\nACCEPTED HISTORY ONLY. Rebuilt from verified author-accepted versions; candidates are excluded.\n"
+    prefix, separator, raw_history = result["context_text"].partition(marker)
+    assert separator == marker
+    history = json.loads(raw_history)
+    assert raw_history == json.dumps(history, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    assert result["used_bytes"] == len(result["context_text"].encode("utf-8"))
+    assert result["history_bytes"] == len((marker + raw_history).encode("utf-8")) == 2479
+    old_history = _pr54_history_v2_projection(history)
+    old_raw = json.dumps(old_history, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    delta = len(raw_history.encode("utf-8")) - len(old_raw.encode("utf-8"))
+    assert delta == 30  # Exactly two embedded copies of {"吧":1,"吗":1}.
+    projected = deepcopy(result)
+    projected["context_text"] = prefix + marker + old_raw
+    projected["history_bytes"] -= delta
+    projected["used_bytes"] -= delta
+    assert projected["history_bytes"] == 2449
+    assert projected["used_bytes"] == len(projected["context_text"].encode("utf-8"))
+    return projected
+
+
 @pytest.fixture
 def saved_journal(tmp_path):
     original = ready_archive(tmp_path)
@@ -54,8 +110,16 @@ def save_load(path, value):
 ])
 def test_native_v1_matches_fixed_pr54_golden(tmp_path, variant, expected):
     # Values independently computed against frozen PR54 source 39d101330a11.
+    # Keep those constants intact. Assert current v3 measurements, then reverse
+    # only their audited derived delta for this frozen compatibility comparison.
     # CI uses constants; it does not need another local checkout.
-    value = state.load_state(ready_archive(tmp_path), expected_story_id="synthetic-story")
+    path = ready_archive(tmp_path)
+    before_bytes = path.read_bytes()
+    value = state.load_state(path, expected_story_id="synthetic-story")
+    before_state = value.model_dump(mode="json")
+    before_identity = state.state_fingerprint(value)
+    before_sources = [(state.source_fingerprint(row["plan"]), state.source_fingerprint(row["draft"]))
+                      for row in value.accepted_chapters]
     if variant == "history":
         result = state.rebuild_accepted_history(value)
         result["readback_file_sha256"] = "NORMALIZED_FILE_SHA"
@@ -63,7 +127,33 @@ def test_native_v1_matches_fixed_pr54_golden(tmp_path, variant, expected):
         options = {"include_current_draft": False} if variant == "omit" else {"history_source_limit": 0} if variant == "no_auto" else {}
         result = state.preflight_next_chapter_context(value, [], 1000 if variant == "small" else 200000, **options)
         result["accepted_history"]["readback_file_sha256"] = "NORMALIZED_FILE_SHA"
-    assert stable_hash(result) == expected
+    before_result = deepcopy(result)
+    projected = _pr54_result_v2_projection(result, variant)
+    assert stable_hash(projected) == expected
+    assert result == before_result
+    assert value.model_dump(mode="json") == before_state
+    assert state.state_fingerprint(value) == before_identity
+    assert [(state.source_fingerprint(row["plan"]), state.source_fingerprint(row["draft"]))
+            for row in value.accepted_chapters] == before_sources
+    assert path.read_bytes() == before_bytes
+
+
+@pytest.mark.parametrize("change", ["old_version", "future_version", "wrong_count", "missing_particle", "extra_particle", "foreign_character"])
+def test_pr54_voice_projection_refuses_unexpected_values_without_mutation(change):
+    voices = {
+        "林青": {"attribution_version": 3, "line_count": 2, "ending_particles": {"吧": 1, "吗": 1}},
+        "木禾": {"attribution_version": 3, "line_count": 1, "ending_particles": {}},
+    }
+    if change == "old_version": voices["林青"]["attribution_version"] = 2
+    elif change == "future_version": voices["林青"]["attribution_version"] = 4
+    elif change == "wrong_count": voices["林青"]["line_count"] = 1
+    elif change == "missing_particle": voices["林青"]["ending_particles"].pop("吧")
+    elif change == "extra_particle": voices["木禾"]["ending_particles"]["呢"] = 1
+    else: voices["foreign"] = deepcopy(voices["木禾"])
+    before = deepcopy(voices)
+    with pytest.raises(AssertionError):
+        _pr54_voice_v2_projection(voices)
+    assert voices == before
 
 
 @pytest.mark.parametrize("mode,expected", [

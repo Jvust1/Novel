@@ -12,6 +12,7 @@ from .dialogue_attribution import ATTRIBUTION_VERSION, attributed_dialogue
 
 
 _PARTICLES = tuple("吧呢啊呀嘛呗哦嗯吗啦")
+_DIALOGUE_TERMINATORS = frozenset("。！？!?…．.")
 _CURVE_HIGH = ("高潮", "爆发", "峰", "climax", "peak", "surge", "high")
 _CURVE_RISE = ("上升", "升温", "推进", "rise", "rising")
 _CURVE_LOW = ("低谷", "缓和", "平静", "回落", "low", "fall", "quiet", "rest")
@@ -48,7 +49,15 @@ def character_voice_dna(text: str, character_names: Sequence[str]) -> dict[str, 
             continue
         lengths = [len(_compact(line)) for line in lines]
         total = max(1, len(lines))
-        ending = Counter(line[-1] for line in lines if line and line[-1] in _PARTICLES)
+        ending = Counter()
+        for line in lines:
+            # Inspect the lexical ending without changing the original sample
+            # used for lengths and question/exclamation/ellipsis ratios.
+            end = len(line)
+            while end and (line[end - 1].isspace() or line[end - 1] in _DIALOGUE_TERMINATORS):
+                end -= 1
+            if end and line[end - 1] in _PARTICLES:
+                ending[line[end - 1]] += 1
         result[str(name)] = {
             "attribution_version": ATTRIBUTION_VERSION,
             "line_count": len(lines),

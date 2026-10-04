@@ -1,3 +1,16 @@
+# 2026-10-04 — Occurrence-correct Voice DNA candidate
+
+Independent branch `fix/voice-occurrences-20261004` starts from current `main` at
+`e3e3c9218bd74f3c7b0f90e23106af9f8ced7a96`. Repeated speech at distinct source
+spans now retains its frequency, and sentence-final punctuation no longer hides
+speech particles. New v3 measurements exclude incompatible cached baselines;
+accepted-source bytes and author confirmations remain unchanged. The default
+GPT entry now connects occurrence evidence and version-bound re-review directly
+to the review/local-repair prompts, with honest text-only capability labels. See
+[behavior and limits](VOICE_OCCURRENCES.md) and
+[verification record](../governance/voice_occurrences_candidate.json).
+The public entry remains `main`; this is a review candidate, not a merge receipt.
+
 # 2026-10-01 — 历史来源同标识冲突检查
 
 当前候选 `fix/history-source-identity-20261001` 叠加已验证 #65。在原共享历史合并边界比较完整来源指纹，仅完全一致才复用；不同原件使用同 ID/版本时明确阻塞，避免默认续写静默漏章。原接受记录、历史哈希、来源数量选择和预算通道不重建。见 [说明](HISTORY_SOURCE_IDENTITY.md) 与 [验证记录](../governance/history_source_identity_candidate.json)。下方保留历史。
