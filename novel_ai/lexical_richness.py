@@ -15,15 +15,17 @@ import re
 from statistics import mean
 from typing import Any
 
+from .jieba_tokenizer import segment as jieba_segment
+
 
 _TOKEN_RE = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)?|[一-鿿]|\d+")
 
 
-def tokenize(text: str) -> list[str]:
-    """Tokenize mixed Chinese/English prose without an external dependency."""
+def tokenize(text: str, vocabulary: Iterable[str] = ()) -> list[str]:
+    """Tokenize mixed Chinese/English prose with the bounded jieba DAG port."""
     if not isinstance(text, str):
         raise TypeError("text must be a string")
-    return [match.group(0).casefold() for match in _TOKEN_RE.finditer(text)]
+    return jieba_segment(text, vocabulary)
 
 
 def _validated_tokens(tokens: Iterable[str]) -> list[str]:
@@ -85,9 +87,11 @@ def mtld(tokens: Iterable[str], threshold: float = 0.72) -> float:
 
 
 def lexical_richness_report(text: str, *, window_size: int = 100,
-                            threshold: float = 0.72) -> dict[str, Any]:
+                            threshold: float = 0.72,
+                            vocabulary: Iterable[str] = ()) -> dict[str, Any]:
     """Return bounded, JSON-safe lexical diversity evidence for review reports."""
-    words = tokenize(text)
+    vocabulary = tuple(vocabulary)
+    words = tokenize(text, vocabulary)
     return {
         "schema": "lexical-richness-v1",
         "backend": "lexicalrichness-port",
@@ -102,6 +106,8 @@ def lexical_richness_report(text: str, *, window_size: int = 100,
         "ttr": round(ttr(words), 4),
         "mattr": round(mattr(words, window_size), 4),
         "mtld": round(mtld(words, threshold), 4),
+        "tokenizer_backend": "jieba-dag-port",
+        "vocabulary_size": len(tuple(vocabulary)),
         "advisory_only": True,
     }
 
