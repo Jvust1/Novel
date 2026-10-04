@@ -1,0 +1,11 @@
+{
+  "upstream": "fxsjy/jieba",
+  "upstream_commit": "67fa2e36e72f69d9134b8a1037b83fbb070b9775",
+  "upstream_path": "jieba/__init__.py",
+  "license": "MIT",
+  "source_symbols": ["Tokenizer.get_DAG", "Tokenizer.calc", "Tokenizer.__cut_DAG_NO_HMM"],
+  "local_path": "novel_ai/jieba_tokenizer.py",
+  "adaptation": "Ported the prefix dictionary, DAG construction and log-probability route selection into a bounded Python 3 tokenizer that accepts only caller-supplied story vocabulary; no jieba dictionary or runtime dependency is vendored.",
+  "stars_checked": 35175,
+  "retrieved_at_utc": "2026-10-04"
+}
