@@ -104,7 +104,11 @@ def extract_reference(filename: str, data: bytes, *, encoding: str | None = None
         raise ValueError("显式文本编码仅适用于 TXT/MD 文件")
     text, backend = _extract_reference_text_with_backend(filename, data)
     clean, removed = sanitize_extracted_text(text)
-    return ReferenceExtraction(clean, backend, {"invisible_codepoints_removed": removed})
+    # Preserve the long-standing non-text reader contract: decoding metadata is
+    # only populated for text codecs. Advanced readers may still report a
+    # sanitization count when they actually remove hidden codepoints.
+    decoding = {"invisible_codepoints_removed": removed} if removed else None
+    return ReferenceExtraction(clean, backend, decoding)
 
 
 def extract_reference_text_with_backend(filename: str, data: bytes, *, encoding: str | None = None) -> tuple[str, str]:
