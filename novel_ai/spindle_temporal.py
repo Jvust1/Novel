@@ -221,3 +221,9 @@ def temporal_coherence_report(
         "issues": issues,
         "advisory_only": True,
     }
+
+def temporal_review_payload(report: dict[str, Any]) -> dict[str, Any]:
+    """Expose only Review-compatible issues from a temporal report."""
+    if not isinstance(report, dict) or not isinstance(report.get("issues"), list):
+        raise ValueError("temporal report must contain an explicit issues list")
+    return {"issues": [dict(item) for item in report["issues"]]}
