@@ -4,7 +4,7 @@ from novel_ai.lexical_richness import lexical_richness_report, mattr, mtld, ttr
 def test_ttr_and_mattr_are_deterministic():
     tokens = ["a", "b", "a", "c", "b", "d"]
     assert ttr(tokens) == 4 / 6
-    assert mattr(tokens, window_size=3) == (1 + 1 + 1) / 3
+    assert mattr(tokens, window_size=3) == (2 / 3 + 1 + 1 + 1) / 4
 
 
 def test_mtld_is_bidirectional_and_finite_for_repetitive_text():
