@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import hashlib
 import importlib.util
 import re
 from typing import Any, Sequence
 
+from .minhash_similarity import minhash_overlap
 from .semantic import Encoder, max_reference_similarity
 from .style_engine import reference_overlap
 
@@ -21,6 +23,7 @@ class SimilarityIssue:
 @dataclass
 class SimilarityReport:
     shingle_overlap: float = 0.0
+    minhash_max: float = 0.0
     fuzzy_max: float = 0.0
     semantic_max: float = 0.0
     event_sequence_max: float = 0.0
@@ -41,6 +44,16 @@ def _bigram_set(text: str) -> set[str]:
     if len(text) < 2:
         return {text} if text else set()
     return {text[i:i+2] for i in range(len(text)-1)}
+
+
+def _shingle_hashes(text: str, shingle_chars: int = 18) -> set[str]:
+    compact = _compact(text)
+    if len(compact) < shingle_chars:
+        return set()
+    return {
+        hashlib.sha256(compact[i : i + shingle_chars].encode("utf-8")).hexdigest()[:20]
+        for i in range(len(compact) - shingle_chars + 1)
+    }
 
 
 def fuzzy_similarity(a: str, b: str) -> float:
@@ -151,6 +164,12 @@ def analyze_reference_similarity(
     event_refs = list(reference_event_sequences or [])
 
     shingle = reference_overlap(text, hashes) if hashes else 0.0
+    candidate_hashes = _shingle_hashes(text)
+    minhash_max = (
+        minhash_overlap(candidate_hashes, hashes)
+        if hashes and candidate_hashes
+        else 0.0
+    )
     fuzzy_max, fuzzy_idx = _max_score(text, refs)
 
     semantic_max = 0.0
@@ -204,6 +223,7 @@ def analyze_reference_similarity(
     score = max(0, 100 - sum(penalty.get(i.severity, 0) for i in issues))
     return SimilarityReport(
         shingle_overlap=round(shingle, 6),
+        minhash_max=round(minhash_max, 6),
         fuzzy_max=round(fuzzy_max, 6),
         semantic_max=round(semantic_max, 6),
         event_sequence_max=round(event_max, 6),
@@ -211,6 +231,7 @@ def analyze_reference_similarity(
             "rapidfuzz": importlib.util.find_spec("rapidfuzz") is not None,
             "embedding": encoder is not None,
             "reference_hashes": bool(hashes),
+            "datasketch_minhash": bool(hashes),
             "temporary_reference_passages": bool(refs),
             "event_sequences": bool(event_refs),
         },
@@ -224,6 +245,7 @@ def similarity_review_payload(report: SimilarityReport) -> dict[str, Any]:
         "score": report.score,
         "metrics": {
             "shingle_overlap": report.shingle_overlap,
+            "minhash_max": report.minhash_max,
             "fuzzy_max": report.fuzzy_max,
             "semantic_max": report.semantic_max,
             "event_sequence_max": report.event_sequence_max,
