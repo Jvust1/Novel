@@ -92,8 +92,13 @@ def create_server(state_path: str | Path, story_id: str):
     if not isinstance(story_id, str) or not story_id.strip():
         raise ValueError("story_id must be nonempty")
     server = FastMCP("Novel read-only library")
-    read_only = ToolAnnotations(read_only_hint=True, destructive_hint=False,
-                                idempotent_hint=True, open_world_hint=False)
+    try:
+        # v1.x uses protocol-style constructor names; v2 uses Python aliases.
+        read_only = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                    idempotentHint=True, openWorldHint=False)
+    except (TypeError, ValueError):  # pragma: no cover - selected by SDK version
+        read_only = ToolAnnotations(read_only_hint=True, destructive_hint=False,
+                                    idempotent_hint=True, open_world_hint=False)
 
     def read_state(expected_revision: int | None = None, expected_sha256: str | None = None):
         return load_state(fixed_path, expected_story_id=story_id,
