@@ -388,9 +388,21 @@
       "repo": "virgiliojr94/book-to-skill",
       "category": "document_ingest",
       "license": "MIT",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "把用户提供的书籍/参考文档转换为按需加载的 Agent Skill，作为 Reference Pack / Story DNA 前的结构化知识层"
+      "use": "参考文档转换前的不可见 Unicode、双向控制与隐藏文本清洗，防止文档内容伪装成指令进入 Story DNA",
+      "source_port": {
+        "upstream_commit": "c108d25b0cb58e1bdc361f3de02ed9f37075152f",
+        "upstream_path": "book_to_skill/sanitize.py",
+        "source_symbols": [
+          "is_invisible_codepoint",
+          "sanitize_extracted_text"
+        ],
+        "local_path": "novel_ai/document_sanitizer.py",
+        "license_path": "third_party/book-to-skill/LICENSE",
+        "provenance": "third_party/book-to-skill/provenance-sanitizer.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "lexicalrichness",
