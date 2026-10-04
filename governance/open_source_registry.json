@@ -487,9 +487,22 @@
       "repo": "ekzhu/datasketch",
       "category": "originality",
       "license": "MIT",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P0",
-      "use": "MinHash 跨章近似重复检测"
+      "use": "MinHash 近似 shingle overlap，支持大规模参考库的低内存重复检测",
+      "source_port": {
+        "upstream_commit": "ee60290e982be00b6f0a6aea8156e2be4d6921e6",
+        "upstream_path": "datasketch/minhash.py",
+        "source_symbols": [
+          "MinHash.update",
+          "MinHash.jaccard"
+        ],
+        "local_path": "novel_ai/minhash_similarity.py",
+        "license_path": "third_party/datasketch/LICENSE",
+        "provenance": "third_party/datasketch/provenance.json",
+        "stars_checked": 4700,
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "networkx",
