@@ -65,3 +65,69 @@ def test_context_uses_registry_resolution_for_explicit_local_backend(tmp_path):
     selector.assert_called_once_with()
     assert context.recall_report["registry_selected_backend"] == "native"
     assert "雨落在旧桥" in context.recall_block
+
+
+def test_context_uses_configured_optional_backend_from_registry(tmp_path):
+    store = ProjectStore(tmp_path)
+    store.save_extraction(
+        "P",
+        {"chapter_id": "old", "chapter_title": "旧章", "summary": "雨落在旧桥。"},
+    )
+    native_backend = LocalSemanticRecall(DummyEncoder())
+    native_backend.name = "native-test"
+    selected_backend = LocalSemanticRecall(DummyEncoder())
+    selected_backend.name = "selected-test"
+    with patch(
+        "novel_ai.oss_batch_20261004.choose_recall_backend",
+        return_value="sentence_transformers",
+    ) as selector, patch.object(
+        selected_backend, "query", wraps=selected_backend.query,
+    ) as query:
+        context = ContextAssembler(
+            store,
+            "P",
+            recall_backends={
+                "native": native_backend,
+                "sentence_transformers": selected_backend,
+            },
+        ).assemble(
+            recent_limit=0,
+            recall_query="雨",
+            history_chapter_ids=["old"],
+        )
+    selector.assert_called_once_with()
+    query.assert_called_once_with("雨", limit=8)
+    assert context.recall_report["registry_selected_backend"] == "sentence_transformers"
+    assert context.recall_report["backend"] == "selected-test"
+    assert selected_backend.ids
+    assert native_backend.ids == []
+
+
+def test_context_falls_back_to_configured_native_backend(tmp_path):
+    store = ProjectStore(tmp_path)
+    store.save_extraction(
+        "P",
+        {"chapter_id": "old", "chapter_title": "旧章", "summary": "雨落在旧桥。"},
+    )
+    native_backend = LocalSemanticRecall(DummyEncoder())
+    native_backend.name = "native-fallback-test"
+    with patch(
+        "novel_ai.oss_batch_20261004.choose_recall_backend",
+        return_value="sentence_transformers",
+    ) as selector, patch.object(
+        native_backend, "query", wraps=native_backend.query,
+    ) as query:
+        context = ContextAssembler(
+            store,
+            "P",
+            recall_backends={"native": native_backend},
+        ).assemble(
+            recent_limit=0,
+            recall_query="雨",
+            history_chapter_ids=["old"],
+        )
+    selector.assert_called_once_with()
+    query.assert_called_once_with("雨", limit=8)
+    assert context.recall_report["registry_selected_backend"] == "native"
+    assert context.recall_report["backend"] == "native-fallback-test"
+    assert native_backend.ids
