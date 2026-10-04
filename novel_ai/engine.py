@@ -457,7 +457,7 @@ class NovelEngine:
                 "similarity_report": similarity_payload,
                 "workflow_report": workflow_summary(plan, text, target_chars=target_chars),
                 "temporal_report": temporal_coherence_report(text),
-                "lexical_richness": lexical_richness_report(text),
+                "lexical_richness": lexical_richness_report(text, vocabulary=[c.name for c in characters]),
                 "voice": {"current": voice_current, "baseline": voice_baseline, "alerts": alerts,
                           "baseline_provenance": "caller supplied; not accepted-manuscript revision validation"},
                 "plan_evidence": deepcopy(plan_evidence),
