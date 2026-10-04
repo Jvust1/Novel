@@ -23,3 +23,10 @@ def test_event_sequence_similarity_rewards_same_order():
     b = ["接到匿名来电", "赶到旧仓库", "发现一把钥匙"]
     c = ["城外下雪", "商队进城", "酒馆争吵"]
     assert event_sequence_similarity(a, b) > event_sequence_similarity(a, c)
+
+
+def test_minhash_signal_is_reported_for_irreversible_reference_hashes():
+    ref = "他推开门，桌上的电话正在响，而走廊里没有任何脚步声。" * 8
+    report = analyze_reference_similarity(ref, reference_hashes=build_reference_signature(ref))
+    assert report.minhash_max > 0.8
+    assert report.backends["datasketch_minhash"] is True
