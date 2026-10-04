@@ -7,6 +7,7 @@ import re
 from typing import Any, Sequence
 
 from .minhash_similarity import minhash_overlap
+from .rapidfuzz_similarity import normalized_similarity
 from .semantic import Encoder, max_reference_similarity
 from .style_engine import reference_overlap
 
@@ -63,10 +64,7 @@ def fuzzy_similarity(a: str, b: str) -> float:
             return round(float(ratio(a, b)) / 100.0, 6)
         except Exception:
             pass
-    ga, gb = _bigram_set(a), _bigram_set(b)
-    if not ga or not gb:
-        return 0.0
-    return round(2 * len(ga & gb) / (len(ga) + len(gb)), 6)
+    return normalized_similarity(a, b)
 
 
 def _max_score(text: str, refs: Sequence[str]) -> tuple[float, int | None]:
@@ -229,6 +227,7 @@ def analyze_reference_similarity(
         event_sequence_max=round(event_max, 6),
         backends={
             "rapidfuzz": importlib.util.find_spec("rapidfuzz") is not None,
+            "rapidfuzz_port": True,
             "embedding": encoder is not None,
             "reference_hashes": bool(hashes),
             "datasketch_minhash": bool(hashes),
