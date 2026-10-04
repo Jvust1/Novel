@@ -1,0 +1,11 @@
+{
+  "upstream": "facebookresearch/faiss",
+  "upstream_commit": "b0074a3fa426027d9ff8575b44386d5922859ac9",
+  "upstream_path": "faiss/IndexFlat.cpp",
+  "license": "MIT",
+  "source_symbols": ["IndexFlat::search"],
+  "local_path": "novel_ai/faiss_flat_search.py",
+  "adaptation": "Ported exhaustive inner-product and L2 ranking semantics to a bounded Python fallback and wired it into LocalSemanticRecall when the optional FAISS runtime is absent.",
+  "stars_checked": 41058,
+  "retrieved_at_utc": "2026-10-04"
+}
