@@ -72,3 +72,82 @@ def test_corrupt_pdf_raises_pdf_error_not_silent_empty():
 def test_reference_text_strips_invisible_prompt_injection_controls():
     data = "正常\u200b文本\u202e倒序".encode("utf-8")
     assert extract_reference_text("ref.txt", data) == "正常文本倒序"
+
+
+def _trafilatura_only(monkeypatch):
+    from novel_ai import reading
+
+    real_find_spec = reading.importlib.util.find_spec
+
+    def find_spec(name):
+        if name in {"docling", "markitdown"}:
+            return None
+        return real_find_spec(name)
+
+    monkeypatch.setattr(reading.importlib.util, "find_spec", find_spec)
+
+
+def test_trafilatura_extracts_uploaded_html_fixture_and_preserves_cleaning(monkeypatch):
+    pytest.importorskip("trafilatura")
+    _trafilatura_only(monkeypatch)
+    fixture = (Path(__file__).parent / "fixtures" / "reference.html").read_bytes()
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference(
+        "reference.html",
+        fixture,
+        normalization_map={"繁": "简"},
+    )
+
+    assert result.backend == "trafilatura"
+    assert "正文标记：夜班电台的门在23:17准时响起" in result.text
+    assert "导航不应出现" not in result.text
+    assert "页脚不应出现" not in result.text
+    assert "评论不应出现" not in result.text
+    assert "表格数据不应出现" not in result.text
+    assert "零宽字符" in result.text
+    assert "繁" not in result.text
+
+
+def test_trafilatura_empty_or_bad_html_has_clear_fallback_error(monkeypatch):
+    pytest.importorskip("trafilatura")
+    _trafilatura_only(monkeypatch)
+
+    from novel_ai.reading import extract_reference
+
+    for payload in (
+        b"<html><head><title></title></head><body><div></div></body></html>",
+        b"",
+    ):
+        with pytest.raises(ValueError, match="trafilatura"):
+            extract_reference("empty.html", payload)
+
+
+def test_html_without_optional_backend_keeps_dependency_fallback(monkeypatch):
+    from novel_ai import reading
+
+    monkeypatch.setattr(reading.importlib.util, "find_spec", lambda name: None)
+
+    from novel_ai.reading import extract_reference
+
+    with pytest.raises(ValueError, match="Docling|MarkItDown"):
+        extract_reference("reference.html", b"<html><body>正文</body></html>")
+
+
+def test_trafilatura_html_path_does_not_open_network(monkeypatch):
+    trafilatura = pytest.importorskip("trafilatura")
+    _trafilatura_only(monkeypatch)
+    import socket
+
+    def blocked_connect(*args, **kwargs):
+        raise AssertionError("local HTML extraction attempted a network connection")
+
+    monkeypatch.setattr(socket.socket, "connect", blocked_connect)
+    fixture = (Path(__file__).parent / "fixtures" / "reference.html").read_bytes()
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference("reference.html", fixture)
+    assert result.backend == "trafilatura"
+    assert hasattr(trafilatura, "extract")
