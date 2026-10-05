@@ -597,6 +597,7 @@ with write_tab:
                 "project": project_name, "chapter_id": chapter_id,
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
                 "character_context_sha256": character_binding,
+                "recall_report": deepcopy(context.recall_report),
             }
             st.session_state.last_extraction = None
             st.session_state.memory_candidate_json = None
@@ -669,6 +670,10 @@ with write_tab:
     result = st.session_state.last_result
     st.session_state.memory_displayed_text_sha256 = None
     if result:
+        recall_report = st.session_state.last_result_meta.get("recall_report")
+        if recall_report:
+            with st.expander("本次正文召回证据", expanded=False):
+                st.json(recall_report)
         with st.expander("场景计划", expanded=False):
             st.json(result.plan.model_dump())
         shown_text = st.text_area("正文", value=result.final_text, height=720, disabled=True)
