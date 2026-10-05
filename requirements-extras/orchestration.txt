@@ -1,0 +1,10 @@
+# Optional prompt/program and editorial orchestration
+dspy
+crewai
+instructor
+langgraph
+pydantic-ai
+outlines
+guardrails-ai
+agent-framework
+guidance

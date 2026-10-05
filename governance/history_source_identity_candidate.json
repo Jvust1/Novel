@@ -1,0 +1,45 @@
+{
+  "schema": "novel-history-source-identity-candidate-v1",
+  "branch": "fix/history-source-identity-20261001",
+  "base_pr": 65,
+  "base_head": "aee038310960de3a88da7022316afa66f1cba81a",
+  "base_tree": "3b1b32b0125b7b9ee98dc41ee8d232da2b456a73",
+  "docs": "docs/HISTORY_SOURCE_IDENTITY.md",
+  "scope": "full source-fingerprint comparison before deduplicating admitted automatic accepted-history artifacts",
+  "preserved": "no source-ID rewriting, archive mutation or new history mechanism; original source limits, accepted fingerprints and budgets retained",
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "independent_regression_cases": 28,
+    "original_baseline": "16 failed and 12 controls passed",
+    "fixed_independent": "28 passed",
+    "surrounding_state_archive_journal_compatibility": 176,
+    "other_state_initial_preflight_controls": 100,
+    "actual_entries": "direct API, real CLI, ordinary and owning-journal continuation, offline serialized requests",
+    "conflict_dispatch": "zero HTTP requests and zero budget reservations",
+    "data": "original synthetic sources only; no live model/network",
+    "input_snapshot": "detached source dictionaries retain the checked version during caller mutation",
+    "fatal_ruff": "passed",
+    "new_tests_ruff": "passed",
+    "default_ruff_advisory_count": 446,
+    "document_links_checked": 63,
+    "python_3_11": {
+      "passed": 2011,
+      "skipped": 1,
+      "seconds": 173.03
+    },
+    "python_3_12": {
+      "passed": 2011,
+      "skipped": 1,
+      "seconds": 170.07
+    },
+    "pip_check": "passed both installed environments",
+    "compileall": "passed both interpreters",
+    "skip": "optional qdrant-client absent"
+  },
+  "boundaries": [
+    "not author authentication",
+    "not an audit of unselected history",
+    "no model call on unresolved conflict",
+    "no main merge, deployment, private manuscript publication or paid model"
+  ]
+}

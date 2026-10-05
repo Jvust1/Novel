@@ -1,0 +1,27 @@
+{
+  "benchmark": "novel-ab-v1",
+  "version": 1,
+  "frozen_at": "2026-09-14",
+  "freeze_policy": "已冻结用例不得修改；hash 校验由 novel_ai.eval.load_benchmark 与测试强制执行。新用例必须新增文件并升级 version。",
+  "variants": {
+    "A_baseline": "仅 Bible+人物卡+章纲+近章摘要（v0.1 行为）",
+    "B_memory": "A + ContextAssembler Canon/Active/Recall 注入（v0.2 行为）"
+  },
+  "cases": [
+    {
+      "case_id": "mystery_calls",
+      "file": "cases/mystery_calls.json",
+      "sha256": "4060baf2d812a42ea85811b39c939296f6521a646a606f929443b4b4282ce550"
+    },
+    {
+      "case_id": "urban_dispute",
+      "file": "cases/urban_dispute.json",
+      "sha256": "dc8403559fab9b9e415276e0ab42b79aa7556c9eaebd807e5801a780b6256e7b"
+    },
+    {
+      "case_id": "xuanhuan_residual",
+      "file": "cases/xuanhuan_residual.json",
+      "sha256": "ca941299688310fc0e33a86bb999d9ef588e1998bc543dd39ff1e1ca1ff14d19"
+    }
+  ]
+}

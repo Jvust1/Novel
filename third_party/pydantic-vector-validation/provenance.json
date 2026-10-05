@@ -1,0 +1,274 @@
+{
+  "repository": "https://github.com/pydantic/pydantic",
+  "source_commit": "001dea020e0809844e5b17666432c9135a976f46",
+  "source_tag": "v2.13.5",
+  "annotated_tag_object": "b6604b904f6b6f46334e35bceab4c905fe915ddc",
+  "tag_resolution_source": "https://api.github.com/repos/pydantic/pydantic/git/tags/b6604b904f6b6f46334e35bceab4c905fe915ddc",
+  "observed_at_utc": "2026-10-01",
+  "observed_stars": 28912,
+  "stars_source": "https://api.github.com/repos/pydantic/pydantic",
+  "meets_1000_star_threshold": true,
+  "github_license_spdx_id": "MIT",
+  "reuse_mode": "runtime reuse of an existing required dependency; no copied or modified implementation",
+  "source_port": false,
+  "vendored_implementation_files": [],
+  "existing_requirement": {
+    "path": "requirements.txt",
+    "specifier": "pydantic>=2.8,<3",
+    "changed_by_this_integration": false
+  },
+  "license_file": {
+    "local_path": "third_party/pydantic-vector-validation/LICENSE",
+    "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/LICENSE",
+    "git_blob_sha": "488c6260c10f2e88fa1fae58a63fccec8d600cd1",
+    "sha256": "a9e186f3ca16b5eef84318e7a701721351a00cb7b8ae3a4394b67b49e3529ef3",
+    "copied_verbatim": true
+  },
+  "license_obligations": [
+    "Include the copyright and permission notice in copies or substantial portions of the Software.",
+    "Preserve the upstream warranty and liability disclaimer."
+  ],
+  "runtime_apis": [
+    "pydantic.TypeAdapter(list[list[pydantic.FiniteFloat]])",
+    "TypeAdapter.validate_python(detached_rows, strict=True)"
+  ],
+  "runtime_integration": {
+    "path": "novel_ai/semantic.py",
+    "behavior": "Reuse one nested-list finite float TypeAdapter after ordered batch/row materialization and Real/non-bool scalar checks.",
+    "recall_consumer": "novel_ai/recall_backends.py",
+    "metadata_helper": "novel_ai.qdrant_recall._json_safe_metadata",
+    "metadata_normalization": "Existing JSON round-trip normalization is preserved.",
+    "new_runtime_module": false
+  },
+  "reviewed_sources": [
+    {
+      "path": "pydantic/types.py",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic/types.py",
+      "git_blob_sha": "467bc8285b4d6a1fa271d0aaa7d1f6fb7735c7a0",
+      "reviewed_line_ranges": [
+        [
+          116,
+          141
+        ],
+        [
+          386,
+          408
+        ],
+        [
+          623,
+          658
+        ]
+      ],
+      "copied_into_repository": false
+    },
+    {
+      "path": "pydantic/type_adapter.py",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic/type_adapter.py",
+      "git_blob_sha": "d962305f2c923a6046b8234a334bdca0e644b159",
+      "reviewed_line_ranges": [
+        [
+          70,
+          82
+        ],
+        [
+          398,
+          451
+        ]
+      ],
+      "copied_into_repository": false
+    },
+    {
+      "path": "pydantic-core/src/input/input_python.rs",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic-core/src/input/input_python.rs",
+      "git_blob_sha": "af6fe04753f752b0b1c195ade047009eb982c3d1",
+      "reviewed_line_ranges": [
+        [
+          320,
+          342
+        ]
+      ],
+      "copied_into_repository": false
+    },
+    {
+      "path": "pydantic-core/src/validators/float.rs",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic-core/src/validators/float.rs",
+      "git_blob_sha": "07b602e4d363f102f07edafe0ea005a54aefae35",
+      "reviewed_line_ranges": [
+        [
+          68,
+          80
+        ],
+        [
+          100,
+          111
+        ]
+      ],
+      "copied_into_repository": false
+    },
+    {
+      "path": "tests/test_types.py",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/tests/test_types.py",
+      "git_blob_sha": "21faeab633979263792c2c53839f3abbdcce806b",
+      "reviewed_line_ranges": [
+        [
+          2783,
+          2800
+        ],
+        [
+          2935,
+          2947
+        ]
+      ],
+      "copied_into_repository": false
+    },
+    {
+      "path": "pydantic-core/tests/validators/test_float.py",
+      "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic-core/tests/validators/test_float.py",
+      "git_blob_sha": "dd78e849997132544fa6d3a2ca9d36d994e3d939",
+      "reviewed_line_ranges": [
+        [
+          19,
+          71
+        ],
+        [
+          234,
+          239
+        ],
+        [
+          251,
+          307
+        ],
+        [
+          310,
+          328
+        ],
+        [
+          332,
+          359
+        ]
+      ],
+      "copied_into_repository": false
+    }
+  ],
+  "runtime_match": {
+    "version": "2.13.5",
+    "core_version": "2.46.5",
+    "version_source": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic/version.py",
+    "package_dependency_source": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pyproject.toml",
+    "installed_source_blobs_match_in_both_environments": [
+      {
+        "path": "pydantic/types.py",
+        "git_blob_sha": "467bc8285b4d6a1fa271d0aaa7d1f6fb7735c7a0"
+      },
+      {
+        "path": "pydantic/type_adapter.py",
+        "git_blob_sha": "d962305f2c923a6046b8234a334bdca0e644b159"
+      },
+      {
+        "path": "pydantic/version.py",
+        "git_blob_sha": "560f34a29332eb2207f7d3e4ca011ba04e12c26a"
+      }
+    ],
+    "verification_method": "git hash-object of installed files compared to GitHub contents API blob SHA at the resolved release commit",
+    "core_binary_rebuilt_or_reproducibly_verified": false,
+    "tested_environments": [
+      {
+        "python": "3.11.16",
+        "pydantic": "2.13.5",
+        "pydantic_core": "2.46.5",
+        "numpy": "2.4.6"
+      },
+      {
+        "python": "3.12.14",
+        "pydantic": "2.13.5",
+        "pydantic_core": "2.46.5",
+        "numpy": "2.5.3"
+      }
+    ]
+  },
+  "upstream_runtime_dependencies": [
+    "typing-extensions>=4.14.1",
+    "annotated-types>=0.6.0",
+    "pydantic-core==2.46.5",
+    "typing-inspection>=0.4.2"
+  ],
+  "dependency_changes": [],
+  "core_license": {
+    "source_url": "https://github.com/pydantic/pydantic/blob/001dea020e0809844e5b17666432c9135a976f46/pydantic-core/LICENSE",
+    "spdx_id": "MIT",
+    "copyright": "Copyright (c) 2022 Samuel Colvin",
+    "git_blob_sha": "0716871caabdbbb3e77a0371d49936cef1923ea1",
+    "implementation_copied": false
+  },
+  "local_probe_observations": {
+    "strict_finite_accepted": [
+      "Python int",
+      "Python float",
+      "NumPy float32",
+      "NumPy float64",
+      "NumPy int64"
+    ],
+    "strict_finite_rejected": [
+      "Python bool",
+      "str",
+      "bytes",
+      "NaN",
+      "positive infinity",
+      "negative infinity",
+      "Python 10**400"
+    ],
+    "stricter_scalar_policy_needed": [
+      "NumPy bool_ is accepted by strict float validation",
+      "zero-dimensional NumPy arrays are accepted",
+      "NumPy complex scalars can be converted with a warning",
+      "Decimal/Fraction and numeric conversion protocols are accepted"
+    ],
+    "shape_guard_observed": "numbers.Real, excluding Python bool, accepts tested NumPy numeric scalars while excluding NumPy bool_, ndarray, and complex scalars.",
+    "precision_limit": "Finiteness is checked after float64 conversion; finite longdouble values exceeding float64 range are rejected."
+  },
+  "existing_novel_contract_review": {
+    "source_commit": "14d4b46005ba8d4e4be26d634fc8ed3187978f5b",
+    "path": "novel_ai/qdrant_recall.py",
+    "reviewed_line_ranges": [
+      [
+        28,
+        36
+      ],
+      [
+        53,
+        58
+      ],
+      [
+        81,
+        99
+      ],
+      [
+        101,
+        127
+      ],
+      [
+        129,
+        137
+      ]
+    ],
+    "useful_rules": [
+      "Embedding batch count equals input count",
+      "Every vector has configured dimension",
+      "All embedding values are finite",
+      "Metadata is JSON round-tripped with allow_nan=False",
+      "Document ID/text are nonempty after stripping",
+      "Query limit is a positive int excluding bool"
+    ],
+    "limitations": [
+      "float(value) admits numeric strings and booleans and may raise uncaught OverflowError",
+      "JSON round-trip normalizes some Python values and keys"
+    ],
+    "client_initialized": false
+  },
+  "verification_limits": [
+    "Full upstream Pydantic tests were not run.",
+    "Other Pydantic releases permitted by requirements.txt were not executed.",
+    "NumPy observations are local probes, not a claim of upstream NumPy tests.",
+    "Pydantic numeric validation does not implement Novel cache, metadata, atomic replacement, dimension or overflow-safe cosine policy."
+  ]
+}

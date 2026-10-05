@@ -1,0 +1,49 @@
+{
+  "schema": "novel-journal-continuation-candidate-v1",
+  "branch": "feat/journal-continuation-20261001",
+  "base_pr": 54,
+  "base_head": "a6ab6d9d40d1de8c89f6106a173d995a14efa1bf",
+  "base_tree": "ad7fca6bd4c1c8c686e438343457e9cc0da1c8eb",
+  "entry": [
+    "restore_journal_source",
+    "BudgetedWritingSession.run_from_accepted_archive",
+    "rebuild_journal_accepted_history",
+    "preflight_journal_next_chapter_context"
+  ],
+  "docs": "docs/JOURNAL_CONTINUATION.md",
+  "reuse_trace": "docs/upstream/journal-continuation-2026-10-01.md",
+  "reuse_kind": "existing licensed eventsourcing replay kernel and existing validation/request-budget path; no new framework or cache",
+  "authority": "owning journal, private observed current load, exact story/context revisions, journal token and file SHA",
+  "compatibility": "v1 native history hash/default/first-chapter output golden parity; separate RestoredJournalSource keeps v1 binding unchanged",
+  "author_acceptance": "existing confirmed events replay only; no new confirmation, event append or canonical write",
+  "validation": {
+    "python_3_11": {
+      "passed": 1670,
+      "skipped": 1,
+      "seconds": 161.92
+    },
+    "python_3_12": {
+      "passed": 1670,
+      "skipped": 1,
+      "seconds": 161.74
+    },
+    "new_journal_cases": 79,
+    "owner_cases": 27,
+    "independent_cases": 52,
+    "independent_combined_matrix": "79 passed on each Python 3.11 and 3.12",
+    "compileall": "passed both interpreters",
+    "ruff": "0.16.9 F821 app/novel_ai/scripts/new tests and full accepted_writing.py passed",
+    "document_links": "60 local references checked; no missing targets",
+    "skip": "optional qdrant-client absent",
+    "remote_ci": "see exact published PR and packaged verification receipt",
+    "data": "original synthetic archives, simulated author confirmations, HTTPX MockTransport; no paid model"
+  },
+  "boundaries": [
+    "first chapter uses existing workflow",
+    "no external original freshness claim",
+    "no historical manuscript replacement or derived-memory recomputation",
+    "full replay, no million-word performance guarantee",
+    "trusted local/cooperating filesystem; no Drive transaction or hostile-process lock",
+    "no real paid model, identity authentication or human literary-quality evidence"
+  ]
+}

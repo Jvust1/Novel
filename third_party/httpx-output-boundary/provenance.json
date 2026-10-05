@@ -1,0 +1,61 @@
+{
+  "upstream": "https://github.com/encode/httpx",
+  "observed_at_utc": "2026-10-01T10:16:00Z",
+  "observed_stars": 15524,
+  "license": "BSD-3-Clause",
+  "version": "0.28.1",
+  "source_commit": "26d48e0634e6ee9cdc0533996db289ce4b430177",
+  "source_port": false,
+  "reuse_kind": "existing required dependency runtime API integration",
+  "runtime_apis": [
+    "httpx.Client.stream",
+    "httpx.Response.iter_bytes (identity encoding only)",
+    "httpx.HTTPStatusError",
+    "httpx.MockTransport (tests)"
+  ],
+  "source_files": [
+    {
+      "path": "httpx/_client.py",
+      "sha256": "c43f941baefe58c91e96d00039e1868fe719d91453026d7db1647194563bff8d",
+      "git_blob_sha": "2249231f8c3b912c731ff160344d3672e2f11738",
+      "installed_matches": {
+        "3.11": true,
+        "3.12": true
+      }
+    },
+    {
+      "path": "httpx/_models.py",
+      "sha256": "e3ffc6bb2bf580bc6e6428708a6f247d036220e709f5a72b785392babbd97e6b",
+      "git_blob_sha": "67d74bf86bfc80e22d9a4a3153572845accd9039",
+      "installed_matches": {
+        "3.11": true,
+        "3.12": true
+      }
+    },
+    {
+      "path": "httpx/__version__.py",
+      "sha256": "2e853261e3974e2786cee3ffeb850bd30c5db718eebbf41b3af13b34e83e22a5",
+      "git_blob_sha": "801bfacf671017cfbebf1ac26ec385daa02ed260",
+      "installed_matches": {
+        "3.11": true,
+        "3.12": true
+      }
+    }
+  ],
+  "license_file": {
+    "path": "third_party/httpx-output-boundary/LICENSE.md",
+    "sha256": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d"
+  },
+  "comparison_not_adopted": {
+    "upstream": "langchain-ai/langchain",
+    "observed_stars": 147345,
+    "source_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+    "source_path": "libs/core/langchain_core/utils/json.py",
+    "reason": "parse_partial_json repairs missing braces/strings and removes suffix characters; this conflicts with refusing truncated or ambiguous model output. Existing LangChain MMR/Markdown ports remain unchanged."
+  },
+  "limits": [
+    "Installed httpx 0.28.1 source matched in Python 3.11/3.12; other allowed dependency versions not run",
+    "No live model endpoint, transport billing, native SDK integration or full input-context tokenizer verification",
+    "Optional Instructor/Outlines/Guidance/LiteLLM adapters tested with stubs only; these are existing integrations, not new frameworks"
+  ]
+}

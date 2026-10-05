@@ -1,0 +1,83 @@
+{
+  "chapter_title": "领取人",
+  "chapter_promise": "旧渡口的临时失物招领员陶青，在工具包领取程序中发现说法冲突，利用补帆师傅提供的包袋结构知识和短暂退潮窗口，找到失联的栈桥检修工。",
+  "tension_curve": "冒領冲突→找人→退潮定位→救援回报→物件路线疑问",
+  "scenes": [
+    {
+      "scene_no": 1,
+      "pov": "陶青",
+      "place": "",
+      "time": "",
+      "objective": "核对工具包领取人并赶上末班车",
+      "opposition": "自称工头的孟川催取包，问及未公开的纸条，却无法提供物主授权",
+      "choice": "陶青坚持验证，暂扣工具包",
+      "cost": "交接和离站被拖延",
+      "state_change": "她第一次知道包内可能另有纸条",
+      "information_release": [],
+      "foreshadowing": [],
+      "environment_function": "",
+      "end_hook": ""
+    },
+    {
+      "scene_no": 2,
+      "pov": "陶青",
+      "place": "",
+      "time": "",
+      "objective": "辨认包主和隐蔽纸条",
+      "opposition": "包主韩平电话不通，工头说法与其姑姑吕阿棉掌握的情况矛盾",
+      "choice": "依吕阿棉所述从补丁夹层取出纸条，并联系值班人员",
+      "cost": "必须承认尚无完整证据，不能直接交包或指控",
+      "state_change": "纸条指向旧栈桥外侧第二根墩柱；韩平可能仍在桥下",
+      "information_release": [],
+      "foreshadowing": [],
+      "environment_function": "",
+      "end_hook": ""
+    },
+    {
+      "scene_no": 3,
+      "pov": "陶青",
+      "place": "",
+      "time": "",
+      "objective": "在退潮可见窗口确认桥下是否有人",
+      "opposition": "柜台交接和末班车时刻与水位窗口冲突，岸上视线被桥裙遮住",
+      "choice": "陶青登记物品去向并随吕阿棉到旧栈桥；援助已在路上",
+      "cost": "错过离港末班车，必须自担改行程费用",
+      "state_change": "二人听见桥下有人回应，猜测变成需救援的可证事实",
+      "information_release": [],
+      "foreshadowing": [],
+      "environment_function": "",
+      "end_hook": ""
+    },
+    {
+      "scene_no": 4,
+      "pov": "陶青",
+      "place": "",
+      "time": "",
+      "objective": "帮助救援人员找到韩平",
+      "opposition": "韩平伤腿且被落下的构件挡在桥下，退潮仅露出一部分通道",
+      "choice": "从岸上指明准确位置，让赶到的值班艇与救援人员接手",
+      "cost": "陶青的车已离站，包和纸条也必须留作记录",
+      "state_change": "韩平获救，工具包物主身份得到本人确认",
+      "information_release": [],
+      "foreshadowing": [],
+      "environment_function": "",
+      "end_hook": ""
+    },
+    {
+      "scene_no": 5,
+      "pov": "陶青",
+      "place": "",
+      "time": "",
+      "objective": "解释工具包如何离开桥下",
+      "opposition": "陶青原以为工具包是韩平自行送出的求救信号",
+      "choice": "她当面询问并核对领取人留下的签名",
+      "cost": "原本可以结案的失物变成必须追查的事件",
+      "state_change": "韩平说工具包曾被从岸上垂下的绳钩提走；是谁提前读过纸条、又让包成为失物，尚不清楚",
+      "information_release": [],
+      "foreshadowing": [],
+      "environment_function": "",
+      "end_hook": ""
+    }
+  ],
+  "must_not_happen": []
+}

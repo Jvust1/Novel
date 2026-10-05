@@ -1,0 +1,42 @@
+    def mutate(self, aggregate: TAggregate | None) -> TAggregate | None:
+        """Validates and adjusts the attributes of the given ``aggregate``
+         argument. The argument is typed as ``Optional``, but the value is
+         expected to be not ``None``.
+
+        Validates the ``aggregate`` argument by checking the event's
+        :py:attr:`~eventsourcing.domain.HasOriginatorIDVersion.originator_id` equals the
+        ``aggregate``'s :py:attr:`~eventsourcing.domain.Aggregate.id`, and the event's
+        :py:attr:`~eventsourcing.domain.HasOriginatorIDVersion.originator_version` is
+        one greater than the ``aggregate``'s current
+        :py:attr:`~eventsourcing.domain.Aggregate.version`.
+        If the ``aggregate`` argument is not valid, an exception is raised.
+
+        If the ``aggregate`` argument is valid, the
+        :func:`~eventsourcing.domain.CanMutateAggregate.apply` method is called, and
+        then :py:attr:`~eventsourcing.domain.HasOriginatorIDVersion.originator_id` is
+        assigned to the aggregate's :py:attr:`~eventsourcing.domain.Aggregate.version`
+        attribute, and the ``timestamp`` is assigned to the aggregate's
+        :py:attr:`~eventsourcing.domain.Aggregate.modified_on` attribute.
+        """
+        assert aggregate is not None
+
+        # Check this event belongs to this aggregate.
+        if self.originator_id != aggregate.id:
+            raise OriginatorIDError(self.originator_id, aggregate.id)
+
+        # Check this event is the next in its sequence.
+        next_version = aggregate.version + 1
+        if self.originator_version != next_version:
+            raise OriginatorVersionError(self.originator_version, next_version)
+
+        # Call apply() before mutating values, in case exception is raised.
+        self.apply(aggregate)
+
+        # Update the aggregate's 'version' number.
+        aggregate.version = self.originator_version
+
+        # Update the aggregate's 'modified on' time.
+        aggregate.modified_on = self.timestamp
+
+        # Return the mutated aggregate.
+        return aggregate

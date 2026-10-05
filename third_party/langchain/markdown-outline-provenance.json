@@ -1,0 +1,22 @@
+{
+  "upstream_repository": "langchain-ai/langchain",
+  "upstream_commit": "a9780cd3dd73135d21d7130b08711685f2700d51",
+  "source_path": "libs/text-splitters/langchain_text_splitters/markdown.py",
+  "source_blob_sha": "3a518a6bce60625c82b40c0c50f2e14a0826b10e",
+  "source_symbol": "MarkdownHeaderTextSplitter.split_text",
+  "adapted_parts": [
+    "fenced-code state machine",
+    "equal/deeper-header stack pop and push"
+  ],
+  "license": "MIT",
+  "copyright": "Copyright (c) LangChain, Inc.",
+  "license_path": "third_party/langchain/LICENSE",
+  "upstream_license_blob_sha": "3957738673765912ca83a0048f833e095d61e087",
+  "local_source_path": "novel_ai/_vendor/langchain_markdown.py",
+  "integration_path": "novel_ai/outline_markdown.py",
+  "stars_checked": 147336,
+  "checked_at_utc": "2026-10-01T06:18:02Z",
+  "verification_source": "https://api.github.com/repos/langchain-ai/langchain",
+  "parser_version": "langchain-markdown-adapted-v1",
+  "new_runtime_dependencies": []
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "novel-main-release-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "main",
+  "base_pr": 75,
+  "base_head": "50f9ba2da535e985cefe9685ec3470f2e38fc862",
+  "base_tree": "c93e5ebdf4ce98e852bbb497e5c4d86ac405ca86",
+  "base_ci_run": 36979681848,
+  "docs": "docs/MAIN_RELEASE.md",
+  "scope": "Cumulative engineering integration through PR75, plus main-facing public entry alignment.",
+  "merge_authorization": "User explicitly authorized merging main after all four full CI jobs pass.",
+  "acceptance": "All four full jobs must pass on this exact release tree before merging main; GitHub merge response and main readback are required.",
+  "historical_candidate_records": [
+    "governance/settings_cli_candidate.json",
+    "governance/windows_private_permissions_candidate.json"
+  ],
+  "boundaries": [
+    "No fabricated author acceptance or manuscript completion.",
+    "No private story publication, paid model calls, deployment, or changed project North Star.",
+    "Historical receipts are retained rather than rewritten as current results."
+  ]
+}

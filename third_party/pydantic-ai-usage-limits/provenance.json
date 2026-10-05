@@ -1,0 +1,38 @@
+{
+  "upstream": "pydantic/pydantic-ai",
+  "observed_date": "2026-10-01",
+  "observed_stars": 20308,
+  "source_commit": "675d9f52b38e4dffe0c248451b5fb44595f7308c",
+  "license": "MIT",
+  "source_port": true,
+  "port_scope": "Only UsageLimits request-count and output-token checks; not the whole agent framework or accounting system",
+  "destination": "novel_ai/_vendor/pydantic_ai_usage.py",
+  "runtime_trace": [
+    "RequestBudget.admit invokes both ported UsageLimits guards",
+    "OpenAICompatibleProvider reserves each owned HTTP attempt including response-format fallback",
+    "BudgetedWritingSession shares RequestBudget through ProviderRouter across actual existing plan/draft/review/repair/re-review/memory/style paths"
+  ],
+  "semantic_adaptation": "Novel output_tokens is the sum of reserved requested caps; never represented as actual billed usage",
+  "files": [
+    {
+      "path": "third_party/pydantic-ai-usage-limits/LICENSE",
+      "git_blob": "1bf1f55e6d1736b499ded961ec6b94bfebb17aec",
+      "sha256": "bc0e89738f36944c8106e1947c3d69631f9c33b8f1bcb60ec4f89d677d2dfcf4",
+      "bytes": 1100
+    },
+    {
+      "path": "third_party/pydantic-ai-usage-limits/upstream_usage.py",
+      "git_blob": "da079670b24802ff12a1d3d07b92a1394d826e13",
+      "sha256": "7d0251fef32d7e7730ee769cf62b50afa965f2ad401916ced3f79adc07309b7a",
+      "bytes": 28483
+    }
+  ],
+  "comparison_not_adopted": {
+    "upstream": "openai/tiktoken",
+    "source_commit": "4e71bbe0c078468e00fefbf94b39849389f346e5",
+    "observed_stars": 19361,
+    "license": "MIT",
+    "source_inspected": "tiktoken/core.py Encoding.encode/encode_ordinary",
+    "reason": "Exact text encoding is not the selected chat model framing/window/fee. Existing Novel TokenCounter permits an estimate fallback and clipping, unsuitable for a hard admission boundary. No new download, code copy or source-port count for this comparison."
+  }
+}

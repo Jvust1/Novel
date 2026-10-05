@@ -1,0 +1,4 @@
+# Advanced document ingestion
+docling
+markitdown[all]
+unstructured

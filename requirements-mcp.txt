@@ -1,0 +1,2 @@
+# Optional read-only MCP entry point; the core Novel install stays dependency-light.
+mcp>=1.28,<2

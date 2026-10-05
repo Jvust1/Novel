@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "repository": "pyeventsourcing/eventsourcing",
+  "repository_url": "https://github.com/pyeventsourcing/eventsourcing",
+  "commit": "575d42c10a821828639b90178ed56703abe9c9f1",
+  "upstream_branch_observed": "9.5",
+  "upstream_package_version": "9.5.5",
+  "observed_on": "2026-10-01",
+  "observed_stars": 1687,
+  "metadata_source": "https://api.github.com/repos/pyeventsourcing/eventsourcing",
+  "license": "BSD-3-Clause",
+  "copyright": "Copyright (c) 2025, John Bywater. All rights reserved.",
+  "license_file": {
+    "local_path": "third_party/eventsourcing/LICENSE",
+    "upstream_path": "LICENSE",
+    "upstream_url": "https://github.com/pyeventsourcing/eventsourcing/blob/575d42c10a821828639b90178ed56703abe9c9f1/LICENSE",
+    "git_blob_sha": "ff80f37b814332fce21d41e4521930778997ebc6",
+    "sha256": "090110cdc64ef005972f98b7848a38c952ab623876141cfa84233b9295d6a70e"
+  },
+  "files": [
+    {
+      "local_path": "third_party/eventsourcing/upstream_immutablemodel.py",
+      "upstream_path": "examples/aggregate7/immutablemodel.py",
+      "upstream_url": "https://github.com/pyeventsourcing/eventsourcing/blob/575d42c10a821828639b90178ed56703abe9c9f1/examples/aggregate7/immutablemodel.py",
+      "preservation": "verbatim_complete_file",
+      "line_range": [
+        1,
+        64
+      ],
+      "git_blob_sha": "79cb8f38a0786c23fc846d225ac091723a5f2b59",
+      "sha256": "b277c4962a42c6df6ce19ef291d1b6fc993725f34230a0a7dab9422b1031436b"
+    },
+    {
+      "local_path": "third_party/eventsourcing/upstream_mutate_excerpt.py.txt",
+      "upstream_path": "eventsourcing/domain.py",
+      "upstream_url": "https://github.com/pyeventsourcing/eventsourcing/blob/575d42c10a821828639b90178ed56703abe9c9f1/eventsourcing/domain.py#L288-L329",
+      "preservation": "verbatim_excerpt",
+      "line_range": [
+        288,
+        329
+      ],
+      "upstream_full_file_git_blob_sha": "d745a209cd25525dbb88ca593054c8dd0fe151a1",
+      "excerpt_git_blob_sha": "97973e162e7a21677fb8281250d593ff108c14da",
+      "sha256": "08f5d7f1430f7f21349425112ade1132b56eb03d2dba07ed0d123349f29d6d56"
+    },
+    {
+      "local_path": "third_party/eventsourcing/upstream_errors_excerpt.py.txt",
+      "upstream_path": "eventsourcing/domain.py",
+      "upstream_url": "https://github.com/pyeventsourcing/eventsourcing/blob/575d42c10a821828639b90178ed56703abe9c9f1/eventsourcing/domain.py#L1789-L1802",
+      "preservation": "verbatim_excerpt",
+      "line_range": [
+        1789,
+        1802
+      ],
+      "upstream_full_file_git_blob_sha": "d745a209cd25525dbb88ca593054c8dd0fe151a1",
+      "excerpt_git_blob_sha": "5c425f49c80a57c4283f01372038924cd3ffebea",
+      "sha256": "3a3880778d85d919ce7abeb3efa87a7c7a121dc6805d2aed52a42a94c655e29c"
+    }
+  ],
+  "adaptation": {
+    "local_path": "novel_ai/_vendor/eventsourcing_example.py",
+    "sha256": "52c37df319ca8e2116d34baf7f1ba8bf654429bf114f16ad3d6228fd30ac0f69",
+    "source_segments": [
+      {
+        "upstream_path": "examples/aggregate7/immutablemodel.py",
+        "line_ranges": [
+          [
+            17,
+            31
+          ],
+          [
+            49,
+            64
+          ]
+        ]
+      },
+      {
+        "upstream_path": "eventsourcing/domain.py",
+        "line_ranges": [
+          [
+            310,
+            317
+          ],
+          [
+            1789,
+            1802
+          ]
+        ]
+      }
+    ],
+    "modifications": [
+      "Remove Snapshot and full-framework imports",
+      "Use non-empty string story IDs instead of UUID",
+      "Add strict validation and version bounds",
+      "Move ID/next-version guards into immutable projection loop, including first version 1",
+      "Use ValueError subclasses and validate event/result objects and returned identity/version",
+      "Tighten mutator signature; preserve real ordered replay closure"
+    ],
+    "runtime_dependencies": [
+      "existing pydantic>=2.8,<3",
+      "Python standard library"
+    ]
+  },
+  "inspected_not_copied": [
+    {
+      "path": "examples/aggregate7/domainmodel.py",
+      "git_blob_sha": "5942c881333abd533928497143b6898cf26687ae"
+    },
+    {
+      "path": "examples/aggregate7/test_application.py",
+      "git_blob_sha": "a1a55db9ec1893ed4a4c65c7b659bb24fd0eabe9"
+    },
+    {
+      "path": "tests/domain_tests/test_aggregate.py",
+      "git_blob_sha": "c5f16ba6103b2de7781509dcd176e945a45875ae",
+      "line_range": [
+        897,
+        921
+      ]
+    },
+    {
+      "path": "eventsourcing/application.py",
+      "git_blob_sha": "5b779166a6feed291cd912822e99937adfa7d7f8",
+      "line_range": [
+        315,
+        360
+      ]
+    },
+    {
+      "path": "eventsourcing/domain.py",
+      "git_blob_sha": "d745a209cd25525dbb88ca593054c8dd0fe151a1",
+      "line_range": [
+        1835,
+        1874
+      ]
+    }
+  ],
+  "evaluated_not_reused": [
+    {
+      "repository": "sqlalchemy/sqlalchemy",
+      "commit": "36e47d3a281869defb7c31f4ea0c9309e2f4494c",
+      "observed_on": "2026-10-01",
+      "observed_stars": 12192,
+      "license": "MIT",
+      "metadata_source": "https://api.github.com/repos/sqlalchemy/sqlalchemy",
+      "license_source": "https://github.com/sqlalchemy/sqlalchemy/blob/36e47d3a281869defb7c31f4ea0c9309e2f4494c/LICENSE",
+      "license_git_blob_sha": "903d67495fc6c2017713c754cf16b8f179122ed2",
+      "inspected": [
+        {
+          "path": "examples/versioned_history/history_meta.py",
+          "git_blob_sha": "ab6e3583dd6a4a2836c4d1738fc97cf9939c9d3a"
+        },
+        {
+          "path": "examples/versioned_history/test_versioning.py",
+          "git_blob_sha": "b3fe217090486005fc8c4b1d861433df0e562aa8"
+        }
+      ],
+      "reason": "Meaningful history-table and optimistic concurrency code, but requires an ORM/database integration outside the bounded JSON/Drive amendment workflow.",
+      "reuse_status": "Not copied, adapted, installed, or run"
+    }
+  ]
+}

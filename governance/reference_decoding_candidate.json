@@ -1,0 +1,55 @@
+{
+  "schema": "novel-reference-decoding-candidate-v1",
+  "branch": "fix/reference-text-decoding-20261001",
+  "base_pr": 62,
+  "base_head": "0c6d18543f14af9ad10e845b880bfee70cad1200",
+  "base_tree": "3ee4f5a1882396e2b58e152e11edb576f66ec1a9",
+  "docs": "docs/REFERENCE_DECODING.md",
+  "reuse_trace": "third_party/chardet-reference-decoding/NOTICE.md",
+  "upstream": {
+    "repository": "chardet/chardet",
+    "version": "7.6.0",
+    "commit": "dcf07fb97b082df57cf06125a0f0778e9aaef79d",
+    "stars_observed": 2675,
+    "license": "0BSD",
+    "observed_utc": "2026-10-01T18:31:00Z",
+    "role": "local statistical encoding candidate ranking, not automatic author choice"
+  },
+  "validation": {
+    "python_3_11": {
+      "passed": 1850,
+      "skipped": 1,
+      "seconds": 175.7
+    },
+    "python_3_12": {
+      "passed": 1850,
+      "skipped": 1,
+      "seconds": 171.48
+    },
+    "new_cases": 71,
+    "owner_entry_cases": 16,
+    "independent_cases": 55,
+    "independent_focused_review": "88 reader, entry, pack, originality and similarity tests passed",
+    "actual_entries": "Style Lab AppTest including same-name new bytes and old-profile preservation; both real CLI routes including mixed-format references",
+    "pip_check": "passed both installed environments",
+    "fatal_ruff": "E9,F63,F7,F82 app/novel_ai/scripts/tests passed",
+    "new_code_ruff": "full new decoder, changed CLIs and owner tests passed",
+    "default_ruff": {
+      "advisory_count": 446,
+      "all_static_clean": false
+    },
+    "compileall": "passed both interpreters",
+    "document_links": 103,
+    "source_provenance": "retained license and API hashes verified; installed 3.11/3.12 API blob matches exact pinned release",
+    "remote_ci": "see exact published PR and packaged verification receipt",
+    "skip": "optional qdrant-client absent",
+    "data": "original synthetic text only; no paid model or real private book"
+  },
+  "boundaries": [
+    "TXT/MD byte decoding only; existing complex readers unchanged",
+    "valid UTF-8 is a documented default, not proof of intended encoding",
+    "reversibility is byte integrity, not semantic correctness",
+    "no automatic transcoding, manuscript mutation or model request",
+    "detector candidates require explicit choice; no privacy text in decoding report"
+  ]
+}

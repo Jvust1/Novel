@@ -1,0 +1,40 @@
+{
+  "schema": "novel-character-source-candidate-v1",
+  "branch": "fix/character-source-binding-20261001",
+  "base_pr": 68,
+  "base_head": "7c3fb44233f6e153f7a8cee004a7783681ee75ad",
+  "base_tree": "019c2d49dbed1aa1544129e345d76a85d7de94f7",
+  "docs": "docs/CHARACTER_SOURCE_BINDINGS.md",
+  "scope": "bind optional local workbench character source and plan context; preserve explicit edits and replacement; retain accepted archive, memory and budget authority",
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "external_ai_review": "not completed; cloud browser connection unavailable",
+    "python_3_11": {
+      "passed": 2083,
+      "skipped": 1,
+      "seconds": 180.63
+    },
+    "python_3_12": {
+      "passed": 2083,
+      "skipped": 1,
+      "seconds": 171.66
+    },
+    "new_cases": 20,
+    "independent_review_cases": 13,
+    "focused_existing_and_new": 56,
+    "pip_check": "passed both installed environments",
+    "fatal_ruff": "passed",
+    "new_tests_ruff": "passed",
+    "default_ruff_advisory_count": 446,
+    "compileall": "passed both interpreters",
+    "document_links_checked": 72,
+    "skip": "optional qdrant-client absent",
+    "baseline_reproduction": "actual optional workbench dispatched old speech and saved candidate before/during persisted card change; accepted archive stopped its first changed response",
+    "memory_test_adapter": "existing stub gained download recording; original assertions retained and draft-byte/disabled-reload checks added"
+  },
+  "boundaries": [
+    "local candidate saving is not author acceptance",
+    "no new history or transaction protocol",
+    "no main merge, deployment, private manuscript publication or paid model"
+  ]
+}

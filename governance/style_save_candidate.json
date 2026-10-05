@@ -1,0 +1,42 @@
+{
+  "schema": "novel-style-save-candidate-v1",
+  "branch": "fix/style-save-consistency-20261001",
+  "base_pr": 63,
+  "base_head": "cf360611df034af51d7eeefdffd1e07930234e13",
+  "base_tree": "0d5391faf061aad6529ee2f0d8c09e5023a90410",
+  "docs": "docs/STYLE_SAVE_INTEGRITY.md",
+  "reuse_trace": "docs/upstream/style-save-2026-10-01.md",
+  "status": "verified_local_draft_candidate",
+  "scope": "fixed local three-file style save, actual readback, coherent reload and stale-session guards",
+  "boundaries": [
+    "no private manuscript publication",
+    "no main merge/deploy/paid model",
+    "no Drive or generic transaction",
+    "no automatic author acceptance or canonical story-memory change",
+    "no native Windows or universal power-loss claim"
+  ],
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "new_cases": 110,
+    "independent_adversarial_cases": 91,
+    "actual_ui_cases": 13,
+    "actual_process_cases": 6,
+    "fatal_ruff": "E9,F63,F7,F82 passed",
+    "new_module_and_tests_ruff": "passed",
+    "pip_check": "passed both installed environments",
+    "compileall": "passed both interpreters",
+    "default_ruff_advisory_count": 446,
+    "skip": "optional qdrant-client absent",
+    "data": "original synthetic text only; no paid model or private manuscript",
+    "python_3_11": {
+      "passed": 1960,
+      "skipped": 1
+    },
+    "python_3_12": {
+      "passed": 1960,
+      "skipped": 1
+    },
+    "source_provenance": "six retained boltons runtime/source/license files match prior verified SHA-256",
+    "public_links_checked": 59
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "template_version": "reader-reveal-ledger-v1",
+  "story_id": null,
+  "base_story_revision": null,
+  "visibility": "private",
+  "entries": [],
+  "pending_updates": [],
+  "entry_template": {
+    "term_id": null,
+    "term": null,
+    "first_chapter": null,
+    "reader_known": [],
+    "full_truth": null,
+    "planned_reveal": {
+      "chapter_id": null,
+      "scene_id": null,
+      "plan_revision": null
+    },
+    "status": "candidate",
+    "source_refs": [],
+    "base_story_revision": null,
+    "accepted_draft_reference": null,
+    "memory_update_id": null,
+    "memory_confirmation_reference": null
+  }
+}

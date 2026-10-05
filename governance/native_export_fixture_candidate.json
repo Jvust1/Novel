@@ -1,0 +1,15 @@
+{
+  "schema": "novel-native-export-fixture-candidate-v1",
+  "branch": "fix/export-fixtures-postclose-20261002",
+  "base_pr": 73,
+  "base_head": "00257c09b9c48d2ce9b6312a7e8205e5a04a442c",
+  "scope": "two post-close fault-injection fixtures; no production changes or skips",
+  "docs": "docs/NATIVE_EXPORT_FIXTURES.md",
+  "current_public_pointer_unchanged": true,
+  "all_original_asserts_retained": true,
+  "original_assert_count": 46,
+  "modified_assert_count": 48,
+  "local_windows_cases_each_python": 63,
+  "native_full_suite_complete": false,
+  "exact_head_ci": "must inspect newly triggered CI"
+}

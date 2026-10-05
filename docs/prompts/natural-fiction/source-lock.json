@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "verified_date_utc": "2026-10-01",
+  "scope": "Read-only GitHub source review; documentation-only prompt adaptation. Stars are point-in-time observations, not an effectiveness metric.",
+  "retrieval": "GitHub connected read-only API: repository metadata, commits?per_page=1, pinned file contents, complete recursive trees for selected sources and cn-humanizer.",
+  "reused": [
+    {
+      "repository": "blader/humanizer",
+      "url": "https://github.com/blader/humanizer",
+      "commit": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8",
+      "commit_url": "https://github.com/blader/humanizer/commit/225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8",
+      "stars_observed": 53203,
+      "stars_source": "https://api.github.com/repos/blader/humanizer",
+      "stars_observed_date_utc": "2026-10-01",
+      "meets_10000_star_preference": true,
+      "api_license_spdx": "MIT",
+      "reviewed_prompt": {
+        "path": "SKILL.md",
+        "git_blob_sha": "19fc634208e8cc6ae55d4ff287152583216fd244",
+        "url": "https://github.com/blader/humanizer/blob/225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8/SKILL.md"
+      },
+      "license": {
+        "spdx": "MIT",
+        "path": "LICENSE",
+        "git_blob_sha": "625297fb778f32eb39d3a5b97e3e3b611b7304d6",
+        "url": "https://github.com/blader/humanizer/blob/225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8/LICENSE",
+        "preserved_at": "third_party/prompts/blader-humanizer/LICENSE"
+      },
+      "upstream_notice": {
+        "present": false,
+        "check": "Complete pinned recursive tree; truncated=false"
+      },
+      "reused_sections": [
+        "How to work, step 3: added/dropped meaning check",
+        "Voice: read and calibrate a writing sample"
+      ],
+      "exact_excerpt_record": "third_party/prompts/source-excerpts.md"
+    },
+    {
+      "repository": "op7418/Humanizer-zh",
+      "url": "https://github.com/op7418/Humanizer-zh",
+      "commit": "f4518a8eab97b8bfebc66a89d34320a89bef6930",
+      "commit_url": "https://github.com/op7418/Humanizer-zh/commit/f4518a8eab97b8bfebc66a89d34320a89bef6930",
+      "stars_observed": 18786,
+      "stars_source": "https://api.github.com/repos/op7418/Humanizer-zh",
+      "stars_observed_date_utc": "2026-10-01",
+      "meets_10000_star_preference": true,
+      "api_license_spdx": "MIT",
+      "reviewed_prompt": {
+        "path": "SKILL.md",
+        "git_blob_sha": "ef07b54da21a41d4a7e4fe0b0afb928f597eb684",
+        "url": "https://github.com/op7418/Humanizer-zh/blob/f4518a8eab97b8bfebc66a89d34320a89bef6930/SKILL.md"
+      },
+      "license": {
+        "spdx": "MIT",
+        "path": "LICENSE",
+        "git_blob_sha": "e43848adc64286ff652e9be646e18ae0606162c7",
+        "url": "https://github.com/op7418/Humanizer-zh/blob/f4518a8eab97b8bfebc66a89d34320a89bef6930/LICENSE",
+        "preserved_at": "third_party/prompts/op7418-humanizer-zh/LICENSE"
+      },
+      "upstream_notice": {
+        "present": false,
+        "check": "Complete pinned recursive tree; truncated=false"
+      },
+      "reused_sections": [
+        "编辑约束与优先级 3: transfer voice, not sample facts",
+        "编辑约束与优先级 4: context-sensitive patterns, no blacklist",
+        "文体与作者声音: avoid forced sentence-length changes",
+        "工作流程 3: actor/time/condition/scope/negation/attribution check"
+      ],
+      "exact_excerpt_record": "third_party/prompts/source-excerpts.md"
+    }
+  ],
+  "evaluated_not_reused": [
+    {
+      "repository": "syw2039/humanizer-zh",
+      "url": "https://github.com/syw2039/humanizer-zh",
+      "commit": "72d73f9c8132817e21f66369de6925a659f9a6a6",
+      "commit_url": "https://github.com/syw2039/humanizer-zh/commit/72d73f9c8132817e21f66369de6925a659f9a6a6",
+      "stars_observed": 0,
+      "stars_source": "https://api.github.com/repos/syw2039/humanizer-zh",
+      "stars_observed_date_utc": "2026-10-01",
+      "meets_10000_star_preference": false,
+      "api_license_spdx": "MIT",
+      "reviewed_prompt": {
+        "path": "SKILL.md",
+        "git_blob_sha": "333e9e916109bd7a2774316dc94a752f1f079246",
+        "url": "https://github.com/syw2039/humanizer-zh/blob/72d73f9c8132817e21f66369de6925a659f9a6a6/SKILL.md"
+      },
+      "reuse_status": "Not copied or adapted",
+      "license": {
+        "spdx": "MIT",
+        "git_blob_sha": "625297fb778f32eb39d3a5b97e3e3b611b7304d6",
+        "url": "https://github.com/syw2039/humanizer-zh/blob/72d73f9c8132817e21f66369de6925a659f9a6a6/LICENSE"
+      },
+      "notice": {
+        "git_blob_sha": "59f6ada3d6b56e402dcb7f1aeb5b2a13dc4166c8",
+        "url": "https://github.com/syw2039/humanizer-zh/blob/72d73f9c8132817e21f66369de6925a659f9a6a6/NOTICE"
+      },
+      "reason": "0 observed stars; fact protection and voice calibration are useful, but selected mature MIT sources cover these principles. No need to add a third duplicate dependency."
+    },
+    {
+      "repository": "0xtresser/cn-humanizer",
+      "url": "https://github.com/0xtresser/cn-humanizer",
+      "commit": "59e1e0e759378cd2e02f4089bbbef314d4774b81",
+      "commit_url": "https://github.com/0xtresser/cn-humanizer/commit/59e1e0e759378cd2e02f4089bbbef314d4774b81",
+      "stars_observed": 16,
+      "stars_source": "https://api.github.com/repos/0xtresser/cn-humanizer",
+      "stars_observed_date_utc": "2026-10-01",
+      "meets_10000_star_preference": false,
+      "api_license_spdx": null,
+      "reviewed_prompt": {
+        "path": "SKILL.md",
+        "git_blob_sha": "afbad157228bd5c3ceace10fdb03d43a979d4c91",
+        "url": "https://github.com/0xtresser/cn-humanizer/blob/59e1e0e759378cd2e02f4089bbbef314d4774b81/SKILL.md"
+      },
+      "reuse_status": "Not copied or adapted",
+      "license_evidence": "Pinned README labels license MIT, but complete recursive tree contains no LICENSE or NOTICE; API license=null. No copyright/permission text available to retain.",
+      "reason": "16 observed stars; do not copy while license text is unverified. Statistical thresholds, categorical vocabulary detection and added-content rewrite examples are unsuitable for this fiction pack.",
+      "readme_url": "https://github.com/0xtresser/cn-humanizer/blob/59e1e0e759378cd2e02f4089bbbef314d4774b81/README.md"
+    }
+  ]
+}

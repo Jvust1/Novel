@@ -1,0 +1,11 @@
+{
+  "upstream": "scikit-learn/scikit-learn",
+  "upstream_commit": "a442e4bb39551feb7b0af4c00075e2cb91cf9b77",
+  "upstream_path": "sklearn/metrics/pairwise.py",
+  "license": "BSD-3-Clause",
+  "source_symbols": ["cosine_similarity"],
+  "local_path": "novel_ai/sklearn_cosine.py",
+  "adaptation": "Ported row normalization and dense dot-product semantics into a dependency-free finite-vector matrix helper; wired into Novel semantic similarity.",
+  "stars_checked": 67470,
+  "retrieved_at_utc": "2026-10-04"
+}

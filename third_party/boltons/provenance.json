@@ -1,0 +1,141 @@
+{
+  "repository": "https://github.com/mahmoud/boltons",
+  "source_commit": "4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d",
+  "observed_at_utc": "2026-10-01T08:42:12Z",
+  "observed_stars": 6932,
+  "stars_source": "https://api.github.com/repos/mahmoud/boltons",
+  "github_license_spdx_id": "NOASSERTION",
+  "license_assessment": "BSD-style three-clause permissive license; preserve exact supplied text",
+  "license_obligations": [
+    "Retain copyright, conditions and disclaimer in source redistributions.",
+    "Reproduce copyright, conditions and disclaimer in binary distribution documentation/materials.",
+    "Do not use contributor names to endorse derived products without prior written permission."
+  ],
+  "license_file": {
+    "local_path": "third_party/boltons/LICENSE",
+    "source_url": "https://github.com/mahmoud/boltons/blob/4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d/LICENSE",
+    "sha256": "c301912653a8d8c99eab6212aa3aea8d164ea249d8ad53c941e0558a0a5ac1e3"
+  },
+  "files": [
+    {
+      "local_path": "third_party/boltons/upstream/fileutils.py",
+      "source_url": "https://github.com/mahmoud/boltons/blob/4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d/boltons/fileutils.py",
+      "sha256": "0c2025cf1e649eabd511a84303b491c19ea59cdcac2f958f9a90b7e39e0a8b0e"
+    },
+    {
+      "local_path": "third_party/boltons/upstream/test_fileutils.py",
+      "source_url": "https://github.com/mahmoud/boltons/blob/4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d/tests/test_fileutils.py",
+      "sha256": "7eafa18f331092063a3a404b5fbf178a3f132ff12406271c8f29fbb2a4571975"
+    }
+  ],
+  "adaptation": {
+    "local_path": "novel_ai/_vendor/boltons_atomic.py",
+    "sha256": "ee526aa0a46aaed79e57ca3dc1e4bd67c5a6445c4f0dc832bee41a6d797dcfdf",
+    "source_path": "boltons/fileutils.py",
+    "source_line_ranges": [
+      [
+        214,
+        261
+      ],
+      [
+        314,
+        321
+      ],
+      [
+        335,
+        489
+      ]
+    ],
+    "local_modified_blocks": {
+      "_sync_directory": {
+        "start": 75,
+        "end": 101
+      },
+      "sync_directory": {
+        "start": 104,
+        "end": 110
+      },
+      "atomic_save": {
+        "start": 113,
+        "end": 121
+      },
+      "atomic_rename": {
+        "start": 124,
+        "end": 132
+      },
+      "AtomicSaver": {
+        "start": 135,
+        "end": 249
+      }
+    }
+  },
+  "runtime_use": "ProjectStore imports atomic_save for complete single-file JSON, text, and JSONL replacements; eval.py uses atomic_save(overwrite=False) for new benchmark evidence and scoring sheets. ProjectStore recovery calls sync_directory before retiring its bounded intent. Locking and confinement are caller responsibilities.",
+  "external_runtime_dependencies": [],
+  "standard_library_dependencies": [
+    "os",
+    "errno"
+  ],
+  "upstream_package_build_dependency": "flit_core >=3.2,<4 (not needed by this extracted runtime)",
+  "upstream_python_requirement": ">=3.7 (the port follows Novel's Python requirement)",
+  "dependency_source": "https://github.com/mahmoud/boltons/blob/4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d/pyproject.toml",
+  "modifications": [
+    "Retain complete original source copyright/license header and adapted AtomicSaver context-manager/publication structure.",
+    "Replace deterministic destination.part and user-selected part paths with fixed-size randomized same-directory .novel-*.tmp names; retry exclusive collisions without touching the prior entry.",
+    "Keep exclusive/no-follow creation and add close-on-exec flags where available; default new files to 0600 filtered by umask, without copying destination permissions.",
+    "Use Python os.replace for overwrite and os.link+unlink for no-clobber; no unsafe hard-link fallback or legacy ctypes branches.",
+    "Explicit UTF-8 and LF for requested text mode; binary remains default.",
+    "Clean owned descriptors and part files for setup/body/flush/fsync/close/publication failures without masking the first exception.",
+    "Attempt POSIX parent-directory fsync after publication. Report unsupported directory sync via directory_synced=False; propagate other postcommit errors without a rollback promise.",
+    "Remove overwrite_part, rm_part_on_exc and custom part names; reject context reuse; do not add file locking, directory creation, or confinement to this narrow kernel.",
+    "Expose sync_directory(path) so callers can resync already-published entries before bounded recovery retirement and sync intent deletion afterward.",
+    "Windows default 0600 parts delegate exclusive creation to Novel private_files.create_private_file: protected effective-user DACL at creation, same-handle owner/ACE readback before content, fail closed; POSIX open flags and lifecycle unchanged."
+  ],
+  "honest_limits": [
+    "One file is published at a time; there is no multi-file transaction or write lock.",
+    "Callers must confine destination/parent paths and protect read-modify-write operations.",
+    "A postpublication exception can leave the complete new file visible; actual readback is required to establish the current version.",
+    "Directory fsync is unavailable on non-POSIX hosts and can be unsupported by a filesystem; no universal power-loss durability guarantee.",
+    "SIGKILL/process loss can leave an unreferenced private temporary file; randomized names permit subsequent writes without unsafe stale-file deletion.",
+    "Atomic no-clobber fails closed when hard links are unsupported.",
+    "Upstream has only one directly targeted AtomicSaver PathLike smoke test in test_fileutils.py; Novel adds synthetic fault-injection coverage.",
+    "Windows private DACL scope covers new default 0600 atomic files, not old files, parents, locks, Drive or privileged backup/owner access."
+  ],
+  "candidate_comparison": [
+    {
+      "repository": "mahmoud/boltons",
+      "source_commit": "4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d",
+      "stars": 6932,
+      "archived": false,
+      "github_license_spdx_id": "NOASSERTION",
+      "meets_1000_stars": true,
+      "source_url": "https://api.github.com/repos/mahmoud/boltons"
+    },
+    {
+      "repository": "untitaker/python-atomicwrites",
+      "source_commit": "4183999d9b7e81af85dee070d5311299bdf5164c",
+      "stars": 321,
+      "archived": true,
+      "github_license_spdx_id": "MIT",
+      "meets_1000_stars": false,
+      "source_url": "https://api.github.com/repos/untitaker/python-atomicwrites"
+    },
+    {
+      "repository": "tox-dev/filelock",
+      "source_commit": "9376e9b1429dc9bbd8eadb916d195ea549768cd3",
+      "stars": 978,
+      "archived": false,
+      "github_license_spdx_id": "MIT",
+      "meets_1000_stars": false,
+      "source_url": "https://api.github.com/repos/tox-dev/filelock"
+    },
+    {
+      "repository": "wolph/portalocker",
+      "source_commit": "c490bea3973b9840a3c18610edac5d00700075dd",
+      "stars": 327,
+      "archived": false,
+      "github_license_spdx_id": "BSD-3-Clause",
+      "meets_1000_stars": false,
+      "source_url": "https://api.github.com/repos/wolph/portalocker"
+    }
+  ]
+}

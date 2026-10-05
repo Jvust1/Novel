@@ -1,0 +1,194 @@
+[submodule "vendor/book-to-skill"]
+	path = vendor/book-to-skill
+	url = https://github.com/virgiliojr94/book-to-skill.git
+	branch = master
+
+[submodule "vendor/lexicalrichness"]
+	path = vendor/lexicalrichness
+	url = https://github.com/LSYS/LexicalRichness.git
+	branch = master
+
+[submodule "vendor/textstat"]
+	path = vendor/textstat
+	url = https://github.com/textstat/textstat.git
+	branch = main
+
+[submodule "vendor/proselint"]
+	path = vendor/proselint
+	url = https://github.com/amperser/proselint.git
+	branch = main
+
+[submodule "vendor/pkuseg-python"]
+	path = vendor/pkuseg-python
+	url = https://github.com/lancopku/pkuseg-python.git
+	branch = master
+
+[submodule "vendor/spacy"]
+	path = vendor/spacy
+	url = https://github.com/explosion/spaCy.git
+	branch = master
+
+[submodule "vendor/pycorrector"]
+	path = vendor/pycorrector
+	url = https://github.com/shibing624/pycorrector.git
+	branch = master
+
+[submodule "vendor/texthero"]
+	path = vendor/texthero
+	url = https://github.com/jbesomi/texthero.git
+	branch = master
+
+[submodule "vendor/opencc"]
+	path = vendor/opencc
+	url = https://github.com/BYVoid/OpenCC.git
+	branch = master
+
+[submodule "vendor/markitdown"]
+	path = vendor/markitdown
+	url = https://github.com/microsoft/markitdown.git
+	branch = main
+
+[submodule "vendor/docling"]
+	path = vendor/docling
+	url = https://github.com/docling-project/docling.git
+	branch = main
+
+[submodule "vendor/text2vec"]
+	path = vendor/text2vec
+	url = https://github.com/shibing624/text2vec.git
+	branch = master
+
+[submodule "vendor/flagem-bedding"]
+	path = vendor/flagem-bedding
+	url = https://github.com/FlagOpen/FlagEmbedding.git
+	branch = master
+
+[submodule "vendor/rapidfuzz"]
+	path = vendor/rapidfuzz
+	url = https://github.com/rapidfuzz/RapidFuzz.git
+	branch = main
+
+[submodule "vendor/deepke"]
+	path = vendor/deepke
+	url = https://github.com/zjunlp/DeepKE.git
+	branch = main
+
+[submodule "vendor/datasketch"]
+	path = vendor/datasketch
+	url = https://github.com/ekzhu/datasketch.git
+	branch = master
+
+[submodule "vendor/networkx"]
+	path = vendor/networkx
+	url = https://github.com/networkx/networkx.git
+	branch = main
+
+[submodule "vendor/qdrant-client"]
+	path = vendor/qdrant-client
+	url = https://github.com/qdrant/qdrant-client.git
+	branch = master
+
+[submodule "vendor/graphrag"]
+	path = vendor/graphrag
+	url = https://github.com/microsoft/graphrag.git
+	branch = main
+
+[submodule "vendor/lightrag"]
+	path = vendor/lightrag
+	url = https://github.com/HKUDS/LightRAG.git
+	branch = main
+
+[submodule "vendor/graphiti"]
+	path = vendor/graphiti
+	url = https://github.com/getzep/graphiti.git
+	branch = main
+
+[submodule "vendor/deepeval"]
+	path = vendor/deepeval
+	url = https://github.com/confident-ai/deepeval.git
+	branch = main
+
+[submodule "vendor/ragas"]
+	path = vendor/ragas
+	url = https://github.com/vibrantlabsai/ragas.git
+	branch = main
+
+[submodule "vendor/sentence-transformers"]
+	path = vendor/sentence-transformers
+	url = https://github.com/huggingface/sentence-transformers.git
+	branch = main
+
+[submodule "vendor/faiss"]
+	path = vendor/faiss
+	url = https://github.com/facebookresearch/faiss.git
+	branch = main
+
+[submodule "vendor/hanlp"]
+	path = vendor/hanlp
+	url = https://github.com/hankcs/HanLP.git
+	branch = doc-zh
+
+[submodule "vendor/mem0"]
+	path = vendor/mem0
+	url = https://github.com/mem0ai/mem0.git
+	branch = main
+
+[submodule "vendor/llama-index"]
+	path = vendor/llama-index
+	url = https://github.com/run-llama/llama_index.git
+	branch = main
+
+[submodule "vendor/langchain"]
+	path = vendor/langchain
+	url = https://github.com/langchain-ai/langchain.git
+	branch = master
+
+[submodule "vendor/haystack"]
+	path = vendor/haystack
+	url = https://github.com/deepset-ai/haystack.git
+	branch = main
+
+[submodule "vendor/chroma"]
+	path = vendor/chroma
+	url = https://github.com/chroma-core/chroma.git
+	branch = main
+
+[submodule "vendor/dspy"]
+	path = vendor/dspy
+	url = https://github.com/stanfordnlp/dspy.git
+	branch = main
+
+[submodule "vendor/chinese-novelist-skill"]
+	path = vendor/chinese-novelist-skill
+	url = https://github.com/PenglongHuang/chinese-novelist-skill.git
+	branch = master
+
+[submodule "vendor/kag"]
+	path = vendor/kag
+	url = https://github.com/OpenSPG/KAG.git
+	branch = master
+
+[submodule "vendor/paddlenlp"]
+	path = vendor/paddlenlp
+	url = https://github.com/PaddlePaddle/PaddleNLP.git
+	branch = develop
+
+[submodule "vendor/scikit-learn"]
+	path = vendor/scikit-learn
+	url = https://github.com/scikit-learn/scikit-learn.git
+	branch = main
+
+[submodule "vendor/river"]
+	path = vendor/river
+	url = https://github.com/online-ml/river.git
+	branch = main
+
+[submodule "vendor/plotly"]
+	path = vendor/plotly
+	url = https://github.com/plotly/plotly.py.git
+	branch = main
+
+[submodule "vendor/umap"]
+	path = vendor/umap
+	url = https://github.com/lmcinnes/umap.git
+	branch = master

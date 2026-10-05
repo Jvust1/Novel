@@ -1,0 +1,42 @@
+{
+  "schema": "novel-workbench-binding-candidate-v1",
+  "branch": "fix/workbench-source-bindings-20261001",
+  "base_pr": 66,
+  "base_head": "fbc509a89dbcd42feb38c01b926f5730d267494f",
+  "base_tree": "ecda9aa33050a49349e77f186279860f5e493e9f",
+  "docs": "docs/WORKBENCH_SOURCE_BINDINGS.md",
+  "scope": "retain existing project edits through hidden-widget cleanup and bind local outline work to actual persisted sources",
+  "preserved": "original field/project ownership, plan confirmation, model output, memory and budget gates; no new history or transaction mechanism",
+  "validation": {
+    "status": "local_passed_remote_receipt_on_published_pr",
+    "python_3_11": {
+      "passed": 2054,
+      "skipped": 1,
+      "seconds": 197.47
+    },
+    "python_3_12": {
+      "passed": 2054,
+      "skipped": 1,
+      "seconds": 193.1
+    },
+    "new_cases": 43,
+    "independent_review_cases": 32,
+    "original_ui_reproductions": "three interrupted-style recovery variants lost author edits; stale cross-session outline dispatched and saved after style refresh",
+    "independent_publication_probe": "simultaneous disk and cache refresh after final response now rejected using the captured source checker",
+    "actual_entries": "AppTest, real provider HTTPX MockTransport, save/reload/retry, every generation stage and format fallback",
+    "fatal_ruff": "passed",
+    "new_tests_ruff": "passed",
+    "default_ruff_advisory_count": 446,
+    "document_links_checked": 72,
+    "pip_check": "passed both installed environments",
+    "compileall": "passed both interpreters",
+    "skip": "optional qdrant-client absent",
+    "external_ai_review": "not completed; cloud browser connection unavailable"
+  },
+  "boundaries": [
+    "source checks are not author acceptance",
+    "process-local unsaved edits are not persisted manuscripts",
+    "external browser AI review unavailable due to infrastructure",
+    "no main merge, deployment, private manuscript publication or paid model"
+  ]
+}

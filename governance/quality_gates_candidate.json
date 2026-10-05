@@ -1,0 +1,62 @@
+{
+  "schema": "novel-quality-gates-candidate-v1",
+  "branch": "chore/quality-gates-integrated-20261001",
+  "base_pr": 61,
+  "base_head": "d2e56e7459cf8bd85637c7953c64a5d8245aad2a",
+  "base_tree": "fadb0309b3aa4d0dfe0400ff95d1d673e61cf8f8",
+  "adapted_from": {
+    "pr": 60,
+    "head": "bc87ef1f87c2d789a44e9364f65e095e360a0cf1",
+    "scope": "CI gate steps and integration-probe bootstrap only; no feature-stack merge"
+  },
+  "gates": {
+    "dependency_consistency": "python -m pip check",
+    "fatal_static": "ruff 0.16.9 check app.py novel_ai scripts tests --select E9,F63,F7,F82",
+    "default_static": "advisory --exit-zero, not a pass claim",
+    "entry": "python scripts/check_current_entry.py",
+    "optional_integrations": "availability only, not real model operation",
+    "full_regression": "existing compileall and pytest retained across Python 3.11/3.12"
+  },
+  "validation": {
+    "python_3_11": {
+      "passed": 1779,
+      "skipped": 1,
+      "seconds": 177.85
+    },
+    "python_3_12": {
+      "passed": 1779,
+      "skipped": 1,
+      "seconds": 171.8
+    },
+    "new_cases": 13,
+    "independent_review": "17 targeted tests and fatal Ruff passed; four false-green identity/entry cases reproduced and fixed",
+    "pip_check": "exact python -m pip check passed in both existing environments; clean environment results belong to the exact-head CI receipt",
+    "fatal_static": "Ruff 0.16.9 E9,F63,F7,F82 passed; synthetic F821 probe rejected exit 1",
+    "default_static": {
+      "advisory_diagnostics": 448,
+      "blocking": false,
+      "all_static_clean": false
+    },
+    "compileall": "passed both interpreters",
+    "links": "95 edited-document local references checked",
+    "provenance": "probe matches exact upstream blob; complete Ruff LICENSE matches pinned Git blob and SHA-256",
+    "skip": "optional qdrant-client absent",
+    "remote_ci": "see exact published PR and packaged verification receipt"
+  },
+  "limits": [
+    "no vulnerability scan or transitive dependency lock",
+    "no type-checking or complete static-clean claim",
+    "no optional model/service runtime verification",
+    "branch-protection enforcement not verified"
+  ],
+  "reuse_trace": "third_party/ruff-dev-tool/NOTICE.md",
+  "upstream": {
+    "repository": "astral-sh/ruff",
+    "version": "0.16.9",
+    "commit": "0be08a206f9c3180afd3e93bcc792ed5cb1f4db1",
+    "license": "MIT",
+    "stars_observed": 49870,
+    "observed_utc": "2026-10-01T17:56:00Z",
+    "kind": "pinned development CLI dependency, not copied application runtime"
+  }
+}

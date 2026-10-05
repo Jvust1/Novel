@@ -1,0 +1,60 @@
+{
+  "execution": "Ran existing Novel Python functions in current cloud execution workspace; GitHub plugin did not execute Python",
+  "code_commit": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+  "code_tree": "9223c7b97c5126b217eea7cff3632d318d4ff438",
+  "model_api_calls": 0,
+  "plan_stage": {
+    "stage": "planning",
+    "ok": true,
+    "issues": []
+  },
+  "draft_length_stage": {
+    "stage": "draft",
+    "ok": true,
+    "issues": []
+  },
+  "prose_heuristics": {
+    "char_count": 3228,
+    "sentence_count": 218,
+    "paragraph_count": 129,
+    "unique_char_ratio": 0.2181,
+    "bigram_diversity": 0.7878,
+    "sentence_length_mean": 14.81,
+    "sentence_length_std": 8.98,
+    "paragraph_length_cv": 0.821,
+    "repeated_sentence_ratio": 0.0,
+    "repeated_paragraph_openings": {},
+    "lexical_metrics": {
+      "tokenizer": "char-fallback",
+      "token_count": 2659,
+      "unique_token_count": 580,
+      "type_token_ratio": 0.2181,
+      "lexicalrichness": 0
+    },
+    "optional_backends": {
+      "opencc": false,
+      "pkuseg": false,
+      "jieba": false,
+      "lexicalrichness": false,
+      "pycorrector": false,
+      "spacy": false,
+      "hanlp": false
+    },
+    "correction_samples": [],
+    "issues": [
+      {
+        "category": "词汇重复偏高",
+        "severity": "medium",
+        "reason": "分词后的 type-token ratio 为 0.2181。",
+        "suggestion": "检查高频实词和固定搭配，只替换无意重复，不做同义词机械轮换。",
+        "excerpt": ""
+      }
+    ],
+    "score": 91
+  },
+  "heuristics_are_not_human_quality_or_publication_scores": true,
+  "human_readability_score": null,
+  "reference_similarity": "NOT_RUN: no reference corpus",
+  "body_han_characters": 2659,
+  "body_non_whitespace_characters": 3228
+}

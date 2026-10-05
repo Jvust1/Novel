@@ -1,0 +1,33 @@
+{
+  "demo_kind": "ORIGINAL_PUBLIC_TEST",
+  "rules_read_via": "GitHub plugin",
+  "code_source_commit": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+  "code_source_tree": "9223c7b97c5126b217eea7cff3632d318d4ff438",
+  "rule_sources": [
+    {
+      "path": "docs/PROJECT_NORTH_STAR.md",
+      "commit": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+      "url": "https://github.com/Jvust1/Novel/blob/d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90/docs/PROJECT_NORTH_STAR.md"
+    },
+    {
+      "path": "docs/ARCHITECTURE_INVARIANTS.md",
+      "commit": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+      "url": "https://github.com/Jvust1/Novel/blob/d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90/docs/ARCHITECTURE_INVARIANTS.md"
+    },
+    {
+      "path": "docs/PRODUCT_SPEC.md",
+      "commit": "d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90",
+      "url": "https://github.com/Jvust1/Novel/blob/d14ccae8faa90fb4e293ff7f448c8d6ee03f4d90/docs/PRODUCT_SPEC.md"
+    },
+    {
+      "path": "docs/CHATGPT_WRITING.md",
+      "commit": "7d6e24b95028d29a97ed1f413ed39c870d6cf380",
+      "url": "https://github.com/Jvust1/Novel/blob/7d6e24b95028d29a97ed1f413ed39c870d6cf380/docs/CHATGPT_WRITING.md",
+      "status": "historical unmerged protocol; writing-stage concepts reused, public storage permission not adopted"
+    }
+  ],
+  "models_or_services_called": [],
+  "private_manuscripts_used": false,
+  "publication_scope": "this original public test only",
+  "formal_author_acceptance": null
+}
