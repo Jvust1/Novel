@@ -281,7 +281,7 @@ with style_tab:
         "多份 profile 按权重融合；参考正文不会写入 Style DNA 文件。"
     )
 
-    uploaded = st.file_uploader("上传参考文本（支持 TXT / MD / DOCX / PDF）", type=["txt", "md", "docx", "pdf"])
+    uploaded = st.file_uploader("上传参考文本（支持 TXT / MD / DOCX / PDF / HTML）", type=["txt", "md", "docx", "pdf", "html", "htm"])
     uploaded_data = uploaded.getvalue() if uploaded is not None else None
     encoding_source = (project_name, uploaded.name, hashlib.sha256(uploaded_data).hexdigest()) if uploaded is not None else None
     if st.session_state.get("reference_encoding_source") != encoding_source:

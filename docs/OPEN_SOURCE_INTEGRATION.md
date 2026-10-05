@@ -1,6 +1,6 @@
 # Novel Open-Source Integration Map
 
-> Updated: 2026-10-04  
+> Updated: 2026-10-05  
 > Scope: public GitHub projects that materially help Novel reach the Reference Pack → Style DNA + Story DNA → original long-form generation → human-feel/originality/evaluation target.
 
 ## Integration policy
@@ -26,7 +26,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 6. `requirements-extras/*` — heavy dependencies split by capability so the default install stays small.
 7. `governance/open_source_registry.json` — auditable upstream registry.
 
-## Upstream registry (47 projects)
+## Upstream registry (48 projects)
 
 | Priority | Key | Upstream | License | Adoption mode | Novel use |
 |---|---|---|---|---|---|
@@ -53,6 +53,7 @@ This preserves the project's current invariants: provider-neutral, local-first, 
 | P0 | `datasketch` | [ekzhu/datasketch](https://github.com/ekzhu/datasketch) | MIT | licensed-source-port | 对不可逆 shingle hash 做低内存 MinHash overlap 诊断 |
 | P0 | `docling` | [docling-project/docling](https://github.com/docling-project/docling) | MIT | adapter | 复杂 PDF/DOCX/版面解析，增强参考小说导入 |
 | P1 | `markitdown` | [microsoft/markitdown](https://github.com/microsoft/markitdown) | MIT | adapter | 多文档统一转 Markdown |
+| P1 | `trafilatura` | [adbar/trafilatura](https://github.com/adbar/trafilatura) | Apache-2.0 | optional-adapter | 已上传 HTML bytes 的本地正文抽取；不抓 URL、不下载模型 |
 | P2 | `unstructured` | [Unstructured-IO/unstructured](https://github.com/Unstructured-IO/unstructured) | Apache-2.0 | adapter | 文档 partition/metadata 备用路径 |
 | P1 | `graphrag` | [microsoft/graphrag](https://github.com/microsoft/graphrag) | MIT | experiment-candidate | 全局/局部图检索；仅在 A/B 证明收益后启用 |
 | P1 | `lightrag` | [HKUDS/LightRAG](https://github.com/HKUDS/LightRAG) | MIT | experiment-candidate | 轻量图+向量 Recall |
@@ -90,8 +91,10 @@ Target mapping:
 - outline expansion confidence / vagueness → choose which node to expand next
 - passage generation + consistency check → current Draft/Review/Repair flow
 
-### Reference ingestion: Docling + MarkItDown
+### Reference ingestion: Docling + MarkItDown + trafilatura
 Current `pypdf` / `python-docx` path remains the lightweight baseline. Advanced adapters should be used when layout, scanned PDFs, headers/footers or complex structure make baseline extraction unreliable.
+
+For uploaded `.html`/`.htm`, trafilatura is an optional local adapter. Novel passes the uploaded bytes directly to `trafilatura.extract` with precision-first extraction, comments and tables disabled; URL fetch helpers and model downloads are not used. Missing or empty optional output falls through to the existing clear dependency error.
 
 ### Chinese semantic layer: jieba + text2vec + FlagEmbedding
 - jieba: deterministic lexical statistics for Style DNA.

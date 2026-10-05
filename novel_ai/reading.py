@@ -15,7 +15,7 @@ SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf",
 
 
 def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
-    """Try Docling first, then MarkItDown.
+    """Try Docling, MarkItDown, then local trafilatura for HTML.
 
     Both adapters operate on a temporary local file and are optional. Failure
     falls through to the deterministic lightweight readers.
@@ -44,6 +44,25 @@ def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
                     return text.strip(), "markitdown"
             except Exception:
                 pass
+
+        if suffix in {".html", ".htm"}:
+            try:
+                if importlib.util.find_spec("trafilatura") is not None:
+                    from trafilatura import extract
+
+                    text = extract(
+                        data,
+                        url=None,
+                        favor_precision=True,
+                        include_comments=False,
+                        include_tables=False,
+                        output_format="txt",
+                    )
+                    if text and text.strip():
+                        return text.strip(), "trafilatura"
+            except Exception:
+                pass
+
     return None
 
 
@@ -77,7 +96,7 @@ def _extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[st
 
     if name.endswith((".html", ".htm", ".rtf", ".epub")):
         raise ValueError(
-            f"读取 {Path(filename).suffix} 需要 Docling 或 MarkItDown："
+            f"读取 {Path(filename).suffix} 需要 Docling、MarkItDown 或 trafilatura>=1.8.0："
             "pip install -r requirements-extras/reference.txt"
         )
 
