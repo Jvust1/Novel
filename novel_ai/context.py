@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from copy import deepcopy
 from typing import Any
@@ -9,7 +10,7 @@ from .storage import ProjectStore
 from .token_budget import TokenCounter
 from .history_recall import select_history
 from .semantic_history import select_semantic_history
-from .recall_backends import LocalSemanticRecall
+from .recall_backends import LocalSemanticRecall, resolve_local_recall_backend
 import hashlib
 
 
@@ -57,6 +58,7 @@ class ContextAssembler:
         canon_token_budget: int | None = None,
         recall_token_budget: int | None = None,
         local_semantic_recall: LocalSemanticRecall | None = None,
+        recall_backends: Mapping[str, LocalSemanticRecall] | None = None,
         local_semantic_limit: int = 8,
     ):
         self.store = store
@@ -69,11 +71,25 @@ class ContextAssembler:
         self.recall_token_budget = recall_token_budget
         if local_semantic_recall is not None and not isinstance(local_semantic_recall, LocalSemanticRecall):
             raise TypeError("local_semantic_recall must be an explicit LocalSemanticRecall instance")
+        if recall_backends is not None and not isinstance(recall_backends, Mapping):
+            raise TypeError("recall_backends must be a mapping")
+        configured_backends = dict(recall_backends or {})
+        if local_semantic_recall is not None:
+            existing_native = configured_backends.get("native")
+            if existing_native is not None and existing_native is not local_semantic_recall:
+                raise ValueError("native recall backend conflicts with local_semantic_recall")
+            configured_backends.setdefault("native", local_semantic_recall)
+        for backend_key, backend in configured_backends.items():
+            if not isinstance(backend_key, str) or not backend_key.strip():
+                raise ValueError("recall backend keys must be non-empty strings")
+            if not isinstance(backend, LocalSemanticRecall):
+                raise TypeError("recall_backends must contain LocalSemanticRecall instances")
         if type(local_semantic_limit) is not int or local_semantic_limit < 1:
             raise ValueError("local_semantic_limit must be a positive integer")
-        if local_semantic_recall is not None and recall_token_budget is not None and recall_token_budget > 0 and token_counter is None:
+        if configured_backends and recall_token_budget is not None and recall_token_budget > 0 and token_counter is None:
             raise ValueError("positive semantic recall token budget requires an actual token counter")
         self.local_semantic_recall = local_semantic_recall
+        self.recall_backends = configured_backends or None
         self.local_semantic_limit = local_semantic_limit
 
     def assemble(
@@ -97,7 +113,13 @@ class ContextAssembler:
         state = deepcopy(config['store'].load_story_state(config['project']))
         summaries = deepcopy(config['store'].all_chapter_summaries(config['project']))
         health = deepcopy(config['store'].load_longform_health(config['project']))
-        semantic_requested = config['local_semantic_recall'] is not None and bool(recall_query.strip())
+        selected_local_backend = config.get('local_semantic_recall')
+        registry_selected_backend = None
+        if recall_query.strip() and config.get('recall_backends'):
+            registry_selected_backend, selected_local_backend = resolve_local_recall_backend(
+                config['recall_backends']
+            )
+        semantic_requested = selected_local_backend is not None and bool(recall_query.strip())
         if semantic_requested and history_chapter_ids is None:
             raise ValueError("semantic writing context requires explicit confirmed history_chapter_ids")
         excluded_history_ids = []
@@ -147,10 +169,10 @@ class ContextAssembler:
         if recall_query.strip():
             # Explicit experiment; keep the historical chronological default intact.
             older = summaries[:-recent_limit] if recent_limit > 0 else summaries
-            if config['local_semantic_recall'] is not None:
+            if selected_local_backend is not None:
                 scope = hashlib.sha256(str(config['store'].project_dir(config['project']).resolve()).encode("utf-8")).hexdigest()
                 older, context.recall_report = select_semantic_history(
-                    config['local_semantic_recall'], recall_query, older, project_scope=scope,
+                    selected_local_backend, recall_query, older, project_scope=scope,
                     limit=config['local_semantic_limit'], summary_chars=(0 if config['recall_char_budget'] <= 0
                         or (config['recall_token_budget'] is not None and config['recall_token_budget'] <= 0)
                         else max(0, config['recall_summary_chars'])),
@@ -158,6 +180,8 @@ class ContextAssembler:
                 context.recall_report["history_chapter_ids"] = list(history_chapter_ids or [])
                 context.recall_report["excluded_out_of_scope_chapter_ids"] = excluded_history_ids
                 context.recall_report["token_budget_evidence"] = "configured counter only; not proof of selected GPT tokenizer or total conversation"
+                if registry_selected_backend is not None:
+                    context.recall_report["registry_selected_backend"] = registry_selected_backend
             else:
                 older, context.recall_report = select_history(
                     recall_query, older, summary_chars=max(0, config['recall_summary_chars'])

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+import hashlib
 import importlib.util
 from numbers import Integral
 from threading import RLock
@@ -21,6 +23,38 @@ class _RecallSnapshot:
     faiss: object | None = None
     index: object | None = None
 
+
+
+class CharacterNgramEncoder:
+    """Dependency-free fixed-width character n-gram encoder for local recall."""
+
+    def __init__(self, *, dimension: int = 512, ngram_size: int = 2) -> None:
+        if type(dimension) is not int or dimension < 32:
+            raise ValueError("dimension must be an integer >= 32")
+        if type(ngram_size) is not int or ngram_size < 1:
+            raise ValueError("ngram_size must be a positive integer")
+        self.dimension = dimension
+        self.ngram_size = ngram_size
+
+    def encode(self, texts: Sequence[str]) -> list[list[float]]:
+        rows: list[list[float]] = []
+        for text in texts:
+            if not isinstance(text, str):
+                raise TypeError("texts must contain strings")
+            compact = "".join(text.split())
+            vector = [0.0] * self.dimension
+            for width in range(1, self.ngram_size + 1):
+                if len(compact) < width:
+                    continue
+                for index in range(len(compact) - width + 1):
+                    gram = compact[index:index + width].encode("utf-8")
+                    value = int.from_bytes(
+                        hashlib.blake2b(gram, digest_size=8).digest(),
+                        "big",
+                    )
+                    vector[value % self.dimension] += 1.0 if value & 1 else -1.0
+            rows.append(vector)
+        return rows
 
 class LocalSemanticRecall:
     """Local recall with atomic, detached corpus/vector/index snapshots.
@@ -228,8 +262,50 @@ class LocalSemanticRecall:
     def query(self, text: str, *, limit: int = 5) -> list[RecallHit]:
         return self.search(text, limit)
 
+ 
 
-def recall_backend_capabilities() -> dict[str, bool]:
+def create_native_character_recall(
+    *, dimension: int = 512, ngram_size: int = 2,
+) -> LocalSemanticRecall:
+    """Create the dependency-free local recall backend used by the writing UI."""
+    backend = LocalSemanticRecall(
+        CharacterNgramEncoder(dimension=dimension, ngram_size=ngram_size)
+    )
+    backend.name = "native-character-ngram"
+    return backend
+
+def resolve_local_recall_backend(
+    configured: Mapping[str, LocalSemanticRecall],
+    *,
+    preferred: tuple[str, ...] | None = None,
+) -> tuple[str, LocalSemanticRecall | None]:
+    """Resolve only configured local backends through the validated registry.
+
+    The registry remains an allow-list and capability probe. An installed
+    optional package is never imported or started unless its matching backend
+    instance was explicitly supplied by the caller. If the selected optional
+    key is absent, an explicitly configured native backend is used.
+    """
+    if not isinstance(configured, Mapping):
+        raise TypeError("configured recall backends must be a mapping")
+    entries = dict(configured)
+    for key, backend in entries.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError("recall backend keys must be non-empty strings")
+        if not isinstance(backend, LocalSemanticRecall):
+            raise TypeError("configured recall backends must be LocalSemanticRecall instances")
+
+    from .oss_batch_20261004 import choose_recall_backend
+
+    selected = choose_recall_backend() if preferred is None else choose_recall_backend(tuple(preferred))
+    backend = entries.get(selected)
+    if backend is not None:
+        return selected, backend
+    fallback = entries.get("native")
+    return ("native", fallback) if fallback is not None else ("native", None)
+
+
+def recall_backend_capabilities() -> dict[str, bool | str]:
     modules = {
         "faiss": "faiss",
         "qdrant": "qdrant_client",
@@ -238,7 +314,16 @@ def recall_backend_capabilities() -> dict[str, bool]:
         "lightrag": "lightrag",
         "graphiti": "graphiti_core",
     }
-    return {key: importlib.util.find_spec(module) is not None for key, module in modules.items()}
+    capabilities: dict[str, bool | str] = {
+        key: importlib.util.find_spec(module) is not None
+        for key, module in modules.items()
+    }
+    # The capability probe is a live runtime entry point: route the selected
+    # optional backend through the validated registry without importing it.
+    from .oss_batch_20261004 import choose_recall_backend
+
+    capabilities["selected_backend"] = choose_recall_backend()
+    return capabilities
 
 
 

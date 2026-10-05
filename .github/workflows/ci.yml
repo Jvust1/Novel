@@ -42,3 +42,36 @@ jobs:
       - name: Check current public entry
         run: python scripts/check_current_entry.py
       - run: pytest -q
+      - name: Exercise the real Streamlit entry
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          python -m streamlit run app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 >"$work/streamlit.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; rm -rf "$work"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8501/_stcore/health >"$work/health.txt"; then
+              break
+            fi
+            sleep 1
+          done
+          test "$(tr -d '\r\n' <"$work/health.txt")" = "ok"
+          curl -fsS http://127.0.0.1:8501/ >"$work/index.html"
+          python - "$work" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          work = pathlib.Path(sys.argv[1])
+          health = (work / "health.txt").read_text(encoding="utf-8").strip()
+          html = (work / "index.html").read_text(encoding="utf-8").lower()
+          assert health == "ok", health
+          assert "<!doctype html>" in html
+          print(json.dumps({
+              "entry": "python -m streamlit run app.py",
+              "health": health,
+              "root": True,
+          }, ensure_ascii=False))
+          PY
