@@ -120,6 +120,9 @@ def test_workbench_carries_recalled_evidence_through_confirmed_plan_and_repair(m
     assert len(calls) == 5
     assert all("仓库钥匙藏在青瓷碗底" in messages[-1]["content"] for messages in calls)
     assert at.session_state["last_result"].review_after_repair is not None
+    report = at.session_state["last_result_meta"]["recall_report"]
+    assert report["registry_selected_backend"] == "native"
+    assert report["backend"] == "native-character-ngram"
 
 
 def test_memory_writeback_persists_character_knowledge_across_fresh_sessions(monkeypatch, tmp_path):
