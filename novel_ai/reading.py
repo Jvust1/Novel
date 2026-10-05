@@ -15,35 +15,16 @@ SUPPORTED_EXTENSIONS = (".txt", ".md", ".docx", ".pdf", ".html", ".htm", ".rtf",
 
 
 def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
-    """Try Docling, MarkItDown, then local trafilatura for HTML.
+    """Try local trafilatura for HTML, then Docling and MarkItDown.
 
-    Both adapters operate on a temporary local file and are optional. Failure
-    falls through to the deterministic lightweight readers.
+    All adapters operate on uploaded bytes or a temporary local file and are
+    optional. A missing, empty, or failing adapter falls through to the next
+    backend and finally to the deterministic lightweight readers.
     """
     suffix = Path(filename or "reference.txt").suffix.lower() or ".txt"
     with tempfile.TemporaryDirectory(prefix="novel-reference-") as td:
         path = Path(td) / ("reference" + suffix)
         path.write_bytes(data)
-
-        if importlib.util.find_spec("docling") is not None:
-            try:
-                from docling.document_converter import DocumentConverter
-                result = DocumentConverter().convert(path)
-                text = result.document.export_to_markdown()
-                if text and text.strip():
-                    return text.strip(), "docling"
-            except Exception:
-                pass
-
-        if importlib.util.find_spec("markitdown") is not None:
-            try:
-                from markitdown import MarkItDown
-                result = MarkItDown().convert(str(path))
-                text = getattr(result, "markdown", None) or getattr(result, "text_content", "")
-                if text and text.strip():
-                    return text.strip(), "markitdown"
-            except Exception:
-                pass
 
         if suffix in {".html", ".htm"}:
             try:
@@ -63,8 +44,28 @@ def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
             except Exception:
                 pass
 
-    return None
+        if importlib.util.find_spec("docling") is not None:
+            try:
+                from docling.document_converter import DocumentConverter
 
+                result = DocumentConverter().convert(path)
+                text = result.document.export_to_markdown()
+                if text and text.strip():
+                    return text.strip(), "docling"
+            except Exception:
+                pass
+
+        if importlib.util.find_spec("markitdown") is not None:
+            try:
+                from markitdown import MarkItDown
+
+                result = MarkItDown().convert(str(path))
+                text = getattr(result, "markdown", None) or getattr(result, "text_content", "")
+                if text and text.strip():
+                    return text.strip(), "markitdown"
+            except Exception:
+                pass
+    return None
 
 def _extract_reference_text_with_backend(filename: str, data: bytes) -> tuple[str, str]:
     """Extract reference text and report the backend actually used."""

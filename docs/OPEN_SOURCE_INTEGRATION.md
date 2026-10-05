@@ -94,7 +94,7 @@ Target mapping:
 ### Reference ingestion: Docling + MarkItDown + trafilatura
 Current `pypdf` / `python-docx` path remains the lightweight baseline. Advanced adapters should be used when layout, scanned PDFs, headers/footers or complex structure make baseline extraction unreliable.
 
-For uploaded `.html`/`.htm`, trafilatura is an optional local adapter. Novel passes the uploaded bytes directly to `trafilatura.extract` with precision-first extraction, comments and tables disabled; URL fetch helpers and model downloads are not used. Missing or empty optional output falls through to the existing clear dependency error.
+For uploaded `.html`/`.htm`, trafilatura is an optional local adapter. Novel passes the uploaded bytes directly to `trafilatura.extract` with precision-first extraction, comments and tables disabled; URL fetch helpers and model downloads are not used. Missing or empty optional output first tries the existing Docling/MarkItDown adapters; only when no backend yields text does the existing clear dependency error surface.
 
 ### Chinese semantic layer: jieba + text2vec + FlagEmbedding
 - jieba: deterministic lexical statistics for Style DNA.

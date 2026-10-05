@@ -47,12 +47,22 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         shell: bash
         run: |
+          set -euo pipefail
           python -m pip install "trafilatura>=1.8.0,<3"
+          python -m pip check
           python - <<'PY'
-          import importlib.util
-          assert importlib.util.find_spec("trafilatura") is not None
+          import trafilatura
+          assert callable(trafilatura.extract)
+          print("trafilatura", trafilatura.__version__)
           PY
-          pytest -q tests/test_reading.py -k trafilatura
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          pytest -q tests/test_reading.py -k trafilatura -rs | tee "$work/pytest.log"
+          grep -Eq '[1-9][0-9]* passed' "$work/pytest.log"
+          if grep -Eq '[1-9][0-9]* skipped' "$work/pytest.log"; then
+            echo "optional trafilatura tests unexpectedly skipped"
+            exit 1
+          fi
 
       - name: Exercise the real Streamlit entry
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'

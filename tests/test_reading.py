@@ -136,19 +136,80 @@ def test_html_without_optional_backend_keeps_dependency_fallback(monkeypatch):
         extract_reference("reference.html", "<html><body>正文</body></html>".encode("utf-8"))
 
 
-def test_trafilatura_html_path_does_not_open_network(monkeypatch):
+def test_trafilatura_html_path_spies_real_extract_and_does_not_open_network(monkeypatch):
     trafilatura = pytest.importorskip("trafilatura")
     _trafilatura_only(monkeypatch)
     import socket
 
+    fixture = (Path(__file__).parent / "fixtures" / "reference.html").read_bytes()
+    original_extract = trafilatura.extract
+    observed = {}
+
+    def spy_extract(filecontent, *args, **kwargs):
+        observed["filecontent"] = filecontent
+        observed["kwargs"] = kwargs
+        return original_extract(filecontent, *args, **kwargs)
+
     def blocked_connect(*args, **kwargs):
         raise AssertionError("local HTML extraction attempted a network connection")
 
+    monkeypatch.setattr(trafilatura, "extract", spy_extract)
     monkeypatch.setattr(socket.socket, "connect", blocked_connect)
-    fixture = (Path(__file__).parent / "fixtures" / "reference.html").read_bytes()
 
     from novel_ai.reading import extract_reference
 
     result = extract_reference("reference.html", fixture)
     assert result.backend == "trafilatura"
-    assert hasattr(trafilatura, "extract")
+    assert observed["filecontent"] == fixture
+    assert observed["kwargs"]["url"] is None
+    assert observed["kwargs"]["favor_precision"] is True
+    assert observed["kwargs"]["include_comments"] is False
+    assert observed["kwargs"]["include_tables"] is False
+
+
+@pytest.mark.parametrize("failure", ["empty", "error"])
+def test_trafilatura_empty_or_error_falls_through_to_markitdown(monkeypatch, failure):
+    trafilatura = pytest.importorskip("trafilatura")
+    from novel_ai import reading
+    import sys
+    import types
+
+    fixture = (Path(__file__).parent / "fixtures" / "reference.html").read_bytes()
+    real_find_spec = reading.importlib.util.find_spec
+
+    def find_spec(name):
+        if name == "docling":
+            return None
+        if name == "markitdown":
+            return object()
+        return real_find_spec(name)
+
+    monkeypatch.setattr(reading.importlib.util, "find_spec", find_spec)
+
+    fallback_module = types.ModuleType("markitdown")
+
+    class FallbackResult:
+        markdown = "MarkItDown fallback text"
+
+    class FallbackMarkItDown:
+        def convert(self, path):
+            return FallbackResult()
+
+    fallback_module.MarkItDown = FallbackMarkItDown
+    monkeypatch.setitem(sys.modules, "markitdown", fallback_module)
+
+    def failing_extract(filecontent, *args, **kwargs):
+        assert filecontent == fixture
+        if failure == "error":
+            raise RuntimeError("synthetic trafilatura failure")
+        return None
+
+    monkeypatch.setattr(trafilatura, "extract", failing_extract)
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference("reference.html", fixture)
+    assert result.backend == "markitdown"
+    assert result.text == "MarkItDown fallback text"
+
+
