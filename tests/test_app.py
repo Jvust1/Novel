@@ -17,6 +17,169 @@ def run_app(monkeypatch, tmp_path):
     return at
 
 
+def _seed_long_recall_history(tmp_path):
+    """Create accepted summaries that exercise the real AppTest recall boundary."""
+    from novel_ai.storage import ProjectStore
+
+    store = ProjectStore(tmp_path / "data")
+    chapter_ids = []
+    for index in range(13):
+        chapter_id = f"{index:02d}-" + "a" * 75
+        chapter_ids.append(chapter_id)
+        if index == 0:
+            summary = "仓库钥匙在青瓷碗底，雨夜林澄核对账本。" * 20
+        else:
+            summary = (
+                f"仓库钥匙在青瓷碗底，雨夜林澄核对账本并记录编号{index}。"
+                + "补充线索。" * 10
+            )
+        store.save_extraction("MyNovel", {"chapter_id": chapter_id, "summary": summary})
+    return chapter_ids
+
+
+def _configure_writer(at, *, goal, diverse_recall):
+    for item in at.text_input:
+        if item.label == "Base URL":
+            item.set_value("http://unused.test")
+        if item.label == "Model":
+            item.set_value("fixture")
+    at.text_area(key="chapter_goal").set_value(goal)
+    if diverse_recall:
+        at.checkbox(key="diverse_recall").check()
+    at.run()
+
+
+def _fixture_result(plan=None):
+    from novel_ai.engine import ChapterResult
+    from novel_ai.models import ChapterPlan
+
+    return ChapterResult(
+        plan=plan or ChapterPlan(chapter_title="测试章"),
+        draft="沈青走进仓库。",
+        review=None,
+        ai_flavor={},
+    )
+
+
+@pytest.mark.parametrize("entry", ["plan", "write_draft", "one_shot"])
+def test_real_writing_entries_carry_bounded_recall_to_engine_and_ui(
+    monkeypatch, tmp_path, entry
+):
+    """Each user-facing writing button must carry the same real recall evidence."""
+    from novel_ai.engine import NovelEngine
+
+    chapter_ids = _seed_long_recall_history(tmp_path)
+    captured = []
+
+    def plan(self, bible, outline, chapter_goal, characters, recent_summaries=None, extra_context=""):
+        captured.append(("plan", chapter_goal, extra_context))
+        return _fixture_result().plan
+
+    def run(self, **kwargs):
+        captured.append(("one_shot", kwargs["chapter_goal"], kwargs["extra_context"]))
+        return _fixture_result()
+
+    def run_from_plan(self, **kwargs):
+        captured.append(("write_draft", "", kwargs["extra_context"]))
+        return _fixture_result(kwargs["plan"])
+
+    monkeypatch.setattr(NovelEngine, "plan", plan)
+    monkeypatch.setattr(NovelEngine, "run", run)
+    monkeypatch.setattr(NovelEngine, "run_from_plan", run_from_plan)
+
+    at = run_app(monkeypatch, tmp_path)
+    _configure_writer(at, goal="仓库钥匙", diverse_recall=True)
+
+    if entry == "plan":
+        at.button(key="btn_plan").click().run()
+        assert not at.exception
+        report = at.session_state["pending_plan_meta"]["recall_report"]
+    elif entry == "write_draft":
+        at.button(key="btn_plan").click().run()
+        assert not at.exception
+        at.button(key="btn_draft").click().run()
+        assert not at.exception
+        report = at.session_state["last_result_meta"]["recall_report"]
+    else:
+        at.button(key="btn_oneshot").click().run()
+        assert not at.exception
+        report = at.session_state["last_result_meta"]["recall_report"]
+
+    assert captured
+    passed_context = captured[-1][2]
+    assert report["mode"] == "local-semantic"
+    assert report["backend"] == "native-character-ngram"
+    assert report["registry_selected_backend"] == "native"
+    assert report["candidate_count"] == 9  # 13 accepted rows minus 4 recent rows
+    assert len(report["selected_sources"]) == report["limit"] == 8
+    assert len(report["history_chapter_ids"]) == 13
+    assert report["summary_chars"] == 80
+    assert report["prompt_chars"] <= 1200
+    assert "configured counter only" in report["token_budget_evidence"]
+
+    selected_ids = {source["chapter_id"] for source in report["selected_sources"]}
+    included_ids = set(report["included_chapter_ids"])
+    omitted_ids = {source["chapter_id"] for source in report["omitted_sources"]}
+    assert included_ids
+    assert included_ids <= selected_ids
+    assert omitted_ids <= selected_ids
+    assert included_ids.isdisjoint(omitted_ids)
+    # The deliberately overlong accepted summary is selected by the native
+    # backend but omitted as a whole source; no partial excerpt is passed on.
+    assert chapter_ids[0] in omitted_ids
+    assert any("complete source summary exceeds" in source["reason"] for source in report["omitted_sources"])
+    assert all(chapter_id in passed_context for chapter_id in included_ids)
+    assert all(chapter_id not in passed_context for chapter_id in omitted_ids)
+
+    if entry == "plan":
+        assert not [value for value in at.json.values if '"mode": "local-semantic"' in value]
+    else:
+        displayed = [
+            json.loads(value)
+            for value in at.json.values
+            if '"mode": "local-semantic"' in value and '"included_chapter_ids"' in value
+        ]
+        assert displayed == [report]
+
+
+@pytest.mark.parametrize(
+    ("goal", "diverse_recall", "semantic"),
+    [("", True, False), ("雨", True, True), ("仓库钥匙", False, False)],
+)
+def test_real_one_shot_recall_compatibility_for_empty_single_char_and_disabled_toggle(
+    monkeypatch, tmp_path, goal, diverse_recall, semantic
+):
+    """Empty goals and the off switch keep the legacy chronological contract."""
+    from novel_ai.engine import NovelEngine
+
+    _seed_long_recall_history(tmp_path)
+    captured = []
+
+    def run(self, **kwargs):
+        captured.append(kwargs["extra_context"])
+        return _fixture_result()
+
+    monkeypatch.setattr(NovelEngine, "run", run)
+    at = run_app(monkeypatch, tmp_path)
+    _configure_writer(at, goal=goal, diverse_recall=diverse_recall)
+    at.button(key="btn_oneshot").click().run()
+    assert not at.exception
+    assert captured
+    context = captured[-1]
+    report = at.session_state["last_result_meta"]["recall_report"]
+
+    if semantic:
+        assert report["mode"] == "local-semantic"
+        assert "【Recall 本地语义历史回顾" in context
+        assert "【Recall 历史回顾】" not in context
+        assert [value for value in at.json.values if '"mode": "local-semantic"' in value]
+    else:
+        assert report is None
+        assert "【Recall 历史回顾】" in context
+        assert "【Recall 本地语义历史回顾" not in context
+        assert not [value for value in at.json.values if '"mode": "local-semantic"' in value]
+
+
 def test_app_boots_without_exceptions(monkeypatch, tmp_path):
     at = run_app(monkeypatch, tmp_path)
     assert not at.exception

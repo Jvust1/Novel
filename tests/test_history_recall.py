@@ -14,6 +14,7 @@ from novel_ai.history_recall import select_history
 from novel_ai.models import StoryBible
 from novel_ai.orchestration import ProviderRouter, ProviderTarget, RouterConfig
 from novel_ai.provider import ProviderConfig
+from novel_ai.recall_backends import create_native_character_recall
 from novel_ai.routed_engine import RoutedNovelEngine
 from novel_ai.storage import ProjectStore
 from novel_ai.token_budget import TokenCounter
@@ -124,6 +125,39 @@ def test_complete_prompt_respects_token_and_character_limits(tmp_path):
                                token_counter=counter, recall_token_budget=80).assemble(recent_limit=1, recall_query=QUERY)
     assert 0 < counter.count(context.recall_block) <= 80
     assert len(context.recall_block) <= 1000
+
+
+def test_default_semantic_recall_budget_reports_whole_source_omissions(tmp_path):
+    """The real default is a 1200-character recall block, without token counting."""
+    store = ProjectStore(tmp_path)
+    chapter_ids = []
+    for index in range(12):
+        chapter_id = f"{index:02d}-" + "b" * 75
+        chapter_ids.append(chapter_id)
+        summary = (
+            f"仓库钥匙在青瓷碗底，林澄核对账本并记录编号{index}。"
+            + "补充线索。" * 10
+        )
+        store.save_extraction("P", {"chapter_id": chapter_id, "summary": summary})
+
+    context = ContextAssembler(
+        store, "P", recall_backends={"native": create_native_character_recall()}
+    ).assemble(
+        recall_query="仓库钥匙",
+        history_chapter_ids=chapter_ids,
+    )
+    report = context.recall_report
+    assert report["candidate_count"] == 8  # 12 sources minus 4 recent summaries
+    assert len(report["selected_sources"]) == 8
+    assert report["summary_chars"] == 80
+    assert report["prompt_chars"] <= 1200
+    assert report["included_chapter_ids"]
+    assert len(report["included_chapter_ids"]) < len(report["selected_sources"])
+    assert any(
+        item["reason"] == "whole summary line exceeds the configured recall budget"
+        for item in report["omitted_sources"]
+    )
+    assert "configured counter only" in report["token_budget_evidence"]
 
 
 class PilotProvider:
