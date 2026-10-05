@@ -649,6 +649,7 @@ with write_tab:
                 "project": project_name, "chapter_id": chapter_id,
                 "text_sha256": hashlib.sha256((final_text.strip() + "\n").encode("utf-8")).hexdigest(),
                 "character_context_sha256": character_binding,
+                "recall_report": deepcopy(context.recall_report),
             }
             st.session_state.last_extraction = None
             st.session_state.memory_candidate_json = None
