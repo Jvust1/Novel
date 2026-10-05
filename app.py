@@ -479,20 +479,23 @@ with write_tab:
         characters = [Character.model_validate(c) for c in st.session_state.characters]
         return engine, bible, characters, current_sources, character_binding, settings_snapshot
 
-    def _context_options():
+    def _assemble_context():
         if not diverse_recall:
-            return {"recall_query": ""}
+            return ContextAssembler(store, project_name).assemble(recall_query="")
         history_ids = []
         for row in store.all_chapter_summaries(project_name):
             chapter_key = row.get("chapter_id") if isinstance(row, dict) else None
             if not isinstance(chapter_key, str) or not chapter_key.strip():
                 raise ValueError("历史摘要缺少稳定章节 ID，已停止语义召回。")
             history_ids.append(chapter_key)
-        return {
-            "recall_query": chapter_goal,
-            "history_chapter_ids": history_ids,
-            "recall_backends": {"native": create_native_character_recall()},
-        }
+        return ContextAssembler(
+            store,
+            project_name,
+            recall_backends={"native": create_native_character_recall()},
+        ).assemble(
+            recall_query=chapter_goal,
+            history_chapter_ids=history_ids,
+        )
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -526,7 +529,7 @@ with write_tab:
         try:
             meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
-            context = ContextAssembler(store, project_name).assemble(**_context_options())
+            context = _assemble_context()
             planning_context = (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()
             if meta.get("outline_node_id"):
                 seed_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
@@ -566,7 +569,7 @@ with write_tab:
                 if not check.ok:
                     raise ValueError("请先补全场景计划：" + "；".join(check.issues))
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble(**_context_options())
+            context = _assemble_context()
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
             result = engine.run_from_plan(
@@ -607,7 +610,7 @@ with write_tab:
             _validate_chapter_target()
             meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
-            context = ContextAssembler(store, project_name).assemble(**_context_options())
+            context = _assemble_context()
             result = engine.run(
                 bible=bible,
                 outline=outline,
