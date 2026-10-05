@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04",
+  "updated_at": "2026-10-05",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,9 +9,9 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 64,
+    "total": 65,
     "p0": 18,
-    "p1": 31,
+    "p1": 32,
     "no_license": 2,
     "agpl": 2
   },
@@ -798,6 +798,21 @@
       "local_path": "novel_ai/lexical_richness.py",
       "provenance": "third_party/lexicalrichness/provenance.json",
       "checked_at_utc": "2026-10-04"
+    },
+    {
+      "key": "trafilatura",
+      "repo": "adbar/trafilatura",
+      "category": "document_ingest",
+      "license": "Apache-2.0",
+      "mode": "optional-adapter",
+      "priority": "P1",
+      "use": "Local HTML body extraction from uploaded bytes; no URL fetching or model downloads",
+      "version_constraint": ">=1.8.0,<3",
+      "upstream_release": "v2.3.0",
+      "upstream_commit": "6c1977a00b4e82ebb7e6fad1192467adaf24d430",
+      "license_path": "LICENSE",
+      "provenance": "docs/TRAFILATURA_LOCAL_HTML_20261005.md",
+      "checked_at_utc": "2026-10-05"
     }
   ]
 }

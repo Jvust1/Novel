@@ -2,3 +2,6 @@
 docling
 markitdown[all]
 unstructured
+
+# Local uploaded HTML body extraction; no URL fetching or model download.
+trafilatura>=1.8.0,<3

@@ -54,6 +54,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
     IntegrationSpec("rapidfuzz", "rapidfuzz/RapidFuzz", "longform_consistency", "MIT", "adapter+direct-optional", "entity alias/name drift after canonical/spaCy extraction plus fuzzy near-duplicate matching", "rapidfuzz", "rapidfuzz"),
     IntegrationSpec("docling", "docling-project/docling", "document_ingest", "MIT", "git-submodule+adapter", "high-quality PDF/DOCX/document conversion", "docling", "docling"),
     IntegrationSpec("markitdown", "microsoft/markitdown", "document_ingest", "MIT", "git-submodule+adapter", "document-to-markdown conversion", "markitdown", "markitdown"),
+    IntegrationSpec("trafilatura", "adbar/trafilatura", "document_ingest", "Apache-2.0", "adapter+direct-optional", "local HTML body extraction from uploaded bytes without URL fetching", "trafilatura", "trafilatura"),
     IntegrationSpec("unstructured", "Unstructured-IO/unstructured", "document_ingest", "Apache-2.0", "adapter", "fallback document partitioning and metadata extraction", "unstructured", "unstructured"),
     IntegrationSpec("deepke", "zjunlp/DeepKE", "story_structure", "MIT", "git-submodule+experiment-candidate", "entity/relation/event extraction candidate for Story DNA; heavy backend remains opt-in"),
     IntegrationSpec("datasketch", "ekzhu/datasketch", "originality", "MIT", "git-submodule+adapter", "MinHash self-repetition screening across chapters", "datasketch", "datasketch"),
