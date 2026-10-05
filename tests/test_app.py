@@ -111,6 +111,8 @@ def test_workbench_carries_recalled_evidence_through_confirmed_plan_and_repair(m
         at.button(key="btn_plan").click().run()
         assert not at.exception
         assert "仓库钥匙藏在青瓷碗底" in at.session_state["pending_plan_meta"]["extra"]
+        assert at.session_state["pending_plan_meta"]["recall_report"]["registry_selected_backend"] == "native"
+        assert at.session_state["pending_plan_meta"]["recall_report"]["backend"] == "native-character-ngram"
         at.button(key="btn_draft").click().run()
     else:
         at.button(key="btn_oneshot").click().run()
