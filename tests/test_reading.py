@@ -133,7 +133,7 @@ def test_html_without_optional_backend_keeps_dependency_fallback(monkeypatch):
     from novel_ai.reading import extract_reference
 
     with pytest.raises(ValueError, match="Docling|MarkItDown"):
-        extract_reference("reference.html", b"<html><body>正文</body></html>")
+        extract_reference("reference.html", "<html><body>正文</body></html>".encode("utf-8"))
 
 
 def test_trafilatura_html_path_does_not_open_network(monkeypatch):
