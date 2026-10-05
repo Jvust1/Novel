@@ -119,6 +119,9 @@ def test_request_limit_stops_next_wire_and_explicit_new_session_recovers(monkeyp
     configure_writer(at)
     at.number_input(key="writing_budget_max_requests").set_value(4)
     at.run()
+    at.button(key="btn_clear_plan").click().run()
+    configured = at.session_state["_writing_request_budget"]
+    assert configured.limits.max_requests == 4
 
     at.button(key="btn_oneshot").click().run()
     assert len(wire.calls) == 4
@@ -146,6 +149,7 @@ def test_request_bytes_stop_before_wire_and_pending_config_waits_for_new_session
     configure_writer(at, mode="快速草稿")
     at.number_input(key="writing_budget_max_request_bytes").set_value(1024)
     at.run()
+    at.button(key="btn_clear_plan").click().run()
 
     at.button(key="btn_oneshot").click().run()
     assert len(wire.calls) == 0
