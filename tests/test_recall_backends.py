@@ -1,5 +1,10 @@
 from novel_ai.context import ContextAssembler
-from novel_ai.recall_backends import LocalSemanticRecall, create_sentence_transformer_recall, recall_backend_capabilities
+from novel_ai.recall_backends import (
+    LocalSemanticRecall,
+    create_native_character_recall,
+    create_sentence_transformer_recall,
+    recall_backend_capabilities,
+)
 from novel_ai.storage import ProjectStore
 from unittest.mock import patch
 
@@ -131,3 +136,31 @@ def test_context_falls_back_to_configured_native_backend(tmp_path):
     assert context.recall_report["registry_selected_backend"] == "native"
     assert context.recall_report["backend"] == "native-fallback-test"
     assert native_backend.ids
+
+
+def test_native_character_recall_uses_dependency_free_vectors():
+    backend = create_native_character_recall()
+    backend.add(["old", "other"], ["雨落在旧桥。", "电话响了。"])
+    hits = backend.query("雨落在旧桥。", limit=1)
+    assert backend.name == "native-character-ngram"
+    assert hits[0].document_id == "old"
+
+
+def test_context_uses_native_registry_path_without_selector_mock(tmp_path):
+    store = ProjectStore(tmp_path)
+    store.save_extraction(
+        "P",
+        {"chapter_id": "old", "chapter_title": "旧章", "summary": "雨落在旧桥。"},
+    )
+    context = ContextAssembler(
+        store,
+        "P",
+        recall_backends={"native": create_native_character_recall()},
+    ).assemble(
+        recent_limit=0,
+        recall_query="雨落在旧桥",
+        history_chapter_ids=["old"],
+    )
+    assert context.recall_report["registry_selected_backend"] == "native"
+    assert context.recall_report["backend"] == "native-character-ngram"
+    assert context.recall_report["included_chapter_ids"] == ["old"]

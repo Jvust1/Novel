@@ -30,7 +30,7 @@ from novel_ai.request_budget import RequestBudget, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
 from novel_ai.reference_similarity import analyze_reference_similarity
 from novel_ai.release_eval import build_release_quality_snapshot
-from novel_ai.recall_backends import recall_backend_capabilities
+from novel_ai.recall_backends import create_native_character_recall, recall_backend_capabilities
 from novel_ai.experimental_backends import experimental_backend_matrix
 from novel_ai.story_dna import story_structure_capabilities
 from novel_ai.storage import ProjectStore
@@ -420,7 +420,7 @@ with write_tab:
 
     diverse_recall = st.checkbox(
         "多样化历史召回（实验）", value=False, key="diverse_recall",
-        help="用本章目标匹配历史摘要，再减少重复线索；仅本地字符匹配，不下载模型。尚未证明提升写作质量。",
+        help="用本章目标匹配历史摘要，再减少重复线索；使用本地字符 n-gram，不下载模型。尚未证明提升写作质量。",
     )
 
     if "pending_plan_json" not in st.session_state:
@@ -479,6 +479,21 @@ with write_tab:
         characters = [Character.model_validate(c) for c in st.session_state.characters]
         return engine, bible, characters, current_sources, character_binding, settings_snapshot
 
+    def _context_options():
+        if not diverse_recall:
+            return {"recall_query": ""}
+        history_ids = []
+        for row in store.all_chapter_summaries(project_name):
+            chapter_key = row.get("chapter_id") if isinstance(row, dict) else None
+            if not isinstance(chapter_key, str) or not chapter_key.strip():
+                raise ValueError("历史摘要缺少稳定章节 ID，已停止语义召回。")
+            history_ids.append(chapter_key)
+        return {
+            "recall_query": chapter_goal,
+            "history_chapter_ids": history_ids,
+            "recall_backends": {"native": create_native_character_recall()},
+        }
+
     col1, col2, col3 = st.columns(3)
     with col1:
         make_plan = st.button("① 生成场景计划", use_container_width=True, key="btn_plan")
@@ -511,9 +526,7 @@ with write_tab:
         try:
             meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
-            context = ContextAssembler(store, project_name).assemble(
-                recall_query=chapter_goal if diverse_recall else ""
-            )
+            context = ContextAssembler(store, project_name).assemble(**_context_options())
             planning_context = (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()
             if meta.get("outline_node_id"):
                 seed_json = st.session_state.get("plan_editor") or st.session_state.pending_plan_json
@@ -553,7 +566,7 @@ with write_tab:
                 if not check.ok:
                     raise ValueError("请先补全场景计划：" + "；".join(check.issues))
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs()
-            context = ContextAssembler(store, project_name).assemble(recall_query=chapter_goal if diverse_recall else "")
+            context = ContextAssembler(store, project_name).assemble(**_context_options())
             meta = {**meta, "recent": context.recent_summaries,
                     "extra": (context.prompt_sections() + "\n\n" + meta.get("outline_context", "")).strip()}
             result = engine.run_from_plan(
@@ -594,9 +607,7 @@ with write_tab:
             _validate_chapter_target()
             meta = _plan_binding(check_characters=False, check_story_bible=False)
             engine, bible, characters, current_sources, character_binding, settings_snapshot = _engine_and_inputs(replan_characters=True)
-            context = ContextAssembler(store, project_name).assemble(
-                recall_query=chapter_goal if diverse_recall else ""
-            )
+            context = ContextAssembler(store, project_name).assemble(**_context_options())
             result = engine.run(
                 bible=bible,
                 outline=outline,

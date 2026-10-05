@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+import hashlib
 import importlib.util
 from numbers import Integral
 from threading import RLock
@@ -22,6 +23,38 @@ class _RecallSnapshot:
     faiss: object | None = None
     index: object | None = None
 
+
+
+class CharacterNgramEncoder:
+    """Dependency-free fixed-width character n-gram encoder for local recall."""
+
+    def __init__(self, *, dimension: int = 512, ngram_size: int = 2) -> None:
+        if type(dimension) is not int or dimension < 32:
+            raise ValueError("dimension must be an integer >= 32")
+        if type(ngram_size) is not int or ngram_size < 1:
+            raise ValueError("ngram_size must be a positive integer")
+        self.dimension = dimension
+        self.ngram_size = ngram_size
+
+    def encode(self, texts: Sequence[str]) -> list[list[float]]:
+        rows: list[list[float]] = []
+        for text in texts:
+            if not isinstance(text, str):
+                raise TypeError("texts must contain strings")
+            compact = "".join(text.split())
+            vector = [0.0] * self.dimension
+            for width in range(1, self.ngram_size + 1):
+                if len(compact) < width:
+                    continue
+                for index in range(len(compact) - width + 1):
+                    gram = compact[index:index + width].encode("utf-8")
+                    value = int.from_bytes(
+                        hashlib.blake2b(gram, digest_size=8).digest(),
+                        "big",
+                    )
+                    vector[value % self.dimension] += 1.0 if value & 1 else -1.0
+            rows.append(vector)
+        return rows
 
 class LocalSemanticRecall:
     """Local recall with atomic, detached corpus/vector/index snapshots.
@@ -230,6 +263,17 @@ class LocalSemanticRecall:
         return self.search(text, limit)
 
  
+
+def create_native_character_recall(
+    *, dimension: int = 512, ngram_size: int = 2,
+) -> LocalSemanticRecall:
+    """Create the dependency-free local recall backend used by the writing UI."""
+    backend = LocalSemanticRecall(
+        CharacterNgramEncoder(dimension=dimension, ngram_size=ngram_size)
+    )
+    backend.name = "native-character-ngram"
+    return backend
+
 def resolve_local_recall_backend(
     configured: Mapping[str, LocalSemanticRecall],
     *,
