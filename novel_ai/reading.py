@@ -39,7 +39,7 @@ def _advanced_extract(filename: str, data: bytes) -> tuple[str, str] | None:
                         include_tables=False,
                         output_format="txt",
                     )
-                    if text and text.strip():
+                    if text and text.strip() and sanitize_extracted_text(text)[0].strip():
                         return text.strip(), "trafilatura"
             except Exception:
                 pass

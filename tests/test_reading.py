@@ -167,6 +167,80 @@ def test_trafilatura_html_path_spies_real_extract_and_does_not_open_network(monk
     assert observed["kwargs"]["include_tables"] is False
 
 
+def test_trafilatura_visible_text_keeps_sanitization_metadata(monkeypatch):
+    from novel_ai import reading
+    import sys
+    import types
+
+    trafilatura = types.ModuleType("trafilatura")
+    trafilatura.extract = lambda *args, **kwargs: "正文\u200b"
+    monkeypatch.setitem(sys.modules, "trafilatura", trafilatura)
+    monkeypatch.setattr(
+        reading.importlib.util,
+        "find_spec",
+        lambda name: object() if name == "trafilatura" else None,
+    )
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference("reference.html", b"fixture")
+    assert result.backend == "trafilatura"
+    assert result.text == "正文"
+    assert result.decoding == {"invisible_codepoints_removed": 1}
+
+
+def test_trafilatura_sanitized_empty_falls_through_to_markitdown(monkeypatch):
+    from novel_ai import reading
+    import sys
+    import types
+
+    trafilatura = types.ModuleType("trafilatura")
+    trafilatura.extract = lambda *args, **kwargs: "\u200b\u202e"
+    fallback_module = types.ModuleType("markitdown")
+
+    class FallbackResult:
+        markdown = "MarkItDown fallback text"
+
+    class FallbackMarkItDown:
+        def convert(self, path):
+            return FallbackResult()
+
+    fallback_module.MarkItDown = FallbackMarkItDown
+    monkeypatch.setitem(sys.modules, "trafilatura", trafilatura)
+    monkeypatch.setitem(sys.modules, "markitdown", fallback_module)
+    monkeypatch.setattr(
+        reading.importlib.util,
+        "find_spec",
+        lambda name: object() if name in {"trafilatura", "markitdown"} else None,
+    )
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference("reference.html", b"<html><body>fixture</body></html>")
+    assert result.backend == "markitdown"
+    assert result.text == "MarkItDown fallback text"
+
+
+def test_all_sanitized_empty_html_backends_raise_clear_dependency_error(monkeypatch):
+    from novel_ai import reading
+    import sys
+    import types
+
+    trafilatura = types.ModuleType("trafilatura")
+    trafilatura.extract = lambda *args, **kwargs: "\u200b\u202e"
+    monkeypatch.setitem(sys.modules, "trafilatura", trafilatura)
+    monkeypatch.setattr(
+        reading.importlib.util,
+        "find_spec",
+        lambda name: object() if name == "trafilatura" else None,
+    )
+
+    from novel_ai.reading import extract_reference
+
+    with pytest.raises(ValueError, match="trafilatura"):
+        extract_reference("reference.html", b"<html><body>fixture</body></html>")
+
+
 @pytest.mark.parametrize("failure", ["empty", "error"])
 def test_trafilatura_empty_or_error_falls_through_to_markitdown(monkeypatch, failure):
     trafilatura = pytest.importorskip("trafilatura")
