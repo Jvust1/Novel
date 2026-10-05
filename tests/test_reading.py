@@ -165,7 +165,28 @@ def test_trafilatura_html_path_spies_real_extract_and_does_not_open_network(monk
     assert observed["kwargs"]["favor_precision"] is True
     assert observed["kwargs"]["include_comments"] is False
     assert observed["kwargs"]["include_tables"] is False
-    assert result.decoding["invisible_codepoints_removed"] >= 1
+
+
+def test_trafilatura_visible_text_keeps_sanitization_metadata(monkeypatch):
+    from novel_ai import reading
+    import sys
+    import types
+
+    trafilatura = types.ModuleType("trafilatura")
+    trafilatura.extract = lambda *args, **kwargs: "正文\u200b"
+    monkeypatch.setitem(sys.modules, "trafilatura", trafilatura)
+    monkeypatch.setattr(
+        reading.importlib.util,
+        "find_spec",
+        lambda name: object() if name == "trafilatura" else None,
+    )
+
+    from novel_ai.reading import extract_reference
+
+    result = extract_reference("reference.html", b"fixture")
+    assert result.backend == "trafilatura"
+    assert result.text == "正文"
+    assert result.decoding == {"invisible_codepoints_removed": 1}
 
 
 def test_trafilatura_sanitized_empty_falls_through_to_markitdown(monkeypatch):
