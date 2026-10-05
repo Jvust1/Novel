@@ -1,4 +1,0 @@
-[tool.pytest.ini_options]
-# bare `pytest` (as CI runs it) doesn't put the repo root on sys.path
-pythonpath = ["."]
-testpaths = ["tests"]
