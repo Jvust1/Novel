@@ -142,6 +142,64 @@ def test_real_writing_entries_carry_bounded_recall_to_engine_and_ui(
         assert displayed == [report]
 
 
+def test_streamlit_recall_budget_omits_whole_selected_sources_consistently(
+    monkeypatch, tmp_path
+):
+    """Eight valid long IDs and 80-char summaries reach the default 1200-char cap."""
+    from novel_ai.engine import NovelEngine
+
+    from novel_ai.storage import ProjectStore
+
+    store = ProjectStore(tmp_path / "data")
+    chapter_ids = []
+    for index in range(12):
+        chapter_id = f"{index:02d}-" + "b" * 75
+        chapter_ids.append(chapter_id)
+        store.save_extraction(
+            "MyNovel",
+            {"chapter_id": chapter_id, "summary": "仓库钥匙在青瓷碗底。" * 8},
+        )
+
+    captured = []
+
+    def run(self, **kwargs):
+        captured.append(kwargs["extra_context"])
+        return _fixture_result()
+
+    monkeypatch.setattr(NovelEngine, "run", run)
+    at = run_app(monkeypatch, tmp_path)
+    _configure_writer(at, goal="仓库钥匙", diverse_recall=True)
+    at.button(key="btn_oneshot").click().run()
+
+    assert not at.exception
+    report = at.session_state["last_result_meta"]["recall_report"]
+    context = captured[-1]
+    assert report["history_chapter_ids"] == chapter_ids
+    assert report["candidate_count"] == report["limit"] == 8
+    assert len(report["selected_sources"]) == 8
+    assert report["summary_chars"] == 80
+    assert report["prompt_chars"] <= 1200
+    assert 0 < len(report["included_chapter_ids"]) < len(report["selected_sources"])
+
+    selected_ids = {source["chapter_id"] for source in report["selected_sources"]}
+    included_ids = set(report["included_chapter_ids"])
+    omitted_ids = {source["chapter_id"] for source in report["omitted_sources"]}
+    assert included_ids <= selected_ids
+    assert omitted_ids <= selected_ids
+    assert included_ids.isdisjoint(omitted_ids)
+    assert omitted_ids == selected_ids - included_ids
+    assert all("whole summary line exceeds the configured recall budget" == source["reason"]
+               for source in report["omitted_sources"])
+    assert all(chapter_id in context for chapter_id in included_ids)
+    assert all(chapter_id not in context for chapter_id in omitted_ids)
+    displayed = [
+        json.loads(value)
+        for value in at.json.values
+        if '"mode": "local-semantic"' in value and '"included_chapter_ids"' in value
+    ]
+    assert displayed == [report]
+
+
 @pytest.mark.parametrize(
     ("goal", "diverse_recall", "semantic"),
     [("", True, False), ("雨", True, True), ("仓库钥匙", False, False)],
