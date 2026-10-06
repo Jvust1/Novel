@@ -727,7 +727,7 @@ def test_reference_evidence_ui_clears_on_nohit_project_change_and_bad_input(
 ):
     """Input/project changes and controlled failures cannot export stale evidence."""
     at = run_app(monkeypatch, tmp_path)
-    valid = b"# Chapter 1\nnight radio 电台在雨夜响起。\n"
+    valid = "# Chapter 1\nnight radio 电台在雨夜响起。\n".encode("utf-8")
     _set_reference_evidence_uploads(at, [("valid.txt", valid, "text/plain")])
     at.text_input(key="reference_evidence_query").set_value("night radio")
     at.button(key="btn_reference_evidence").click().run()
