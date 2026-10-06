@@ -47,11 +47,12 @@ def test_evidence_is_bounded_lexical_mmr_and_stable():
     assert all(row["excerpt"] for row in first["matches"])
     clean = {"a.txt": "第一章 夜班电台\n\n夜班电台在雨里响起，周宁记下门牌。\n\n第二章 旧账本\n\n旧账本压在抽屉底，没人提电台。", "b.md": "# 第一章\n\n夜班电台的灯亮着，门外没有脚印。\n\n# 第二章\n\n河堤上的风吹散了纸片。"}
     assert all(row["excerpt"] == clean[row["source_filename"]][row["start"]:row["end"]] for row in first["matches"])
-    assert [row["id"] for row in first["matches"]] == sorted(
-        [row["id"] for row in first["matches"]], key=lambda value: first["matches"][
-            [item["id"] for item in first["matches"]].index(value)
-        ]
-    )
+    assert [
+        (row["source_filename"], row["start"], row["end"])
+        for row in first["matches"]
+    ] == [
+        ("a.txt", 0, 8), ("b.md", 7, 23), ("a.txt", 10, 27),
+    ]
     assert all(row["source_filename"] in {"a.txt", "b.md"} for row in first["matches"])
     assert all(row["backend"] and "encoding" in row for row in first["matches"])
     assert "河堤上的风吹散了纸片" not in "\n".join(row["excerpt"] for row in first["matches"])
