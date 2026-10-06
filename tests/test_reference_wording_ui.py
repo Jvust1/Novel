@@ -127,10 +127,35 @@ def test_reference_wording_server_rejects_2049_char_draft(monkeypatch, tmp_path)
     selected = evidence["matches"][0]
 
     at.checkbox(key=f"reference_wording_match_{selected['id']}").check().run()
-    overlong = "x" * 2049
-    at.text_area(key="reference_wording_draft").set_value(overlong).run()
-    assert at.session_state["reference_wording_draft"] == overlong
+    _check(at, selected["id"], selected["excerpt"])
+    assert _downloads(at, "download_reference_wording")
 
+    overlong = "x" * 2049
+    prior_value = at.session_state["reference_wording_draft"]
+    at.text_area(key="reference_wording_draft").set_value(overlong).run()
+    stable_value = at.session_state["reference_wording_draft"]
+    assert isinstance(stable_value, str)
+    if stable_value == overlong:
+        stable_behavior = "accepted-for-server"
+    elif stable_value == overlong[:2048]:
+        stable_behavior = "client-truncated-at-2048"
+    elif stable_value in {prior_value, ""}:
+        stable_behavior = "rejected-before-submit"
+    else:
+        raise AssertionError(
+            f"unexpected stable overlong value length: {len(stable_value)}"
+        )
+    assert stable_behavior in {
+        "accepted-for-server",
+        "client-truncated-at-2048",
+        "rejected-before-submit",
+    }
+
+    # AppTest's widget transport may enforce max_chars before submit. Inject the
+    # 2049-character value only after recording that real widget behavior so the
+    # application handler itself is exercised at its server-side guard.
+    at.session_state["reference_wording_draft"] = overlong
+    assert at.session_state["reference_wording_draft"] == overlong
     at.button(key="btn_reference_wording_check").click().run()
     assert not at.exception
     assert any("超过 2048" in item.value for item in at.error)
