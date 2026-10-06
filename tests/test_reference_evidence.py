@@ -9,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from novel_ai.reference_evidence import build_reference_evidence
+from novel_ai.reference_evidence import build_reference_evidence, save_evidence_artifact
+from scripts import build_reference_pack as cli_module
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "build_reference_pack.py"
@@ -211,3 +212,97 @@ def test_real_optional_html_path_is_exercised_when_installed(tmp_path):
     assert run.returncode == 0, run.stderr
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["matches"][0]["backend"] == "trafilatura"
+
+
+def test_evidence_publish_is_exclusive_when_target_appears_during_publish(monkeypatch, tmp_path):
+    target = tmp_path / "evidence.json"
+    import novel_ai.reference_evidence as evidence_module
+
+    real_link = evidence_module.os.link
+    real_replace = evidence_module.os.replace
+
+    def racing_link(source, destination):
+        Path(destination).write_bytes(b"racer")
+        return real_link(source, destination)
+
+    def racing_replace(source, destination):
+        Path(destination).write_bytes(b"racer")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(evidence_module.os, "link", racing_link)
+    monkeypatch.setattr(evidence_module.os, "replace", racing_replace)
+    with pytest.raises(ValueError, match="覆盖|存在"):
+        save_evidence_artifact({"schema": "test"}, target)
+    assert target.read_bytes() == b"racer"
+    assert not list(tmp_path.glob(".*.tmp"))
+
+
+def test_cli_preserves_word_boundaries_for_english_and_mixed_queries(tmp_path):
+    source_path = tmp_path / "mixed.txt"
+    source_path.write_text(
+        "The night radio broadcast continued through the storm。夜班电台没有停。",
+        encoding="utf-8",
+    )
+    for query, name, expect in (
+        ("night radio", "english.json", True),
+        ("night 夜班", "mixed.json", True),
+        ("nightradio", "false.json", False),
+    ):
+        output = tmp_path / name
+        run = cli(
+            tmp_path,
+            source_path,
+            "--out",
+            tmp_path / (name + ".pack.json"),
+            "--query",
+            query,
+            "--evidence-out",
+            output,
+        )
+        assert run.returncode == 0, run.stderr
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        assert bool(payload["matches"]) is expect
+
+
+def test_query_mode_rejects_stat_overflow_before_any_extract_or_build(monkeypatch, tmp_path):
+    source_path = tmp_path / "too-big.txt"
+    with source_path.open("wb") as handle:
+        handle.truncate(8 * 1024 * 1024 + 1)
+    before = source_path.stat().st_size
+    output = tmp_path / "evidence.json"
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli_module, "build_reference_pack", lambda *a, **k: pytest.fail("pack parsed before bound"))
+    monkeypatch.setattr(cli_module, "build_reference_evidence", lambda *a, **k: pytest.fail("evidence parsed before bound"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["build_reference_pack.py", str(source_path), "--query", "night", "--evidence-out", str(output)],
+    )
+    assert cli_module.main() == 2
+    assert source_path.stat().st_size == before
+    assert not output.exists()
+
+
+def test_query_mode_stops_a_growing_stream_at_the_bound(monkeypatch, tmp_path):
+    source_path = tmp_path / "growing.txt"
+    source_path.write_bytes(b"seed")
+
+    class Growing:
+        calls = 0
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self, size=-1):
+            self.calls += 1
+            return b"x" * (size + 1)
+
+    growing = Growing()
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: growing)
+    with pytest.raises(ValueError, match="上限|超过"):
+        cli_module.read_query_sources_bounded([source_path], max_source_bytes=8, max_total_bytes=8)
+    assert growing.calls == 1
