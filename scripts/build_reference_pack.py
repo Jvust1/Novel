@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import stat
 import sys
+import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -18,8 +20,6 @@ from novel_ai.reference_evidence import (
     MAX_SOURCE_BYTES,
     MAX_TOTAL_SOURCE_BYTES,
     build_reference_evidence,
-    save_evidence_artifact,
-    validate_evidence_output_path,
 )
 from novel_ai.reference_pack import build_reference_pack, save_reference_pack
 
@@ -78,6 +78,110 @@ def read_query_sources_bounded(
     return result
 
 
+def _reject_query_output_collisions(
+    pack_target: Path,
+    evidence_target: Path,
+    source_paths: list[Path],
+) -> None:
+    """Reject query outputs that exist or share an inode with an input."""
+    if pack_target.resolve(strict=False) == evidence_target.resolve(strict=False):
+        raise ValueError("query 的两个输出路径不能相同")
+    for target, label in ((pack_target, "Reference Pack"), (evidence_target, "evidence")):
+        target_resolved = target.resolve(strict=False)
+        for source in source_paths:
+            source_resolved = source.resolve(strict=True)
+            try:
+                same_inode = target.samefile(source)
+            except FileNotFoundError:
+                same_inode = False
+            except OSError as exc:
+                raise ValueError(f"无法检查 {label} 输出与参考源的 inode 关系") from exc
+            if same_inode or target_resolved == source_resolved:
+                raise ValueError(f"{label} 输出不得覆盖或别名指向参考源文件")
+        if target.exists() or target.is_symlink():
+            raise ValueError(f"{label} 输出已存在，查询模式拒绝覆盖: {target}")
+
+
+def _stage_query_json(target: Path, text: str) -> Path:
+    """Stage one complete query artifact beside its eventual target."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, raw_stage = tempfile.mkstemp(
+        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+    )
+    stage = Path(raw_stage)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except BaseException:
+        try:
+            stage.unlink()
+        except FileNotFoundError:
+            pass
+        raise
+    return stage
+
+
+def _publish_query_stage(stage: Path, target: Path) -> os.stat_result:
+    """Publish a staged query file with exclusive, no-clobber creation."""
+    owner_stat = os.stat(stage, follow_symlinks=False)
+    try:
+        os.link(stage, target)
+    except FileExistsError as exc:
+        raise ValueError(f"query 输出已存在，拒绝覆盖: {target}") from exc
+    except OSError as exc:
+        raise OSError(f"无法以独占方式发布 query 输出: {target}") from exc
+    try:
+        stage.unlink()
+    except FileNotFoundError:
+        pass
+    return owner_stat
+
+
+def _remove_query_owner(target: Path, owner_stat: os.stat_result) -> None:
+    """Remove only a file whose inode is the one this invocation published."""
+    try:
+        current = os.stat(target, follow_symlinks=False)
+        if os.path.samestat(current, owner_stat):
+            target.unlink()
+    except (FileNotFoundError, OSError):
+        # A missing path or a concurrent replacement belongs to the other
+        # writer and must remain untouched.
+        pass
+
+
+def _publish_query_outputs(pack: object, evidence: dict, pack_target: Path, evidence_target: Path) -> None:
+    """Stage both query artifacts, then publish with bounded cleanup.
+
+    This is intentionally query-specific.  It does not provide a cross-file
+    transaction: if the second exclusive publish fails, only the first file
+    still owned by this invocation is removed.
+    """
+    stages: list[Path] = []
+    owned: list[tuple[Path, os.stat_result]] = []
+    try:
+        pack_stage = _stage_query_json(pack_target, pack.model_dump_json(indent=2))
+        stages.append(pack_stage)
+        evidence_stage = _stage_query_json(
+            evidence_target,
+            json.dumps(evidence, ensure_ascii=False, indent=2) + "\n",
+        )
+        stages.append(evidence_stage)
+        owned.append((pack_target, _publish_query_stage(pack_stage, pack_target)))
+        owned.append((evidence_target, _publish_query_stage(evidence_stage, evidence_target)))
+    except BaseException:
+        for target, owner_stat in reversed(owned):
+            _remove_query_owner(target, owner_stat)
+        raise
+    finally:
+        for stage in stages:
+            try:
+                stage.unlink()
+            except FileNotFoundError:
+                pass
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build a non-reversible Novel Reference Pack.")
     parser.add_argument("files", nargs="+", help="TXT/MD/DOCX/PDF reference files")
@@ -114,15 +218,10 @@ def main() -> int:
                 raise ValueError(f"输入必须是普通文件: {path}")
 
         pack_target = Path(args.out)
-        pack_resolved = pack_target.resolve(strict=False)
-        if any(pack_resolved == path.resolve(strict=True) for path in input_paths):
-            raise ValueError("Reference Pack 输出不得覆盖参考源文件")
-
         evidence_target = None
         if args.evidence_out is not None:
-            evidence_target = validate_evidence_output_path(
-                args.evidence_out, input_paths, pack_out=args.out
-            )
+            evidence_target = Path(args.evidence_out)
+            _reject_query_output_collisions(pack_target, evidence_target, input_paths)
 
         choices = {}
         for raw, codec in args.encoding or []:
@@ -161,9 +260,12 @@ def main() -> int:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
     try:
-        target = save_reference_pack(pack, args.out)
         if evidence is not None and evidence_target is not None:
-            save_evidence_artifact(evidence, evidence_target)
+            _publish_query_outputs(pack, evidence, pack_target, evidence_target)
+            target = pack_target
+        else:
+            # Preserve the legacy non-query writer and its overwrite behavior.
+            target = save_reference_pack(pack, args.out)
     except (OSError, ValueError, TypeError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
