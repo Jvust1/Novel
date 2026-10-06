@@ -63,6 +63,12 @@ jobs:
             echo "optional trafilatura tests unexpectedly skipped"
             exit 1
           fi
+          pytest -q tests/test_reference_evidence.py -k optional_html -rs | tee "$work/evidence-pytest.log"
+          grep -Eq '[1-9][0-9]* passed' "$work/evidence-pytest.log"
+          if grep -Eq '[1-9][0-9]* skipped' "$work/evidence-pytest.log"; then
+            echo "optional trafilatura evidence test unexpectedly skipped"
+            exit 1
+          fi
 
       - name: Exercise the real Streamlit entry
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
