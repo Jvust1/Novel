@@ -215,7 +215,7 @@ def _paragraph_ranges(text: str) -> list[tuple[int, int]]:
     return ranges
 
 
-def _bounded_ranges(text: str, chunk_chars: int) -> list[tuple[int, int]]:
+def _bounded_ranges(text: str, chunk_chars: int, *, max_ranges: int | None = None) -> list[tuple[int, int]]:
     ranges: list[tuple[int, int]] = []
     for start, end in _paragraph_ranges(text):
         cursor = start
@@ -228,6 +228,8 @@ def _bounded_ranges(text: str, chunk_chars: int) -> list[tuple[int, int]]:
                 if boundary > cursor + max(1, chunk_chars // 3):
                     stop = boundary
             ranges.append((cursor, stop))
+            if max_ranges is not None and len(ranges) > max_ranges:
+                raise ValueError("分段数量超过资源上限")
             cursor = stop
             while cursor < end and text[cursor].isspace():
                 cursor += 1
@@ -306,21 +308,36 @@ def build_reference_evidence(
     chunk_counts: dict[str, int] = {}
     for source in extracted:
         spans = _chapter_spans(source.text)
-        ranges = _bounded_ranges(source.text, chunk_chars)
+        ranges = _bounded_ranges(source.text, chunk_chars, max_ranges=max_chunks)
         chunk_counts[source.filename] = len(ranges)
+        if sum(chunk_counts.values()) > max_chunks:
+            raise ValueError("分段数量超过资源上限")
         for start, end in ranges:
-            excerpt_end = min(end, start + max_excerpt_chars)
-            excerpt = source.text[start:excerpt_end]
-            score, tokens = _lexical_score(query_norm, excerpt)
+            chunk_text = source.text[start:end]
+            score, tokens = _lexical_score(query_norm, chunk_text)
             if score <= 0:
                 continue
+            excerpt_start = start
+            excerpt_end = min(end, start + max_excerpt_chars)
+            if end - start > max_excerpt_chars:
+                # Keep the bounded evidence window near the first matching
+                # lexical token when the paragraph itself is longer than the
+                # artifact excerpt cap.
+                anchors = sorted(set(_tokens(query_norm)), key=len, reverse=True)
+                lowered = chunk_text.casefold()
+                positions = [lowered.find(anchor) for anchor in anchors if anchor and lowered.find(anchor) >= 0]
+                if positions:
+                    anchor = start + min(positions)
+                    excerpt_start = max(start, min(anchor - max_excerpt_chars // 3, end - max_excerpt_chars))
+                    excerpt_end = excerpt_start + max_excerpt_chars
+            excerpt = source.text[excerpt_start:excerpt_end]
             excerpt_hash = hashlib.sha256(excerpt.encode("utf-8")).hexdigest()
-            stable_material = "|".join((source.filename, source.raw_sha256, str(start), str(excerpt_end), excerpt_hash))
+            stable_material = "|".join((source.filename, source.raw_sha256, str(excerpt_start), str(excerpt_end), excerpt_hash))
             stable_id = hashlib.sha256(stable_material.encode("utf-8")).hexdigest()
             candidates.append(_Candidate(
                 source=source,
-                chapter=_chapter_for(spans, start),
-                start=start,
+                chapter=_chapter_for(spans, excerpt_start),
+                start=excerpt_start,
                 end=excerpt_end,
                 excerpt=excerpt,
                 score=score,
@@ -328,9 +345,6 @@ def build_reference_evidence(
                 excerpt_sha256=excerpt_hash,
                 stable_id=stable_id,
             ))
-    if len(chunk_counts) and sum(chunk_counts.values()) > max_chunks:
-        raise ValueError("分段数量超过资源上限")
-
     candidates.sort(key=lambda row: (-row.score, row.source.filename.casefold(), row.start, row.end, row.stable_id))
     if not candidates:
         selected: list[_Candidate] = []
