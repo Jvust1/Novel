@@ -85,7 +85,7 @@ def test_bounds_and_bad_input_are_rejected():
     with pytest.raises(ValueError):
         build_reference_evidence([("a.txt", b"\xff", "utf-8")], "正文")
     with pytest.raises(ValueError):
-        build_reference_evidence([("a.txt", b"正文", None)], "正文", chunk_chars=10_000_000)
+        build_reference_evidence([("a.txt", "正文".encode("utf-8"), None)], "正文", chunk_chars=10_000_000)
 
 
 def cli(tmp_path, *args):
