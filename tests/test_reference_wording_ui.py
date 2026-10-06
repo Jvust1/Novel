@@ -43,8 +43,8 @@ def _check(at, match_id, draft):
 
 
 def _sources():
-    first = "# Chapter 1\\nnight radio 电台在雨夜响起。\\n".encode("utf-8")
-    second = "## Chapter 2\\n雨夜的 radio signal 断断续续。\\n".encode("utf-8")
+    first = "# Chapter 1\nnight radio 电台在雨夜响起。\n".encode("utf-8")
+    second = "## Chapter 2\n雨夜的 radio signal 断断续续。\n".encode("utf-8")
     return [
         ("source.txt", first, "text/plain"),
         ("source.md", second, "text/markdown"),
@@ -55,6 +55,7 @@ def test_reference_wording_ui_uses_real_uploads_and_deterministic_metric(
     monkeypatch, tmp_path
 ):
     from novel_ai.provider import OpenAICompatibleProvider
+    from novel_ai.reading import extract_reference
 
     def fail_provider(*args, **kwargs):
         raise AssertionError("wording check must not call a provider")
@@ -68,6 +69,11 @@ def test_reference_wording_ui_uses_real_uploads_and_deterministic_metric(
     selected = evidence["matches"][0]
     assert selected["source_filename"] == "source.txt"
     assert selected["raw_source_sha256"] == hashlib.sha256(first).hexdigest()
+    assert selected["chapter"] == "Chapter 1"
+    assert selected["offset_basis"] == "sanitized-extracted-unicode-codepoints"
+    extracted = extract_reference("source.txt", first, encoding=None)
+    assert selected["extracted_text_sha256"] == hashlib.sha256(extracted.text.encode("utf-8")).hexdigest()
+    assert extracted.text[selected["start"]:selected["end"]] == selected["excerpt"]
     assert selected["start"] < selected["end"]
     assert selected["id"]
 
