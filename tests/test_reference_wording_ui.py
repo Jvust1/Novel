@@ -151,10 +151,17 @@ def test_reference_wording_server_rejects_2049_char_draft(monkeypatch, tmp_path)
         "rejected-before-submit",
     }
 
-    # AppTest's widget transport may enforce max_chars before submit. Inject the
-    # 2049-character value only after recording that real widget behavior so the
-    # application handler itself is exercised at its server-side guard.
-    at.session_state["reference_wording_draft"] = overlong
+    # The real AppTest widget transport applies max_chars before the app
+    # handler. Bypass only that serializer for this TEST-ONLY server-guard
+    # rerun; production still renders max_chars=2048.
+    from streamlit.elements.widgets.text_widgets import TextAreaSerde
+
+    monkeypatch.setattr(
+        TextAreaSerde,
+        "deserialize",
+        lambda self, ui_value: ui_value if ui_value is not None else self.value,
+    )
+    at.text_area(key="reference_wording_draft").set_value(overlong).run()
     assert at.session_state["reference_wording_draft"] == overlong
     at.button(key="btn_reference_wording_check").click().run()
     assert not at.exception
