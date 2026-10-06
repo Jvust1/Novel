@@ -621,3 +621,148 @@ def test_locked_fact_editor_is_project_scoped(monkeypatch, tmp_path):
     at.text_input(key="project_name").set_value("MyNovel").run()
     assert not at.exception
     assert at.text_area(key="locked_text").value == "甲书未保存事实"
+
+
+def _set_reference_evidence_uploads(at, files):
+    """Use Streamlit AppTest's real file_uploader serialization."""
+    uploader = at.file_uploader(key="reference_evidence_upload")
+    assert hasattr(uploader, "set_value"), "installed AppTest lacks real uploader support"
+    uploader.set_value(
+        [(name, data, mime) for name, data, mime in files]
+    )
+    at.run()
+
+
+def test_reference_evidence_ui_real_upload_core_render_and_download(monkeypatch, tmp_path):
+    """TXT/MD bytes travel through the real AppTest uploader and core query path."""
+    from novel_ai import reading
+    from novel_ai.provider import OpenAICompatibleProvider
+    import novel_ai.reference_evidence as evidence_module
+
+    build_calls = []
+    extract_calls = []
+    real_build = evidence_module.build_reference_evidence
+    real_extract = reading.extract_reference
+
+    def build(*args, **kwargs):
+        build_calls.append((args, kwargs))
+        return real_build(*args, **kwargs)
+
+    def extract(*args, **kwargs):
+        extract_calls.append((args, kwargs))
+        return real_extract(*args, **kwargs)
+
+    def fail_provider(*args, **kwargs):
+        raise AssertionError("reference evidence UI must not call a provider")
+
+    monkeypatch.setattr(evidence_module, "build_reference_evidence", build)
+    monkeypatch.setattr(reading, "extract_reference", extract)
+    monkeypatch.setattr(OpenAICompatibleProvider, "chat", fail_provider)
+
+    at = run_app(monkeypatch, tmp_path)
+    first = (
+        "# Chapter 1\n"
+        "night radio 电台在雨夜响起，仓库钥匙仍在青瓷碗底。\n\n"
+        "这一段保留可验证的 Unicode 偏移。"
+    ).encode("utf-8")
+    second = (
+        "# Chapter 2\n"
+        "night radio 电台再次响起，林澄核对账本。\n\n"
+        "第二个显式 Markdown 来源。"
+    ).encode("utf-8")
+    _set_reference_evidence_uploads(
+        at,
+        [
+            ("a.txt", first, "text/plain"),
+            ("b.md", second, "text/markdown"),
+        ],
+    )
+    at.text_input(key="reference_evidence_query").set_value("night 电台")
+    at.number_input(key="reference_evidence_top_n").set_value(2)
+    at.number_input(key="reference_evidence_excerpt_chars").set_value(120)
+    at.run()
+
+    at.button(key="btn_reference_evidence").click().run()
+    assert not at.exception
+    assert len(build_calls) == 1
+    assert len(extract_calls) >= 2
+    result = at.session_state["reference_evidence_result"]
+    assert result["query"] == "night 电台"
+    assert result["parameters"]["top_n"] == 2
+    assert result["parameters"]["max_excerpt_chars"] == 120
+    assert {source["filename"] for source in result["sources"]} == {"a.txt", "b.md"}
+    assert result["matches"]
+    ids = [match["id"] for match in result["matches"]]
+    for match in result["matches"]:
+        assert match["chapter"] in {"Chapter 1", "Chapter 2"}
+        assert 0 <= match["start"] < match["end"]
+        assert len(match["excerpt"]) <= 120
+        assert match["offset_basis"] == "sanitized-extracted-unicode-codepoints"
+        assert len(match["raw_source_sha256"]) == 64
+        assert len(match["extracted_text_sha256"]) == 64
+        assert len(match["excerpt_sha256"]) == 64
+    assert any(
+        "bounded_excerpt" in list(frame.value.columns)
+        and "unicode_offset" in list(frame.value.columns)
+        for frame in at.dataframe
+    )
+    assert any(
+        '"schema": "novel-reference-evidence-v1"' in value
+        for value in [item.value for item in at.json]
+    )
+    assert at.download_button(key="download_reference_evidence").label == "下载本次证据 JSON"
+
+    # Re-running the same explicit inputs keeps stable IDs and offsets.
+    at.button(key="btn_reference_evidence").click().run()
+    assert [match["id"] for match in at.session_state["reference_evidence_result"]["matches"]] == ids
+
+    # The panel has no disk body or provider side effect.
+    for path in tmp_path.rglob("*"):
+        if path.is_file():
+            assert b"night radio" not in path.read_bytes()
+
+
+def test_reference_evidence_ui_clears_on_nohit_project_change_and_bad_input(
+    monkeypatch, tmp_path
+):
+    """Input/project changes and controlled failures cannot export stale evidence."""
+    at = run_app(monkeypatch, tmp_path)
+    valid = b"# Chapter 1\nnight radio 电台在雨夜响起。\n"
+    _set_reference_evidence_uploads(at, [("valid.txt", valid, "text/plain")])
+    at.text_input(key="reference_evidence_query").set_value("night radio")
+    at.button(key="btn_reference_evidence").click().run()
+    assert not at.exception
+    assert at.session_state["reference_evidence_result"]["matches"]
+    assert at.download_button(key="download_reference_evidence")
+
+    # Query edits immediately invalidate the prior result and download.
+    at.text_input(key="reference_evidence_query").set_value("absent phrase").run()
+    assert "reference_evidence_result" not in at.session_state
+    assert not [item for item in at.download_button if item.key == "download_reference_evidence"]
+    at.button(key="btn_reference_evidence").click().run()
+    assert not at.exception
+    assert at.session_state["reference_evidence_result"]["matches"] == []
+    assert any("未命中" in item.value for item in at.info)
+
+    # Project switching cannot carry the old result into the new project.
+    at.text_input(key="project_name").set_value("OtherBook").run()
+    assert not at.exception
+    assert "reference_evidence_result" not in at.session_state
+    assert not [item for item in at.download_button if item.key == "download_reference_evidence"]
+
+    # Empty and undecodable input remain controlled UI errors with no download.
+    at.text_input(key="reference_evidence_query").set_value("").run()
+    at.button(key="btn_reference_evidence").click().run()
+    assert not at.exception
+    assert any("query must not be empty" in item.value for item in at.error)
+    assert "reference_evidence_result" not in at.session_state
+
+    _set_reference_evidence_uploads(
+        at, [("broken.txt", b"\xff\xfe\xff", "text/plain")]
+    )
+    at.text_input(key="reference_evidence_query").set_value("x").run()
+    at.button(key="btn_reference_evidence").click().run()
+    assert not at.exception
+    assert any("本地证据查询未完成" in item.value for item in at.error)
+    assert "reference_evidence_result" not in at.session_state
+    assert not [item for item in at.download_button if item.key == "download_reference_evidence"]

@@ -103,3 +103,17 @@ jobs:
               "root": True,
           }, ensure_ascii=False))
           PY
+
+      - name: Exercise local reference evidence AppTest uploader and download
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          pytest -q tests/test_app.py -k reference_evidence_ui -rs | tee "$work/evidence-ui.log"
+          grep -Eq '[1-9][0-9]* passed' "$work/evidence-ui.log"
+          if grep -Eq '[1-9][0-9]* skipped' "$work/evidence-ui.log"; then
+            echo "reference evidence UI tests unexpectedly skipped"
+            exit 1
+          fi

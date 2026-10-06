@@ -25,6 +25,14 @@ from novel_ai.longform_tools import near_duplicate_chapters
 from novel_ai.longform_analytics import trope_frequency, cluster_story_dna, project_story_dna_2d, detect_longform_drift, analytics_backend_capabilities
 from novel_ai.models import Character, ChapterPlan, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference
+from novel_ai.reference_evidence import (
+    DEFAULT_MAX_EXCERPT_CHARS,
+    DEFAULT_TOP_N,
+    MAX_EXCERPT_CHARS,
+    MAX_SOURCE_BYTES,
+    MAX_TOTAL_SOURCE_BYTES,
+    build_reference_evidence,
+)
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
 from novel_ai.request_budget import RequestBudget, RequestBudgetExceeded, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
@@ -89,6 +97,48 @@ def _render_writing_budget(budget: RequestBudget, pending_limits: RequestBudgetL
     if pending_limits != budget.limits:
         st.info("预算配置已修改；当前会话继续使用已启用额度，配置只在显式开始新章/清空待写计划时生效。")
 
+def _clear_reference_evidence() -> None:
+    """Drop only the session-local evidence result and its input binding."""
+    st.session_state.pop("reference_evidence_result", None)
+    st.session_state.pop("reference_evidence_binding", None)
+
+
+def _read_reference_evidence_sources(uploaded_files, encoding: str | None):
+    """Read bounded uploader bytes without writing them to ProjectStore or disk."""
+    files = list(uploaded_files or [])
+    if not files:
+        return []
+
+    declared_total = 0
+    for uploaded_file in files:
+        declared_size = getattr(uploaded_file, "size", None)
+        if type(declared_size) is int:
+            if declared_size > MAX_SOURCE_BYTES:
+                raise ValueError(
+                    f"参考源超过单文件资源上限: {uploaded_file.name}"
+                )
+            declared_total += declared_size
+    if declared_total > MAX_TOTAL_SOURCE_BYTES:
+        raise ValueError("参考源超过累计资源上限")
+
+    sources = []
+    total = 0
+    for uploaded_file in files:
+        data = uploaded_file.getvalue()
+        if type(data) is not bytes:
+            data = bytes(data)
+        if len(data) > MAX_SOURCE_BYTES:
+            raise ValueError(
+                f"参考源超过单文件资源上限: {uploaded_file.name}"
+            )
+        total += len(data)
+        if total > MAX_TOTAL_SOURCE_BYTES:
+            raise ValueError("参考源超过累计资源上限")
+        text_encoding = encoding if uploaded_file.name.lower().endswith((".txt", ".md")) else None
+        sources.append((uploaded_file.name, data, text_encoding))
+    return sources
+
+
 if "characters" not in st.session_state:
     st.session_state.characters = []
 if "style" not in st.session_state:
@@ -105,6 +155,9 @@ if "last_extraction" not in st.session_state:
     st.session_state.last_extraction = None
 if "last_self_similarity" not in st.session_state:
     st.session_state.last_self_similarity = []
+
+if "_reference_evidence_project" not in st.session_state:
+    st.session_state["_reference_evidence_project"] = None
 
 
 with st.sidebar:
@@ -192,11 +245,14 @@ if (st.session_state.get("seeded_project") is not None
         and st.session_state.get("seeded_project") != project_name):
     _close_writing_budget()
 seed_project_state()
+if st.session_state.get("_reference_evidence_project") != project_name:
+    _clear_reference_evidence()
+    st.session_state["_reference_evidence_project"] = project_name
 preserve_project_fields(st.session_state)
 
 
-story_tab, char_tab, style_tab, write_tab, review_tab, release_tab = st.tabs(
-    ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "✍️ 章节写作", "🔎 审校", "📦 市场审阅与发布"]
+story_tab, char_tab, style_tab, evidence_tab, write_tab, review_tab, release_tab = st.tabs(
+    ["📚 故事与大纲", "👥 人物", "🎛️ Style Lab", "🔎 本地证据", "✍️ 章节写作", "🔎 审校", "📦 市场审阅与发布"]
 )
 
 with story_tab:
@@ -450,6 +506,133 @@ with style_tab:
     if fp:
         st.markdown("#### 当前综合 Style DNA")
         st.json(fp.model_dump())
+
+with evidence_tab:
+    st.subheader("本地参考证据查询")
+    st.caption(
+        "仅处理本次显式上传的 TXT / MD；HTML 可走已有本地 reader。"
+        "结果只保留在当前会话，不进入 Style DNA、ProjectStore、ContextAssembler 或模型。"
+    )
+    evidence_uploads = st.file_uploader(
+        "上传本地参考源（TXT / MD / HTML）",
+        type=["txt", "md", "html", "htm"],
+        accept_multiple_files=True,
+        key="reference_evidence_upload",
+    )
+    evidence_encoding_labels = {
+        "自动确认 UTF-8 或 BOM": None,
+        "GB18030": "gb18030",
+        "GBK": "gbk",
+        "Big5": "big5",
+        "UTF-8": "utf-8",
+        "UTF-16 小端": "utf-16-le",
+        "UTF-16 大端": "utf-16-be",
+        "UTF-32 小端": "utf-32-le",
+        "UTF-32 大端": "utf-32-be",
+        "Windows-1252": "cp1252",
+    }
+    evidence_encoding_label = st.selectbox(
+        "TXT/MD 原文件编码",
+        list(evidence_encoding_labels),
+        key="reference_evidence_encoding",
+    )
+    evidence_query = st.text_input("查询词 / query", key="reference_evidence_query")
+    evidence_top_n = st.number_input(
+        "返回数量 top_n", min_value=1, max_value=20, value=DEFAULT_TOP_N,
+        step=1, key="reference_evidence_top_n",
+    )
+    evidence_excerpt_chars = st.number_input(
+        "单条摘录上限（Unicode 字符）",
+        min_value=1, max_value=MAX_EXCERPT_CHARS,
+        value=DEFAULT_MAX_EXCERPT_CHARS, step=1,
+        key="reference_evidence_excerpt_chars",
+    )
+
+    evidence_sources = None
+    evidence_binding = None
+    try:
+        evidence_sources = _read_reference_evidence_sources(
+            evidence_uploads, evidence_encoding_labels[evidence_encoding_label]
+        )
+        evidence_binding = {
+            "project": project_name,
+            "files": [
+                {
+                    "filename": filename,
+                    "raw_sha256": hashlib.sha256(data).hexdigest(),
+                }
+                for filename, data, _encoding in evidence_sources
+            ],
+            "encoding": evidence_encoding_label,
+            "query": evidence_query.strip(),
+            "top_n": int(evidence_top_n),
+            "max_excerpt_chars": int(evidence_excerpt_chars),
+        }
+    except (OSError, TypeError, ValueError) as exc:
+        _clear_reference_evidence()
+        st.error("本地证据输入无效：" + str(exc))
+
+    if evidence_binding is not None:
+        if st.session_state.get("reference_evidence_binding") != evidence_binding:
+            _clear_reference_evidence()
+            st.session_state["reference_evidence_binding"] = evidence_binding
+
+    if st.button("查询本地参考证据", key="btn_reference_evidence"):
+        _clear_reference_evidence()
+        try:
+            if not evidence_sources:
+                raise ValueError("请先上传至少一个 TXT、MD 或 HTML 文件")
+            if not evidence_query.strip():
+                raise ValueError("query must not be empty")
+            # Keep the UI on the same direct reader/core path as the CLI.
+            for filename, data, encoding in evidence_sources:
+                extract_reference(filename, data, encoding=encoding)
+            result = build_reference_evidence(
+                evidence_sources,
+                evidence_query,
+                top_n=int(evidence_top_n),
+                max_excerpt_chars=int(evidence_excerpt_chars),
+            )
+            st.session_state["reference_evidence_result"] = result
+            st.session_state["reference_evidence_binding"] = evidence_binding
+            st.success(f"本地证据查询完成：命中 {len(result['matches'])} 条。")
+        except (OSError, TypeError, UnicodeError, ValueError) as exc:
+            st.error("本地证据查询未完成：" + str(exc))
+
+    evidence_result = st.session_state.get("reference_evidence_result")
+    if evidence_result is not None:
+        st.markdown("#### 本次查询结果")
+        rows = [
+            {
+                "source": match["source_filename"],
+                "chapter": match["chapter"],
+                "bounded_excerpt": match["excerpt"],
+                "unicode_offset": f"{match['start']}:{match['end']}",
+                "score": match["score"],
+                "raw_sha256": match["raw_source_sha256"],
+                "extracted_sha256": match["extracted_text_sha256"],
+                "stable_id": match["id"],
+            }
+            for match in evidence_result["matches"]
+        ]
+        if rows:
+            st.dataframe(rows, use_container_width=True)
+        else:
+            st.info("未命中：没有相关证据片段。")
+        st.json({
+            "schema": evidence_result["schema"],
+            "query": evidence_result["query"],
+            "offset_basis": evidence_result["offset_basis"],
+            "parameters": evidence_result["parameters"],
+            "sources": evidence_result["sources"],
+        })
+        st.download_button(
+            "下载本次证据 JSON",
+            data=(json.dumps(evidence_result, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+            file_name="reference-evidence.json",
+            mime="application/json",
+            key="download_reference_evidence",
+        )
 
 if st.session_state.get("style_pending"):
     st.info("请先在 Style Lab 核对待保存结果。写作、审校和发布入口暂不使用未完成的风格资料。")

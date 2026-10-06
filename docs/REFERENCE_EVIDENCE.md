@@ -68,3 +68,27 @@ file is produced.  Query mode intentionally rejects same-path output pairs and
 input or output symlink aliases as a safety tightening; this does not claim
 every historical CLI edge behavior is unchanged, and the rejected destructive
 alias paths are not restored.
+
+
+## Streamlit local evidence panel
+
+The seventh 本地证据 tab is a thin session-only entry point over the same
+reading.extract_reference and build_reference_evidence functions.  It accepts
+explicit TXT/MD uploads and can pass HTML to the existing local reader chain.
+It exposes query, top_n, and the bounded excerpt length, then renders source,
+chapter, bounded excerpt, sanitized-Unicode offset, score, raw-byte hash, and
+extracted-text hash.  The JSON download is explicit.
+
+The panel binds the result to the current project, every uploaded filename and
+raw SHA-256, the selected TXT/MD encoding, query, top_n, and excerpt bound.
+Changing any binding field, switching projects, or encountering a read/query
+failure clears the old result and download.  Uploaded size metadata is checked
+before getvalue() when available, then the core 8 MiB per-source and 32 MiB
+total bounds remain authoritative.  The panel does not invoke Style DNA
+analysis, ContextAssembler, a provider, a model, network access, ProjectStore
+writes, Reference Pack writing, or a permanent index.
+
+The real Streamlit AppTest uploader gate uses synthetic TXT/MD bytes and the
+actual file_uploader widget serialization.  The optional HTML/trafilatura
+acceptance remains a separate no-skip CI probe; TXT/MD UI coverage does not
+stand in for that HTML backend check.
