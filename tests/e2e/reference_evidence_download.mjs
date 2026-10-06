@@ -155,7 +155,7 @@ async function main() {
     const draft = "night radio 电台在雨夜响起";
     const draftField = page.getByLabel("明确粘贴稿件片段（仅当前会话）", { exact: true });
     await draftField.fill(draft);
-    await evidenceCheckbox(page, evidenceMatch).check();
+    await evidenceCheckbox(page, evidenceMatch).check({ force: true });
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查完成：");
 
@@ -221,7 +221,7 @@ async function main() {
       observedOverlong.length === 2048 || observedOverlong.length === 2049,
       "overlong input must be client-capped or reach the server",
     );
-    await evidenceCheckbox(page, evidenceMatch).check();
+    await evidenceCheckbox(page, evidenceMatch).check({ force: true });
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     if (observedOverlong.length > 2048) {
       await waitForText(page, "措辞相近检查未完成：");
@@ -235,12 +235,12 @@ async function main() {
 
     await draftField.fill("编辑后的新片段");
     await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
-    await evidenceCheckbox(page, evidenceMatch).uncheck();
+    await evidenceCheckbox(page, evidenceMatch).uncheck({ force: true });
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查未完成：");
     await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
 
-    await evidenceCheckbox(page, evidenceMatch).check();
+    await evidenceCheckbox(page, evidenceMatch).check({ force: true });
     await draftField.fill(draft);
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查完成：");
