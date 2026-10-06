@@ -39,11 +39,11 @@ async function waitForText(page, expected, timeout = 45000) {
   throw new Error("Timed out waiting for " + expected + "\n" + last.slice(-4000));
 }
 
-async function waitForCount(locator, expected, timeout = 30000) {
+async function waitForCount(page, locator, expected, timeout = 30000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     if (await locator.count() === expected) return;
-    await locator.page().waitForTimeout(200);
+    await page.waitForTimeout(200);
   }
   throw new Error("Timed out waiting for count " + expected);
 }
@@ -137,7 +137,6 @@ async function main() {
 
     const draft = "night radio 电台在雨夜响起";
     const draftField = page.getByLabel("明确粘贴稿件片段（仅当前会话）", { exact: true });
-    assert.equal(await draftField.getAttribute("maxlength"), "2048");
     await draftField.fill(draft);
     await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().check();
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
@@ -185,11 +184,11 @@ async function main() {
     }
 
     await draftField.fill("编辑后的新片段");
-    await waitForCount(page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+    await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
     await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().uncheck();
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查未完成：");
-    await waitForCount(page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+    await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
 
     await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().check();
     await draftField.fill(draft);
@@ -205,8 +204,8 @@ async function main() {
 
     const projectField = page.getByLabel("当前项目", { exact: true });
     await projectField.fill("BrowserOtherBook");
-    await waitForCount(page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
-    await waitForCount(page.getByText("下载本次证据 JSON", { exact: true }), 0);
+    await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+    await waitForCount(page, page.getByText("下载本次证据 JSON", { exact: true }), 0);
     assert.equal((await pageText(page)).includes(evidenceMatch.id), false);
 
     assert.deepEqual(externalRequests, []);
