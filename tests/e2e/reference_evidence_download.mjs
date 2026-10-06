@@ -274,6 +274,7 @@ async function main() {
 
     const projectField = page.getByLabel("当前项目", { exact: true });
     await projectField.fill("BrowserOtherBook");
+    await projectField.blur();
     await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
     await waitForCount(page, page.getByText("下载本次证据 JSON", { exact: true }), 0);
     assert.equal((await pageText(page)).includes(evidenceMatch.id), false);
