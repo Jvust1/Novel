@@ -460,3 +460,39 @@ def test_query_publish_second_failure_cleans_only_owned_pack(monkeypatch, tmp_pa
     assert not pack_target.exists()
     assert evidence_target.read_bytes() == b"evidence-winner"
     assert not list(tmp_path.glob(".*.tmp"))
+
+
+def test_query_publish_stage_cleanup_failure_rolls_back_owned_pack_and_preserves_competitor(
+    monkeypatch, tmp_path
+):
+    source_path = tmp_path / "source.txt"
+    source_path.write_bytes(b"night radio")
+    original_source = source_path.read_bytes()
+    pack_target = tmp_path / "pack.json"
+    evidence_target = tmp_path / "evidence.json"
+    evidence_target.write_bytes(b"competitor")
+    pack = cli_module.build_reference_pack(
+        [(source_path.name, original_source, 1.0, None)]
+    )
+
+    real_unlink = Path.unlink
+    injected = False
+
+    def fail_first_stage_unlink(path, *args, **kwargs):
+        nonlocal injected
+        if path.suffix == ".tmp" and not injected:
+            injected = True
+            raise PermissionError("injected stage cleanup failure")
+        return real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", fail_first_stage_unlink)
+    with pytest.raises(PermissionError, match="injected stage cleanup failure"):
+        cli_module._publish_query_outputs(
+            pack, {"schema": "test"}, pack_target, evidence_target
+        )
+
+    assert injected
+    assert not pack_target.exists()
+    assert evidence_target.read_bytes() == b"competitor"
+    assert source_path.read_bytes() == original_source
+    assert not list(tmp_path.glob(".*.tmp"))
