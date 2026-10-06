@@ -125,6 +125,7 @@ jobs:
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
+      E2E_ARTIFACT_DIR: e2e-artifacts
     steps:
       - name: Preserve exact pinned source and frozen artifact bytes
         run: git config --global core.autocrlf false
@@ -165,3 +166,12 @@ jobs:
           done
           test "$health" = "ok"
           node tests/e2e/reference_evidence_download.mjs http://127.0.0.1:8501
+
+      - name: Upload synthetic browser verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: novel-reference-browser-evidence
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

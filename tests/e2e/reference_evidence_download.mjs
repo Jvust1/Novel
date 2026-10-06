@@ -8,9 +8,24 @@ const baseUrl = process.argv[2] || "http://127.0.0.1:8501";
 const sourceText = "# Chapter 1\nnight radio 电台在雨夜响起，仓库钥匙仍在青瓷碗底。\n\n这一段保留可验证的 Unicode 偏移。\n";
 const markdownText = "## Chapter 2\nnight radio 电台再次响起，林澄核对账本。\n\n第二个显式 Markdown 来源。\n";
 const externalRequests = [];
+const artifactDirectory = path.resolve(process.env.E2E_ARTIFACT_DIR || "e2e-artifacts");
+let overlongBehavior = "not-run";
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function regexEscape(value) {
+  return value.replace(/[.*+?^()|[\]\\]/g, "\\$&");
+}
+
+function evidenceCheckbox(page, match) {
+  const chapter = match.chapter === null ? "None" : String(match.chapter);
+  const labelPattern = "^选择证据 [0-9]+: "
+    + regexEscape(String(match.source_filename))
+    + " · " + regexEscape(chapter)
+    + " · " + match.start + ":" + match.end + "$";
+  return page.getByRole("checkbox", { name: new RegExp(labelPattern) });
 }
 
 async function pageText(page) {
@@ -108,6 +123,8 @@ async function main() {
 
     const evidenceDownload = await downloadJson(page, "下载本次证据 JSON");
     const evidence = evidenceDownload.payload;
+    await fs.mkdir(artifactDirectory, { recursive: true });
+    await fs.writeFile(path.join(artifactDirectory, "reference-evidence.json"), evidenceDownload.bytes);
     assert.equal(evidence.schema, "novel-reference-evidence-v1");
     assert.equal(evidence.query, "night 电台");
     assert.equal(evidence.parameters.top_n, 2);
@@ -138,12 +155,13 @@ async function main() {
     const draft = "night radio 电台在雨夜响起";
     const draftField = page.getByLabel("明确粘贴稿件片段（仅当前会话）", { exact: true });
     await draftField.fill(draft);
-    await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().check();
+    await evidenceCheckbox(page, evidenceMatch).check();
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查完成：");
 
     const wordingDownload = await downloadJson(page, "下载本次措辞检查 JSON");
     const wording = wordingDownload.payload;
+    await fs.writeFile(path.join(artifactDirectory, "reference-wording-check.json"), wordingDownload.bytes);
     assert.equal(wording.schema, "novel-reference-wording-check-v1");
     assert.equal(wording.project, "MyNovel");
     assert.equal(wording.evidence_query, "night 电台");
@@ -183,14 +201,46 @@ async function main() {
       assert(visibleWording.includes(String(value)), "visible wording result missing " + value);
     }
 
+
+    const overlong = "x".repeat(2049);
+    await draftField.evaluate((element, value) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value",
+      ).set;
+      setter.call(element, value);
+      element.dispatchEvent(new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertText",
+        data: value,
+      }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    }, overlong);
+    const observedOverlong = await draftField.inputValue();
+    assert(
+      observedOverlong.length === 2048 || observedOverlong.length === 2049,
+      "overlong input must be client-capped or reach the server",
+    );
+    await evidenceCheckbox(page, evidenceMatch).check();
+    await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
+    if (observedOverlong.length > 2048) {
+      await waitForText(page, "措辞相近检查未完成：");
+      await waitForText(page, "超过 2048");
+      await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+      overlongBehavior = "server-rejected";
+    } else {
+      await waitForText(page, "措辞相近检查完成：");
+      overlongBehavior = "client-capped";
+    }
+
     await draftField.fill("编辑后的新片段");
     await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
-    await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().uncheck();
+    await evidenceCheckbox(page, evidenceMatch).uncheck();
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查未完成：");
     await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
 
-    await page.getByRole("checkbox", { name: /选择证据 1:/ }).first().check();
+    await evidenceCheckbox(page, evidenceMatch).check();
     await draftField.fill(draft);
     await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
     await waitForText(page, "措辞相近检查完成：");
@@ -214,6 +264,57 @@ async function main() {
       assert(!body.includes(Buffer.from("night radio", "utf8")), "source body must not be persisted");
       assert(!body.includes(Buffer.from("编辑后的新片段", "utf8")), "draft body must not be persisted");
     }
+
+
+    await fs.writeFile(
+      path.join(artifactDirectory, "verification-summary.json"),
+      JSON.stringify({
+        schema: "novel-reference-browser-e2e-v1",
+        synthetic_only: true,
+        evidence: {
+          bytes: evidenceDownload.bytes.length,
+          schema: evidence.schema,
+          query: evidence.query,
+          source_filename: evidenceMatch.source_filename,
+          chapter: evidenceMatch.chapter,
+          start: evidenceMatch.start,
+          end: evidenceMatch.end,
+          offset_basis: evidenceMatch.offset_basis,
+          raw_source_sha256: evidenceMatch.raw_source_sha256,
+          extracted_text_sha256: evidenceMatch.extracted_text_sha256,
+          stable_id: evidenceMatch.id,
+          score: evidenceMatch.score,
+          parameters: evidence.parameters,
+        },
+        wording: {
+          bytes: wordingDownload.bytes.length,
+          schema: wording.schema,
+          project: wording.project,
+          evidence_query: wording.evidence_query,
+          draft_sha256: wording.draft_sha256,
+          selected_match_ids: wording.selected_match_ids,
+          source_filename: wordingMatch.source_filename,
+          chapter: evidenceMatch.chapter,
+          start: wordingMatch.start,
+          end: wordingMatch.end,
+          raw_source_sha256: wordingMatch.raw_source_sha256,
+          extracted_text_sha256: wordingMatch.extracted_text_sha256,
+          stable_id: wordingMatch.stable_id,
+          score: wordingMatch.similarity,
+          metric: wording.metric,
+          parameters: wording.parameters,
+        },
+        checks: {
+          repeat_download_bytes_identical: true,
+          overlong_input_behavior: overlongBehavior,
+          edited_download_absent: true,
+          failed_download_absent: true,
+          project_download_absent: true,
+          external_requests: externalRequests.length,
+          persisted_fixture_body: false,
+        },
+      }, null, 2) + "\n",
+    );
 
     console.log(JSON.stringify({
       evidence_download_bytes: evidenceDownload.bytes.length,

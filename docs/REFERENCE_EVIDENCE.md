@@ -129,5 +129,7 @@ download controls, reads the completed files, and checks their JSON bytes agains
 the visible hashes, offsets, stable IDs, scores, and the current draft binding.
 It also checks deterministic repeat downloads, input/selection/project invalidation,
 controlled failure, external request absence, and that the project data directory
-does not contain the fixture bodies. This browser gate is separate from the
-optional HTML/trafilatura acceptance path.
+does not contain the fixture bodies. On success, the two exact synthetic
+download bytes and a metadata-only verification summary are retained as a short-lived
+CI artifact; no user source, credential, or real data is included. This browser gate
+is separate from the optional HTML/trafilatura acceptance path.
