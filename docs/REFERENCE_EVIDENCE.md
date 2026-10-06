@@ -57,6 +57,11 @@ either extractor or Reference Pack builder; a source that grows past its
 limit is rejected without unbounded reads.  Evidence output is written to a
 temporary file and published with an exclusive same-directory link, so a
 target created by another writer is never overwritten and failed publication
-cleans up the temporary file.  `--query` and `--evidence-out` are an
-all-or-nothing pair.  With neither flag, the legacy Reference Pack CLI
-behavior is retained and no evidence file is produced.
+cleans up the temporary file.  In query mode the Reference Pack output uses
+the same no-clobber staging path.  Both complete artifacts are staged before
+the first publish; if the second publish fails, cleanup removes only the
+first file still owned by this invocation and leaves an existing or competing
+winner untouched.  This is bounded failure cleanup rather than a cross-file
+transaction.  `--query` and `--evidence-out` are an all-or-nothing pair.  With
+neither flag, the legacy Reference Pack CLI behavior is retained and no
+evidence file is produced.
