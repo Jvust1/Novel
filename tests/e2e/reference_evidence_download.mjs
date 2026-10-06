@@ -203,34 +203,47 @@ async function main() {
 
 
     const overlong = "x".repeat(2049);
-    await draftField.evaluate((element, value) => {
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      ).set;
-      setter.call(element, value);
-      element.dispatchEvent(new InputEvent("input", {
-        bubbles: true,
-        inputType: "insertText",
-        data: value,
-      }));
-      element.dispatchEvent(new Event("change", { bubbles: true }));
-    }, overlong);
-    const observedOverlong = await draftField.inputValue();
-    assert(
-      observedOverlong.length === 2048 || observedOverlong.length === 2049,
-      "overlong input must be client-capped or reach the server",
+    // Playwright fill models a paste; blur commits the Streamlit widget value.
+    await draftField.fill(overlong);
+    await draftField.blur();
+    let observedOverlong = await draftField.inputValue();
+    let stableReads = 0;
+    const observedDeadline = Date.now() + 5000;
+    while (Date.now() < observedDeadline && stableReads < 2) {
+      await page.waitForTimeout(250);
+      const nextValue = await draftField.inputValue();
+      if (nextValue === observedOverlong) stableReads += 1;
+      else stableReads = 0;
+      observedOverlong = nextValue;
+    }
+    assert.equal(
+      stableReads >= 2,
+      true,
+      "overlong input value did not settle after fill and blur",
     );
-    await evidenceCheckbox(page, evidenceMatch).check({ force: true });
-    await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
-    if (observedOverlong.length > 2048) {
+    const acceptedPrefix = "x".repeat(2048);
+    if (observedOverlong === draft) {
+      overlongBehavior = "rejected-before-submit";
+    } else if (observedOverlong === acceptedPrefix) {
+      overlongBehavior = "client-truncated-at-2048";
+      await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+      await evidenceCheckbox(page, evidenceMatch).check({ force: true });
+      await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
+      await waitForText(page, "措辞相近检查完成：");
+    } else if (observedOverlong === overlong) {
+      overlongBehavior = "server-rejected-at-2049";
+      await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
+      await evidenceCheckbox(page, evidenceMatch).check({ force: true });
+      await page.getByRole("button", { name: "检查措辞相近度", exact: true }).click();
       await waitForText(page, "措辞相近检查未完成：");
       await waitForText(page, "超过 2048");
       await waitForCount(page, page.getByText("下载本次措辞检查 JSON", { exact: true }), 0);
-      overlongBehavior = "server-rejected";
     } else {
-      await waitForText(page, "措辞相近检查完成：");
-      overlongBehavior = "client-capped";
+      throw new Error(
+        "unexpected stable overlong value (length "
+        + observedOverlong.length
+        + ")",
+      );
     }
 
     await draftField.fill("编辑后的新片段");
@@ -304,6 +317,12 @@ async function main() {
           metric: wording.metric,
           parameters: wording.parameters,
         },
+        overlong_input: {
+          attempted_char_count: overlong.length,
+          stable_value_char_count: observedOverlong.length,
+          stable_value_sha256: sha256(observedOverlong),
+          behavior: overlongBehavior,
+        },
         checks: {
           repeat_download_bytes_identical: true,
           overlong_input_behavior: overlongBehavior,
@@ -322,6 +341,8 @@ async function main() {
       repeated_download_bytes: repeatedDownload.bytes.length,
       evidence_matches: evidence.matches.length,
       wording_matches: wording.matches.length,
+      overlong_input_behavior: overlongBehavior,
+      overlong_stable_value_length: observedOverlong.length,
       external_requests: externalRequests.length,
     }));
   } finally {

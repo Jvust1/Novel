@@ -119,6 +119,25 @@ def test_reference_wording_scores_partial_and_unrelated_text(
     assert unrelated["matches"][0]["similarity"] == 0.0
 
 
+def test_reference_wording_server_rejects_2049_char_draft(monkeypatch, tmp_path):
+    at = _run_app(monkeypatch, tmp_path)
+    files, _first, _second = _sources()
+    _upload_evidence(at, files)
+    evidence = _query(at, "night radio")
+    selected = evidence["matches"][0]
+
+    at.checkbox(key=f"reference_wording_match_{selected['id']}").check().run()
+    overlong = "x" * 2049
+    at.text_area(key="reference_wording_draft").set_value(overlong).run()
+    assert at.session_state["reference_wording_draft"] == overlong
+
+    at.button(key="btn_reference_wording_check").click().run()
+    assert not at.exception
+    assert any("超过 2048" in item.value for item in at.error)
+    assert "reference_wording_result" not in at.session_state
+    assert not _downloads(at, "download_reference_wording")
+
+
 def test_reference_wording_invalidates_old_result_on_edit_failure_and_project_switch(
     monkeypatch, tmp_path
 ):
