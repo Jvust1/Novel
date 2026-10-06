@@ -101,6 +101,10 @@ async function main() {
 
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await page.getByRole("tab", { name: /本地证据/ }).click();
+    await page.locator('input[type="file"]').last().waitFor({
+      state: "attached",
+      timeout: 45000,
+    });
 
     const fileInputs = page.locator('[data-testid="stFileUploader"] input[type="file"]');
     const fallbackInputs = page.locator('input[type="file"]');
