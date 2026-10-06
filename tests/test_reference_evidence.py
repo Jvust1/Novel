@@ -367,6 +367,22 @@ def test_query_cli_rejects_hardlink_and_symlink_output_aliases(tmp_path):
     assert source_path.read_bytes() == original
     assert hardlink.read_bytes() == original
 
+    evidence_hardlink = tmp_path / "hardlink-evidence.json"
+    os.link(source_path, evidence_hardlink)
+    evidence_alias_run = cli(
+        tmp_path,
+        source_path,
+        "--out",
+        tmp_path / "alias-pack.json",
+        "--query",
+        "night radio",
+        "--evidence-out",
+        evidence_hardlink,
+    )
+    assert evidence_alias_run.returncode == 2
+    assert source_path.read_bytes() == original
+    assert evidence_hardlink.read_bytes() == original
+
     symlink = tmp_path / "symlink-pack.json"
     try:
         symlink.symlink_to(source_path)
@@ -385,6 +401,21 @@ def test_query_cli_rejects_hardlink_and_symlink_output_aliases(tmp_path):
     assert symlink_run.returncode == 2
     assert source_path.read_bytes() == original
     assert symlink.read_bytes() == original
+
+    source_symlink = tmp_path / "source-link.txt"
+    source_symlink.symlink_to(source_path)
+    input_symlink_run = cli(
+        tmp_path,
+        source_symlink,
+        "--out",
+        tmp_path / "input-link-pack.json",
+        "--query",
+        "night radio",
+        "--evidence-out",
+        tmp_path / "input-link-evidence.json",
+    )
+    assert input_symlink_run.returncode == 2
+    assert source_path.read_bytes() == original
 
 
 def test_query_publish_first_race_winner_is_preserved(monkeypatch, tmp_path):
