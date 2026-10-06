@@ -113,6 +113,53 @@ def test_real_wire_budget_spans_plan_draft_oneshot_and_reruns(monkeypatch, tmp_p
         pickle.dumps(new_budget)
 
 
+def test_project_switch_closes_budget_and_restarts_scope(monkeypatch, tmp_path):
+    wire = WireFixture()
+    at = run_app(monkeypatch, tmp_path, wire)
+    configure_writer(at, mode="快速草稿")
+
+    at.button(key="btn_plan").click().run()
+    old_budget = at.session_state["_writing_request_budget"]
+    assert old_budget.snapshot()["requests_reserved"] == 1
+
+    at.text_input(key="project_name").set_value("OtherBook").run()
+    other_budget = at.session_state["_writing_request_budget"]
+    assert old_budget.snapshot()["closed"] is True
+    assert other_budget is not old_budget
+    assert other_budget.snapshot()["requests_reserved"] == 0
+
+    at.text_input(key="project_name").set_value("BudgetBook").run()
+    returned_budget = at.session_state["_writing_request_budget"]
+    assert other_budget.snapshot()["closed"] is True
+    assert returned_budget is not other_budget
+    assert returned_budget is not old_budget
+    assert returned_budget.snapshot()["requests_reserved"] == 0
+    assert len(wire.calls) == 1
+
+
+def test_plan_draft_stops_mid_budget_before_chapter_write(monkeypatch, tmp_path):
+    wire = WireFixture()
+    at = run_app(monkeypatch, tmp_path, wire)
+    configure_writer(at, mode="精修")
+    at.number_input(key="writing_budget_max_requests").set_value(3)
+    at.button(key="btn_clear_plan").click().run()
+
+    budget = at.session_state["_writing_request_budget"]
+    assert budget.limits.max_requests == 3
+    at.button(key="btn_plan").click().run()
+    assert len(wire.calls) == 1
+
+    at.button(key="btn_draft").click().run()
+    assert len(wire.calls) == 3
+    assert budget.snapshot()["requests_reserved"] == 3
+    chapter = tmp_path / "data" / "projects" / "BudgetBook" / "chapters" / "001.md"
+    assert not chapter.exists()
+    assert any("预算已耗尽" in item.value for item in at.error)
+    at.run()
+    assert len(wire.calls) == 3
+    assert not chapter.exists()
+
+
 def test_request_limit_stops_next_wire_and_explicit_new_session_recovers(monkeypatch, tmp_path):
     wire = WireFixture()
     at = run_app(monkeypatch, tmp_path, wire)
