@@ -307,3 +307,125 @@ def test_query_mode_stops_a_growing_stream_at_the_bound(monkeypatch, tmp_path):
     with pytest.raises(ValueError, match="上限|超过"):
         cli_module.read_query_sources_bounded([source_path], max_source_bytes=8, max_total_bytes=8)
     assert growing.calls == 1
+
+
+def test_query_cli_no_clobber_preexisting_pack_and_evidence(tmp_path):
+    source_path = tmp_path / "source.txt"
+    source_path.write_text("night radio", encoding="utf-8")
+
+    old_pack = tmp_path / "old-pack.json"
+    old_pack.write_bytes(b"existing-pack")
+    pack_run = cli(
+        tmp_path,
+        source_path,
+        "--out",
+        old_pack,
+        "--query",
+        "night radio",
+        "--evidence-out",
+        tmp_path / "new-evidence.json",
+    )
+    assert pack_run.returncode == 2
+    assert old_pack.read_bytes() == b"existing-pack"
+    assert not (tmp_path / "new-evidence.json").exists()
+
+    old_evidence = tmp_path / "old-evidence.json"
+    old_evidence.write_bytes(b"existing-evidence")
+    evidence_run = cli(
+        tmp_path,
+        source_path,
+        "--out",
+        tmp_path / "new-pack.json",
+        "--query",
+        "night radio",
+        "--evidence-out",
+        old_evidence,
+    )
+    assert evidence_run.returncode == 2
+    assert old_evidence.read_bytes() == b"existing-evidence"
+    assert not (tmp_path / "new-pack.json").exists()
+
+
+def test_query_cli_rejects_hardlink_and_symlink_output_aliases(tmp_path):
+    source_path = tmp_path / "source.txt"
+    source_path.write_text("night radio", encoding="utf-8")
+    original = source_path.read_bytes()
+
+    hardlink = tmp_path / "hardlink-pack.json"
+    os.link(source_path, hardlink)
+    hardlink_run = cli(
+        tmp_path,
+        source_path,
+        "--out",
+        hardlink,
+        "--query",
+        "night radio",
+        "--evidence-out",
+        tmp_path / "hardlink-evidence.json",
+    )
+    assert hardlink_run.returncode == 2
+    assert source_path.read_bytes() == original
+    assert hardlink.read_bytes() == original
+
+    symlink = tmp_path / "symlink-pack.json"
+    try:
+        symlink.symlink_to(source_path)
+    except OSError:
+        pytest.skip("the test runner does not permit symlink creation")
+    symlink_run = cli(
+        tmp_path,
+        source_path,
+        "--out",
+        symlink,
+        "--query",
+        "night radio",
+        "--evidence-out",
+        tmp_path / "symlink-evidence.json",
+    )
+    assert symlink_run.returncode == 2
+    assert source_path.read_bytes() == original
+    assert symlink.read_bytes() == original
+
+
+def test_query_publish_first_race_winner_is_preserved(monkeypatch, tmp_path):
+    pack_target = tmp_path / "pack.json"
+    evidence_target = tmp_path / "evidence.json"
+    pack = cli_module.build_reference_pack([("source.txt", b"night radio", 1.0, None)])
+    calls = 0
+    real_link = cli_module.os.link
+
+    def racing_link(source, destination):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            Path(destination).write_bytes(b"pack-winner")
+        return real_link(source, destination)
+
+    monkeypatch.setattr(cli_module.os, "link", racing_link)
+    with pytest.raises(ValueError, match="覆盖|存在"):
+        cli_module._publish_query_outputs(pack, {"schema": "test"}, pack_target, evidence_target)
+    assert pack_target.read_bytes() == b"pack-winner"
+    assert not evidence_target.exists()
+    assert not list(tmp_path.glob(".*.tmp"))
+
+
+def test_query_publish_second_failure_cleans_only_owned_pack(monkeypatch, tmp_path):
+    pack_target = tmp_path / "pack.json"
+    evidence_target = tmp_path / "evidence.json"
+    pack = cli_module.build_reference_pack([("source.txt", b"night radio", 1.0, None)])
+    calls = 0
+    real_link = cli_module.os.link
+
+    def racing_second_link(source, destination):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            Path(destination).write_bytes(b"evidence-winner")
+        return real_link(source, destination)
+
+    monkeypatch.setattr(cli_module.os, "link", racing_second_link)
+    with pytest.raises(ValueError, match="覆盖|存在"):
+        cli_module._publish_query_outputs(pack, {"schema": "test"}, pack_target, evidence_target)
+    assert not pack_target.exists()
+    assert evidence_target.read_bytes() == b"evidence-winner"
+    assert not list(tmp_path.glob(".*.tmp"))
