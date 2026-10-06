@@ -26,7 +26,7 @@ from novel_ai.longform_analytics import trope_frequency, cluster_story_dna, proj
 from novel_ai.models import Character, ChapterPlan, StoryBible, StyleFingerprint
 from novel_ai.reading import extract_reference
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
-from novel_ai.request_budget import RequestBudget, RequestBudgetLimits
+from novel_ai.request_budget import RequestBudget, RequestBudgetExceeded, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
 from novel_ai.reference_similarity import analyze_reference_similarity
 from novel_ai.release_eval import build_release_quality_snapshot
@@ -52,6 +52,42 @@ st.title("Novel · AI 网络小说写作助手")
 st.caption("情节与人物优先 · 大纲扩写 · 长篇记忆 · Style DNA · 去 AI 味审校")
 
 store = ProjectStore("data")
+
+
+def _close_writing_budget() -> None:
+    """Close and discard the live chapter budget at an explicit scope boundary."""
+    budget = st.session_state.pop("_writing_request_budget", None)
+    st.session_state.pop("_writing_budget_scope", None)
+    if isinstance(budget, RequestBudget):
+        budget.close()
+
+
+def _ensure_writing_budget(project: str, chapter_id: str, limits: RequestBudgetLimits,
+                           *, force_new: bool = False) -> RequestBudget:
+    """Return one live budget for this project/chapter, never rebuilding on rerun."""
+    scope = (project, chapter_id)
+    budget = st.session_state.get("_writing_request_budget")
+    if (force_new or not isinstance(budget, RequestBudget)
+            or st.session_state.get("_writing_budget_scope") != scope):
+        _close_writing_budget()
+        budget = RequestBudget(limits)
+        st.session_state["_writing_request_budget"] = budget
+        st.session_state["_writing_budget_scope"] = scope
+    return budget
+
+
+def _render_writing_budget(budget: RequestBudget, pending_limits: RequestBudgetLimits) -> None:
+    """Show detached allowance metadata without endpoint, key, prompt or response."""
+    snapshot = budget.snapshot()
+    limits = snapshot["limits"]
+    st.caption(
+        "本章写作会话预算："
+        f"已预留 {snapshot['requests_reserved']}/{limits['max_requests']} 次请求，"
+        f"请求体 {snapshot['request_bytes_reserved']}/{limits['max_total_request_bytes']} B，"
+        f"输出预留 {snapshot['output_tokens_reserved']}/{limits['max_reserved_output_tokens']} tokens。"
+    )
+    if pending_limits != budget.limits:
+        st.info("预算配置已修改；当前会话继续使用已启用额度，配置只在显式开始新章/清空待写计划时生效。")
 
 if "characters" not in st.session_state:
     st.session_state.characters = []
@@ -88,6 +124,30 @@ with st.sidebar:
     st.divider()
     project_name = st.text_input("当前项目", value="MyNovel", key="project_name")
     target_chars = st.number_input("目标章节字数", min_value=800, max_value=15000, value=3500, step=200)
+    with st.expander("写作会话预算", expanded=False):
+        budget_max_requests = st.number_input(
+            "最大请求次数", min_value=1, max_value=128, value=8, step=1,
+            key="writing_budget_max_requests",
+        )
+        budget_max_request_bytes = st.number_input(
+            "单次请求体上限（字节）", min_value=1024, max_value=8 * 1024 * 1024,
+            value=512 * 1024, step=1024, key="writing_budget_max_request_bytes",
+        )
+        budget_max_total_request_bytes = st.number_input(
+            "会话请求体累计上限（字节）", min_value=1024, max_value=32 * 1024 * 1024,
+            value=2 * 1024 * 1024, step=1024, key="writing_budget_max_total_request_bytes",
+        )
+        budget_max_reserved_output_tokens = st.number_input(
+            "输出预留上限（tokens）", min_value=1, max_value=512 * 1024,
+            value=96 * 1024, step=1024, key="writing_budget_max_reserved_output_tokens",
+        )
+        st.caption("默认 8 次、单次 512 KiB、累计 2 MiB、输出预留 96 Ki tokens；仅在显式新会话时应用。")
+    writing_budget_limits = RequestBudgetLimits(
+        max_requests=int(budget_max_requests),
+        max_request_bytes=int(budget_max_request_bytes),
+        max_total_request_bytes=int(budget_max_total_request_bytes),
+        max_reserved_output_tokens=int(budget_max_reserved_output_tokens),
+    )
 
 
 def make_provider(*, request_budget: RequestBudget | None = None, request_guard=None) -> OpenAICompatibleProvider:
@@ -128,6 +188,9 @@ def seed_project_state() -> None:
     switch_project(st.session_state, store, project_name)
 
 
+if (st.session_state.get("seeded_project") is not None
+        and st.session_state.get("seeded_project") != project_name):
+    _close_writing_budget()
 seed_project_state()
 preserve_project_fields(st.session_state)
 
@@ -400,6 +463,7 @@ except (OSError, ValueError) as exc:
 with write_tab:
     st.subheader("章纲 → 场景计划 → 正文")
     chapter_id = st.text_input("章节编号 / 名称", value="001", key="chapter_id")
+    writing_budget = _ensure_writing_budget(project_name, chapter_id, writing_budget_limits)
     if st.session_state.get("overwrite_chapter_binding") != chapter_id:
         st.session_state.allow_chapter_overwrite = False
         st.session_state.overwrite_chapter_binding = chapter_id
@@ -474,7 +538,7 @@ with write_tab:
             if bound_meta.get("outline_sha256") or bound_meta.get("outline_node_id"):
                 require_saved_outline(store, project_name, bound_meta.get("outline_sha256"))
 
-        engine = NovelEngine(make_provider(request_guard=current_sources))
+        engine = NovelEngine(make_provider(request_budget=writing_budget, request_guard=current_sources))
         bible = current_bible()
         characters = [Character.model_validate(c) for c in st.session_state.characters]
         return engine, bible, characters, current_sources, character_binding, settings_snapshot
@@ -512,6 +576,7 @@ with write_tab:
         one_shot = st.button("一步生成", use_container_width=True, help="跳过计划确认：计划→正文→审校一次完成", key="btn_oneshot")
 
     if st.button("清空待写计划，开始新章", key="btn_clear_plan"):
+        _ensure_writing_budget(project_name, chapter_id, writing_budget_limits, force_new=True)
         st.session_state.pending_plan_json = ""
         st.session_state.pending_plan_meta = {}
         st.session_state.plan_editor = ""
@@ -555,6 +620,8 @@ with write_tab:
             }
             st.session_state.plan_new = True
             st.rerun()
+        except RequestBudgetExceeded as exc:
+            st.error("本写作会话预算已耗尽；本次未发送下一次模型请求，未保存新章节。" + str(exc))
         except Exception as exc:
             st.exception(exc)
 
@@ -603,6 +670,8 @@ with write_tab:
             st.session_state.memory_candidate_json = None
             st.session_state.last_memory_commit = None
             st.success("章节已按确认的计划生成并保存到本地项目目录。")
+        except RequestBudgetExceeded as exc:
+            st.error("本写作会话预算已耗尽；本次未发送下一次模型请求，未保存新章节。" + str(exc))
         except Exception as exc:
             st.exception(exc)
 
@@ -655,6 +724,8 @@ with write_tab:
             st.session_state.memory_candidate_json = None
             st.session_state.last_memory_commit = None
             st.success("章节已生成并保存到本地项目目录。")
+        except RequestBudgetExceeded as exc:
+            st.error("本写作会话预算已耗尽；本次未发送下一次模型请求，未保存新章节。" + str(exc))
         except Exception as exc:
             st.exception(exc)
 
@@ -668,6 +739,7 @@ with write_tab:
             height=420,
         )
 
+    _render_writing_budget(writing_budget, writing_budget_limits)
     result = st.session_state.last_result
     st.session_state.memory_displayed_text_sha256 = None
     if result:
