@@ -62,6 +62,9 @@ the same no-clobber staging path.  Both complete artifacts are staged before
 the first publish; if the second publish fails, cleanup removes only the
 first file still owned by this invocation and leaves an existing or competing
 winner untouched.  This is bounded failure cleanup rather than a cross-file
-transaction.  `--query` and `--evidence-out` are an all-or-nothing pair.  With
-neither flag, the legacy Reference Pack CLI behavior is retained and no
-evidence file is produced.
+transaction.  `--query` and `--evidence-out` are an all-or-nothing pair.  With neither flag, normal legacy Reference Pack CLI invocations remain
+compatible with the existing Reference Pack schema and writer, and no evidence
+file is produced.  Query mode intentionally rejects same-path output pairs and
+input or output symlink aliases as a safety tightening; this does not claim
+every historical CLI edge behavior is unchanged, and the rejected destructive
+alias paths are not restored.

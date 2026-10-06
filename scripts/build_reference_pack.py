@@ -132,10 +132,8 @@ def _publish_query_stage(stage: Path, target: Path) -> os.stat_result:
         raise ValueError(f"query 输出已存在，拒绝覆盖: {target}") from exc
     except OSError as exc:
         raise OSError(f"无法以独占方式发布 query 输出: {target}") from exc
-    try:
-        stage.unlink()
-    except FileNotFoundError:
-        pass
+    # Return ownership immediately after the exclusive link.  The caller
+    # records it before attempting any stage cleanup.
     return owner_stat
 
 
@@ -168,8 +166,18 @@ def _publish_query_outputs(pack: object, evidence: dict, pack_target: Path, evid
             json.dumps(evidence, ensure_ascii=False, indent=2) + "\n",
         )
         stages.append(evidence_stage)
-        owned.append((pack_target, _publish_query_stage(pack_stage, pack_target)))
-        owned.append((evidence_target, _publish_query_stage(evidence_stage, evidence_target)))
+        pack_owner = _publish_query_stage(pack_stage, pack_target)
+        owned.append((pack_target, pack_owner))
+        try:
+            pack_stage.unlink()
+        except FileNotFoundError:
+            pass
+        evidence_owner = _publish_query_stage(evidence_stage, evidence_target)
+        owned.append((evidence_target, evidence_owner))
+        try:
+            evidence_stage.unlink()
+        except FileNotFoundError:
+            pass
     except BaseException:
         for target, owner_stat in reversed(owned):
             _remove_query_owner(target, owner_stat)
@@ -178,7 +186,8 @@ def _publish_query_outputs(pack: object, evidence: dict, pack_target: Path, evid
         for stage in stages:
             try:
                 stage.unlink()
-            except FileNotFoundError:
+            except OSError:
+                # Cleanup is best-effort after ownership rollback.
                 pass
 
 
