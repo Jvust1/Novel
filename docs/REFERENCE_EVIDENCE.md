@@ -51,8 +51,12 @@ python scripts/build_reference_pack.py reference.txt notes.md \
 
 An empty query, invalid bound, undecodable/corrupt source, unsupported reader,
 directory/special-file input, output collision, or existing evidence output
-returns an error before an evidence manifest is written.  Evidence output is
-created with a temporary file and atomic rename; an existing target is never
-overwritten.  `--query` and `--evidence-out` are an all-or-nothing pair.  With
-neither flag, the legacy Reference Pack CLI behavior is retained and no
-evidence file is produced.
+returns an error before an evidence manifest is written.  In query mode, the
+CLI stats every source and reads it through a bounded stream before invoking
+either extractor or Reference Pack builder; a source that grows past its
+limit is rejected without unbounded reads.  Evidence output is written to a
+temporary file and published with an exclusive same-directory link, so a
+target created by another writer is never overwritten and failed publication
+cleans up the temporary file.  `--query` and `--evidence-out` are an
+all-or-nothing pair.  With neither flag, the legacy Reference Pack CLI
+behavior is retained and no evidence file is produced.
