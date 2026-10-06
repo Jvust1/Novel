@@ -218,6 +218,9 @@ def main() -> int:
                 raise ValueError(f"输入必须是普通文件: {path}")
 
         pack_target = Path(args.out)
+        pack_resolved = pack_target.resolve(strict=False)
+        if any(pack_resolved == path.resolve(strict=True) for path in input_paths):
+            raise ValueError("Reference Pack 输出不得覆盖参考源文件")
         evidence_target = None
         if args.evidence_out is not None:
             evidence_target = Path(args.evidence_out)
