@@ -31,9 +31,11 @@ from novel_ai.reference_evidence import (
     MAX_EXCERPT_CHARS,
     MAX_SOURCE_BYTES,
     MAX_TOTAL_SOURCE_BYTES,
+    MAX_TOP_N,
     build_reference_evidence,
 )
 from novel_ai.provider import OpenAICompatibleProvider, ProviderConfig
+from novel_ai.rapidfuzz_similarity import normalized_similarity
 from novel_ai.request_budget import RequestBudget, RequestBudgetExceeded, RequestBudgetLimits
 from novel_ai.quality_gate import analyze_prose_quality
 from novel_ai.reference_similarity import analyze_reference_similarity
@@ -97,10 +99,136 @@ def _render_writing_budget(budget: RequestBudget, pending_limits: RequestBudgetL
     if pending_limits != budget.limits:
         st.info("预算配置已修改；当前会话继续使用已启用额度，配置只在显式开始新章/清空待写计划时生效。")
 
+REFERENCE_WORDING_METRIC = {
+    "name": "normalized_levenshtein_similarity",
+    "display_name": "Normalized Levenshtein similarity",
+    "implementation": "novel_ai.rapidfuzz_similarity.normalized_similarity",
+    "upstream": "rapidfuzz/RapidFuzz",
+    "upstream_commit": "db6e504539a9c895180b266a06b36a32cb6029ee",
+    "license": "MIT",
+}
+MAX_WORDING_DRAFT_CHARS = MAX_EXCERPT_CHARS
+MAX_WORDING_MATCHES = MAX_TOP_N
+MAX_WORDING_COMPARISONS = MAX_TOP_N
+
+
 def _clear_reference_evidence() -> None:
     """Drop only the session-local evidence result and its input binding."""
     st.session_state.pop("reference_evidence_result", None)
     st.session_state.pop("reference_evidence_binding", None)
+
+
+def _clear_reference_wording_check(*, clear_selection: bool = False) -> None:
+    """Drop the session-only wording report and optionally its evidence choices."""
+    st.session_state.pop("reference_wording_result", None)
+    st.session_state.pop("reference_wording_binding", None)
+    if clear_selection:
+        for key in list(st.session_state):
+            if key.startswith("reference_wording_match_"):
+                st.session_state.pop(key, None)
+
+
+def _reference_wording_key(match_id: str) -> str:
+    return "reference_wording_match_" + match_id
+
+
+def _build_reference_wording_binding(
+    project_name: str,
+    evidence_binding: dict,
+    evidence_result: dict,
+    selected_ids: list[str],
+    draft_text: str,
+) -> dict:
+    return {
+        "project": project_name,
+        "files": [
+            {"filename": item["filename"], "raw_sha256": item["raw_sha256"]}
+            for item in evidence_binding["files"]
+        ],
+        "query": evidence_result["query"],
+        "selected_match_ids": list(selected_ids),
+        "draft_text": draft_text,
+        "max_draft_chars": MAX_WORDING_DRAFT_CHARS,
+        "max_matches": MAX_WORDING_MATCHES,
+        "max_comparisons": MAX_WORDING_COMPARISONS,
+    }
+
+
+def _build_reference_wording_result(
+    project_name: str,
+    evidence_result: dict,
+    selected_ids: list[str],
+    draft_text: str,
+) -> dict:
+    if not isinstance(draft_text, str):
+        raise TypeError("稿件片段必须是文本")
+    if not draft_text.strip():
+        raise ValueError("请先粘贴稿件片段")
+    if len(draft_text) > MAX_WORDING_DRAFT_CHARS:
+        raise ValueError(
+            f"稿件片段超过 {MAX_WORDING_DRAFT_CHARS} 个 Unicode 字符"
+        )
+    if not selected_ids:
+        raise ValueError("请明确选择至少一条当前证据")
+    if len(selected_ids) > MAX_WORDING_MATCHES:
+        raise ValueError(f"选择的证据条数超过 {MAX_WORDING_MATCHES} 条")
+    if len(selected_ids) > MAX_WORDING_COMPARISONS:
+        raise ValueError(f"比较次数超过 {MAX_WORDING_COMPARISONS} 次")
+
+    selected = set(selected_ids)
+    rows = []
+    for match in evidence_result.get("matches", []):
+        if match["id"] not in selected:
+            continue
+        score = normalized_similarity(draft_text, match["excerpt"])
+        rows.append({
+            "stable_id": match["id"],
+            "source_filename": match["source_filename"],
+            "chapter": match["chapter"],
+            "start": match["start"],
+            "end": match["end"],
+            "offset_basis": match["offset_basis"],
+            "bounded_excerpt": match["excerpt"],
+            "excerpt_sha256": match["excerpt_sha256"],
+            "raw_source_sha256": match["raw_source_sha256"],
+            "extracted_text_sha256": match["extracted_text_sha256"],
+            "similarity": score,
+            "metric": REFERENCE_WORDING_METRIC["name"],
+        })
+    if len(rows) != len(selected_ids):
+        raise ValueError("所选证据已不属于当前查询结果，请重新查询后选择")
+    return {
+        "schema": "novel-reference-wording-check-v1",
+        "project": project_name,
+        "evidence_query": evidence_result["query"],
+        "draft_sha256": hashlib.sha256(draft_text.encode("utf-8")).hexdigest(),
+        "draft_char_count": len(draft_text),
+        "advisory_only": True,
+        "metric": dict(REFERENCE_WORDING_METRIC),
+        "parameters": {
+            "max_draft_chars": MAX_WORDING_DRAFT_CHARS,
+            "max_matches": MAX_WORDING_MATCHES,
+            "max_comparisons": MAX_WORDING_COMPARISONS,
+        },
+        "selected_match_ids": list(selected_ids),
+        "matches": rows,
+    }
+
+
+def _reference_wording_download_payload(result: dict) -> dict:
+    """Return metadata-only JSON; source and draft prose remain session-only."""
+    return {
+        key: value for key, value in result.items() if key != "matches"
+    } | {
+        "matches": [
+            {
+                key: value
+                for key, value in match.items()
+                if key != "bounded_excerpt"
+            }
+            for match in result["matches"]
+        ]
+    }
 
 
 def _read_reference_evidence_sources(uploaded_files, encoding: str | None):
@@ -247,6 +375,7 @@ if (st.session_state.get("seeded_project") is not None
 seed_project_state()
 if st.session_state.get("_reference_evidence_project") != project_name:
     _clear_reference_evidence()
+    _clear_reference_wording_check(clear_selection=True)
     st.session_state["_reference_evidence_project"] = project_name
 preserve_project_fields(st.session_state)
 
@@ -570,15 +699,18 @@ with evidence_tab:
         }
     except (OSError, TypeError, ValueError) as exc:
         _clear_reference_evidence()
+        _clear_reference_wording_check(clear_selection=True)
         st.error("本地证据输入无效：" + str(exc))
 
     if evidence_binding is not None:
         if st.session_state.get("reference_evidence_binding") != evidence_binding:
             _clear_reference_evidence()
+            _clear_reference_wording_check(clear_selection=True)
             st.session_state["reference_evidence_binding"] = evidence_binding
 
     if st.button("查询本地参考证据", key="btn_reference_evidence"):
         _clear_reference_evidence()
+        _clear_reference_wording_check(clear_selection=True)
         try:
             if not evidence_sources:
                 raise ValueError("请先上传至少一个 TXT、MD 或 HTML 文件")
@@ -633,6 +765,95 @@ with evidence_tab:
             mime="application/json",
             key="download_reference_evidence",
         )
+
+
+    if evidence_result is not None:
+        st.markdown("#### 当前证据的措辞相近检查")
+        st.caption(
+            "这是表面措辞相近度的 advisory 检查，不是抄袭/原创性证明、模型评判或自动接受。"
+            "指标固定为 normalized Levenshtein similarity；不会切换到 rapidfuzz.fuzz.ratio。"
+        )
+        wording_draft = st.text_area(
+            "明确粘贴稿件片段（仅当前会话）",
+            height=180,
+            max_chars=MAX_WORDING_DRAFT_CHARS,
+            key="reference_wording_draft",
+        )
+        selected_ids = []
+        for index, match in enumerate(evidence_result.get("matches", []), start=1):
+            match_id = match["id"]
+            checked = st.checkbox(
+                f"选择证据 {index}: {match['source_filename']} · "
+                f"{match['chapter']} · {match['start']}:{match['end']}",
+                key=_reference_wording_key(match_id),
+            )
+            st.caption(
+                f"raw={match['raw_source_sha256']} · "
+                f"extracted={match['extracted_text_sha256']} · stable_id={match_id}"
+            )
+            if checked:
+                selected_ids.append(match_id)
+
+        wording_binding = _build_reference_wording_binding(
+            project_name,
+            evidence_binding,
+            evidence_result,
+            selected_ids,
+            wording_draft,
+        )
+        if (
+            st.session_state.get("reference_wording_result") is not None
+            and st.session_state.get("reference_wording_binding") != wording_binding
+        ):
+            _clear_reference_wording_check()
+
+        if st.button("检查措辞相近度", key="btn_reference_wording_check"):
+            _clear_reference_wording_check()
+            try:
+                result = _build_reference_wording_result(
+                    project_name,
+                    evidence_result,
+                    selected_ids,
+                    wording_draft,
+                )
+                st.session_state["reference_wording_result"] = result
+                st.session_state["reference_wording_binding"] = wording_binding
+                st.success(
+                    f"措辞相近检查完成：比较 {len(result['matches'])} 条当前证据。"
+                )
+            except (OSError, TypeError, UnicodeError, ValueError) as exc:
+                _clear_reference_wording_check()
+                st.error("措辞相近检查未完成：" + str(exc))
+
+        wording_result = st.session_state.get("reference_wording_result")
+        if (
+            wording_result is not None
+            and st.session_state.get("reference_wording_binding") == wording_binding
+        ):
+            wording_rows = [
+                {
+                    "source": match["source_filename"],
+                    "chapter": match["chapter"],
+                    "unicode_offset": f"{match['start']}:{match['end']}",
+                    "bounded_excerpt": match["bounded_excerpt"],
+                    "raw_sha256": match["raw_source_sha256"],
+                    "extracted_sha256": match["extracted_text_sha256"],
+                    "stable_id": match["stable_id"],
+                    "advisory_score": match["similarity"],
+                }
+                for match in wording_result["matches"]
+            ]
+            st.dataframe(wording_rows, use_container_width=True)
+            wording_payload = _reference_wording_download_payload(wording_result)
+            st.json(wording_payload)
+            st.download_button(
+                "下载本次措辞检查 JSON",
+                data=(json.dumps(wording_payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+                file_name="reference-wording-check.json",
+                mime="application/json",
+                key="download_reference_wording",
+            )
+
 
 if st.session_state.get("style_pending"):
     st.info("请先在 Style Lab 核对待保存结果。写作、审校和发布入口暂不使用未完成的风格资料。")
