@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import stat
 import sys
 from pathlib import Path
 
@@ -14,11 +15,67 @@ from novel_ai.reference_evidence import (
     DEFAULT_LAMBDA_MULT,
     DEFAULT_MAX_EXCERPT_CHARS,
     DEFAULT_TOP_N,
+    MAX_SOURCE_BYTES,
+    MAX_TOTAL_SOURCE_BYTES,
     build_reference_evidence,
     save_evidence_artifact,
     validate_evidence_output_path,
 )
 from novel_ai.reference_pack import build_reference_pack, save_reference_pack
+
+
+def read_query_sources_bounded(
+    paths: list[Path] | tuple[Path, ...],
+    *,
+    max_source_bytes: int = MAX_SOURCE_BYTES,
+    max_total_bytes: int = MAX_TOTAL_SOURCE_BYTES,
+) -> list[tuple[Path, bytes]]:
+    """Read query inputs with pre-stat and bounded streaming.
+
+    Every file is stat'ed before opening.  Reads request at most one byte past
+    the remaining allowance, so a file that grows after stat is rejected
+    without handing any bytes to an extractor or Reference Pack builder.
+    """
+    if type(max_source_bytes) is not int or max_source_bytes <= 0:
+        raise ValueError("max_source_bytes must be a positive integer")
+    if type(max_total_bytes) is not int or max_total_bytes <= 0:
+        raise ValueError("max_total_bytes must be a positive integer")
+    total = 0
+    result: list[tuple[Path, bytes]] = []
+    for raw_path in paths:
+        path = Path(raw_path)
+        try:
+            info = path.stat()
+        except OSError as exc:
+            raise ValueError(f"无法检查参考源: {path}") from exc
+        if path.is_symlink() or not stat.S_ISREG(info.st_mode):
+            raise ValueError(f"输入必须是普通文件: {path}")
+        if info.st_size > max_source_bytes:
+            raise ValueError(f"参考源超过单文件资源上限: {path}")
+        if info.st_size > max_total_bytes - total:
+            raise ValueError(f"参考源超过累计资源上限: {path}")
+
+        file_total = 0
+        chunks: list[bytes] = []
+        with path.open("rb") as handle:
+            while True:
+                remaining_file = max_source_bytes - file_total
+                remaining_total = max_total_bytes - total
+                if remaining_file < 0 or remaining_total < 0:
+                    raise ValueError(f"参考源超过资源上限: {path}")
+                read_size = min(1024 * 1024, remaining_file, remaining_total) + 1
+                chunk = handle.read(read_size)
+                if not chunk:
+                    break
+                file_total += len(chunk)
+                total += len(chunk)
+                if file_total > max_source_bytes:
+                    raise ValueError(f"参考源超过单文件资源上限: {path}")
+                if total > max_total_bytes:
+                    raise ValueError("参考源超过累计资源上限")
+                chunks.append(chunk)
+        result.append((path, b"".join(chunks)))
+    return result
 
 
 def parse_args() -> argparse.Namespace:
@@ -75,14 +132,16 @@ def main() -> int:
             choices[path] = codec
         sources = []
         evidence_sources = []
-        for path in input_paths:
-            data = path.read_bytes()
-            selected_encoding = choices.get(path.resolve())
-            sources.append((path.name, data, args.weight, selected_encoding))
-            evidence_sources.append((path.name, data, selected_encoding))
-        pack = build_reference_pack(sources, name=args.name)
         evidence = None
         if args.query is not None:
+            # This must be the first operation that touches source bytes in
+            # query mode.  No extractor or pack builder runs until every file
+            # has passed stat and bounded streaming checks.
+            bounded_sources = read_query_sources_bounded(input_paths)
+            for path, data in bounded_sources:
+                selected_encoding = choices.get(path.resolve())
+                sources.append((path.name, data, args.weight, selected_encoding))
+                evidence_sources.append((path.name, data, selected_encoding))
             evidence = build_reference_evidence(
                 evidence_sources,
                 args.query,
@@ -91,6 +150,13 @@ def main() -> int:
                 max_excerpt_chars=args.max_excerpt_chars,
                 lambda_mult=args.lambda_mult,
             )
+            pack = build_reference_pack(sources, name=args.name)
+        else:
+            for path in input_paths:
+                data = path.read_bytes()
+                selected_encoding = choices.get(path.resolve())
+                sources.append((path.name, data, args.weight, selected_encoding))
+            pack = build_reference_pack(sources, name=args.name)
     except (OSError, ValueError, TypeError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
