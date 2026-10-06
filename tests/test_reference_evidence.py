@@ -44,7 +44,7 @@ def test_evidence_is_bounded_lexical_mmr_and_stable():
     assert 0 < len(first["matches"]) <= 3
     assert all(0 < row["end"] - row["start"] <= 40 for row in first["matches"])
     assert all(row["excerpt"] for row in first["matches"])
-    assert all(row["excerpt"] == row["extracted_text"][row["start"]:row["end"]] for row in first["matches"])
+    clean = {"a.txt": "第一章 夜班电台\n\n夜班电台在雨里响起，周宁记下门牌。\n\n第二章 旧账本\n\n旧账本压在抽屉底，没人提电台。", "b.md": "# 第一章\n\n夜班电台的灯亮着，门外没有脚印。\n\n# 第二章\n\n河堤上的风吹散了纸片。"}\n    assert all(row["excerpt"] == clean[row["source_filename"]][row["start"]:row["end"]] for row in first["matches"])
     assert [row["id"] for row in first["matches"]] == sorted(
         [row["id"] for row in first["matches"]], key=lambda value: first["matches"][
             [item["id"] for item in first["matches"]].index(value)
@@ -66,7 +66,7 @@ def test_offsets_hashes_and_controls_use_extracted_clean_text():
     assert src["extracted_text_sha256"] == hashlib.sha256("第一章\n\n零宽字符 夜班电台。".encode()).hexdigest()
     row = result["matches"][0]
     assert "\u200b" not in row["excerpt"]
-    assert row["excerpt"] == row["extracted_text"][row["start"]:row["end"]]
+    assert row["excerpt"] == "第一章\n\n零宽字符 夜班电台。"[row["start"]:row["end"]]
     assert row["excerpt_sha256"] == hashlib.sha256(row["excerpt"].encode()).hexdigest()
 
 
