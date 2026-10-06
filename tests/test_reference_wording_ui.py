@@ -142,5 +142,5 @@ def test_reference_wording_invalidates_old_result_on_edit_failure_and_project_sw
 
     for path in tmp_path.rglob("*"):
         if path.is_file():
-            assert b"编辑后的新片段" not in path.read_bytes()
+            assert "编辑后的新片段".encode("utf-8") not in path.read_bytes()
 
