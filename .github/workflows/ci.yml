@@ -126,7 +126,6 @@ jobs:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
       E2E_ARTIFACT_DIR: e2e-artifacts
-      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
     steps:
       - name: Preserve exact pinned source and frozen artifact bytes
         run: git config --global core.autocrlf false
@@ -136,6 +135,18 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: pip install -r requirements-dev.txt
+      - name: Verify project Streamlit privacy setting
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from streamlit import config
+
+          config_path = Path(".streamlit/config.toml")
+          assert config_path.is_file(), config_path
+          gather_usage_stats = config.get_option("browser.gatherUsageStats")
+          assert gather_usage_stats is False, gather_usage_stats
+          print("browser.gatherUsageStats=false from .streamlit/config.toml")
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: '24'

@@ -93,6 +93,22 @@ actual file_uploader widget serialization.  The optional HTML/trafilatura
 acceptance remains a separate no-skip CI probe; TXT/MD UI coverage does not
 stand in for that HTML backend check.
 
+### Local Streamlit privacy configuration
+
+The supported local entry in docs/AUTHOR_WORKFLOW.md is
+`python -m streamlit run app.py`, started from the repository root. The
+project-level `.streamlit/config.toml` sets
+`[browser] gatherUsageStats = false`. The Chromium job verifies Streamlit's
+effective `browser.gatherUsageStats` option from that file and does not set a
+telemetry environment override. Its raw no-external-request assertion stays
+unfiltered; no external requests were observed in that browser run with the
+repository configuration alone.
+
+This verifies the repository's local entry and this CI browser environment.
+Browser extensions, reverse proxies, hosted deployment settings, and other
+launch wrappers are outside that check and may make external requests. This
+configuration does not promise every deployment environment is network-free.
+
 
 ## Session-only wording check
 

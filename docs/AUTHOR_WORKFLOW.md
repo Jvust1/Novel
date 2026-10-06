@@ -8,7 +8,7 @@
 
 ## 可选的本地程序入口
 
-运行 `python -m streamlit run app.py`。Python 3.11/3.12，依赖使用 `python -m pip install -r requirements-dev.txt`。仅生成计划/正文、模型审校与记忆抽取需要配置模型；大纲导入、人工评分和 ZIP 打包本地完成。
+从仓库根目录运行 `python -m streamlit run app.py`；项目 `.streamlit/config.toml` 显式关闭 Streamlit usage telemetry。浏览器扩展及其他部署环境的外部请求不由此本地配置覆盖。Python 3.11/3.12，依赖使用 `python -m pip install -r requirements-dev.txt`。仅生成计划/正文、模型审校与记忆抽取需要配置模型；大纲导入、人工评分和 ZIP 打包本地完成。
 
 1. 在“故事与大纲”展开层级大纲。粘贴 Markdown：`#` 全书、`##` 卷、`###` 情节线、`####` 章、`#####` 场景。不能跳级。代码围栏里的标题保留为备注；不是完整 CommonMark 文档导入器。
 2. 解析只是预览。检查可编辑 JSON 并保存，再选择章节、确认本地保存编号（例如 001），点击载入写作工作台。

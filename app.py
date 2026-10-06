@@ -641,6 +641,8 @@ with evidence_tab:
     st.caption(
         "仅处理本次显式上传的 TXT / MD；HTML 可走已有本地 reader。"
         "结果只保留在当前会话，不进入 Style DNA、ProjectStore、ContextAssembler 或模型。"
+        "从仓库根目录按项目配置运行时会关闭 Streamlit usage telemetry；"
+        "浏览器扩展及其他部署环境仍可能产生当前门禁未覆盖的外部请求。"
     )
     evidence_uploads = st.file_uploader(
         "上传本地参考源（TXT / MD / HTML）",
