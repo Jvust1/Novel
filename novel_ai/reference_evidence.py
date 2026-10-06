@@ -135,7 +135,10 @@ def _coerce_source(item: EvidenceSource | Sequence[Any]) -> EvidenceSource:
 def _normalise_query(query: str) -> str:
     if not isinstance(query, str):
         raise ValueError("query must be a non-empty string")
-    value = re.sub(r"\s+", "", query.casefold())
+    # Keep word boundaries for Latin queries.  CJK callers may still use
+    # spaces for readability; compact phrase matching is handled separately
+    # by _lexical_score instead of changing the token stream here.
+    value = re.sub(r"\s+", " ", query.casefold()).strip()
     if not value:
         raise ValueError("query must not be empty")
     return value
@@ -163,7 +166,21 @@ def _lexical_score(query: str, text: str) -> tuple[float, frozenset[str]]:
     query_counts = Counter(query_tokens)
     matched = sum(min(count, text_tokens.get(token, 0)) for token, count in query_counts.items())
     coverage = matched / max(sum(query_counts.values()), 1)
-    phrase = query in re.sub(r"\s+", "", text.casefold())
+    normal_text = re.sub(r"\s+", " ", text.casefold()).strip()
+    compact_query = re.sub(r"\s+", "", query)
+    compact_text = re.sub(r"\s+", "", text.casefold())
+    if _CJK.search(query):
+        # Compact matching is intentionally available when the query contains
+        # CJK text, where a source commonly omits spaces between words.  Pure
+        # Latin queries retain word boundaries, so ``nightradio`` does not
+        # match the separate words ``night radio``.
+        phrase = compact_query in compact_text
+    else:
+        phrase = bool(re.search(
+            rf"(?<![a-z0-9]){re.escape(query)}(?![a-z0-9])",
+            normal_text,
+            flags=re.IGNORECASE,
+        ))
     cjk_only = bool(_CJK.search(query)) and not bool(_LATIN.search(query))
     # A single common CJK character is not enough to make an unrelated chunk
     # an evidence hit.  A contiguous phrase always qualifies.
@@ -409,11 +426,16 @@ def query_reference_evidence(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def save_evidence_artifact(artifact: dict[str, Any], path: str | Path) -> Path:
-    """Atomically create a new evidence artifact without overwriting one."""
+    """Atomically create a new evidence artifact without overwriting one.
+
+    The temporary file is linked into place with an exclusive directory entry.
+    ``os.replace`` is deliberately not used because it would clobber a target
+    created after the initial existence check.
+    """
     target = Path(path)
     if target.exists() or target.is_symlink():
         raise ValueError(f"evidence-out 已存在，拒绝覆盖: {target}")
-    if target.name in {"", ".", ".."} or target.exists() and not target.is_file():
+    if target.name in {"", ".", ".."}:
         raise ValueError("evidence-out 必须是新的普通文件路径")
     target.parent.mkdir(parents=True, exist_ok=True)
     temp_name: str | None = None
@@ -424,7 +446,15 @@ def save_evidence_artifact(artifact: dict[str, Any], path: str | Path) -> Path:
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temp_name, target)
+        try:
+            # link(2) creates the destination name atomically and fails if a
+            # concurrent writer won the name between our preflight and here.
+            os.link(temp_name, target)
+        except FileExistsError as exc:
+            raise ValueError(f"evidence-out 已存在，拒绝覆盖: {target}") from exc
+        except OSError as exc:
+            raise OSError(f"无法以独占方式发布 evidence-out: {target}") from exc
+        os.unlink(temp_name)
         temp_name = None
     finally:
         if temp_name:
