@@ -126,6 +126,7 @@ jobs:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
       E2E_ARTIFACT_DIR: e2e-artifacts
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
     steps:
       - name: Preserve exact pinned source and frozen artifact bytes
         run: git config --global core.autocrlf false
