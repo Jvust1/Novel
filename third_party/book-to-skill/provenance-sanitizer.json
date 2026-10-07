@@ -1,0 +1,10 @@
+{
+  "upstream": "virgiliojr94/book-to-skill",
+  "upstream_commit": "c108d25b0cb58e1bdc361f3de02ed9f37075152f",
+  "upstream_path": "book_to_skill/sanitize.py",
+  "license": "MIT",
+  "source_symbols": ["is_invisible_codepoint", "sanitize_extracted_text"],
+  "local_path": "novel_ai/document_sanitizer.py",
+  "adaptation": "Ported invisible Unicode, bidi override, tag block, variation selector and annotation-control filtering; wired into all reference extraction formats and reports removal count.",
+  "retrieved_at_utc": "2026-10-04"
+}

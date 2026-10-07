@@ -9,6 +9,8 @@ from typing import Protocol, Sequence
 
 from pydantic import FiniteFloat, TypeAdapter, ValidationError
 
+from .sklearn_cosine import cosine_similarity_matrix
+
 
 _FINITE_VECTOR_BATCH = TypeAdapter(list[list[FiniteFloat]])
 
@@ -69,8 +71,9 @@ def _normalize_vector(vector: Sequence[float]) -> tuple[float, ...]:
 
 
 def _unit_cosine(a: Sequence[float], b: Sequence[float]) -> float:
-    score = fsum(x * y for x, y in zip(a, b, strict=True))
-    return round(max(-1.0, min(1.0, score)), 6)
+    # Uses the local scikit-learn cosine source port for the final bounded
+    # normalized dot product; the surrounding validation remains Novel-owned.
+    return cosine_similarity_matrix([a], [b])[0][0]
 
 
 class Encoder(Protocol):

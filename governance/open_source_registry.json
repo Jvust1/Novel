@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-01",
+  "updated_at": "2026-10-04",
   "project": "Novel",
   "policy": {
     "default": "Prefer dependency/adapters over vendoring upstream source.",
@@ -9,8 +9,8 @@
     "provenance": "Every adopted upstream capability keeps repository, license, mode and purpose."
   },
   "counts": {
-    "total": 61,
-    "p0": 15,
+    "total": 64,
+    "p0": 18,
     "p1": 31,
     "no_license": 2,
     "agpl": 2
@@ -79,9 +79,23 @@
       "repo": "fxsjy/jieba",
       "category": "chinese_nlp",
       "license": "MIT",
-      "mode": "direct-optional",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "轻量中文分词与 Reference Pack 词汇统计"
+      "use": "中文分词与 Reference Pack 词汇统计；使用故事人物词表保留多字人名和术语，提升词汇重复诊断的稳定性",
+      "source_port": {
+        "upstream_commit": "67fa2e36e72f69d9134b8a1037b83fbb070b9775",
+        "upstream_path": "jieba/__init__.py",
+        "source_symbols": [
+          "Tokenizer.get_DAG",
+          "Tokenizer.calc",
+          "Tokenizer.__cut_DAG_NO_HMM"
+        ],
+        "local_path": "novel_ai/jieba_tokenizer.py",
+        "license_path": "third_party/jieba/LICENSE",
+        "provenance": "third_party/jieba/provenance.json",
+        "stars_checked": 35175,
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "text2vec",
@@ -106,18 +120,38 @@
       "repo": "huggingface/sentence-transformers",
       "category": "embeddings",
       "license": "Apache-2.0",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+optional-adapter+tested",
       "priority": "P1",
-      "use": "通用 embedding 备选"
+      "use": "sentence-transformers encode 适配到 Novel 本地语义 Recall；强制本地模型路径优先，保留 FAISS/Flat 回退",
+      "stars_observed": 19150,
+      "adapter_provenance": {
+        "upstream_commit": "4a3b5cd6ec718e421f57e824a41ed3fd99595df6",
+        "local_path": "novel_ai/recall_backends.py",
+        "provenance": "third_party/sentence-transformers/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "rapidfuzz",
       "repo": "rapidfuzz/RapidFuzz",
       "category": "originality",
       "license": "MIT",
-      "mode": "git-submodule+direct-optional",
+      "mode": "git-submodule+direct-optional+licensed-source-port",
       "priority": "P0",
-      "use": "人名/短语/事件摘要近似匹配与去重"
+      "use": "人名/短语/事件摘要近似匹配与去重；本地保留规范化 Levenshtein 兜底，避免可选依赖缺失时退化为粗粒度匹配",
+      "source_port": {
+        "upstream_commit": "db6e504539a9c895180b266a06b36a32cb6029ee",
+        "upstream_path": "src/rapidfuzz/distance/Levenshtein_py.py",
+        "source_symbols": [
+          "distance",
+          "normalized_distance",
+          "normalized_similarity"
+        ],
+        "local_path": "novel_ai/rapidfuzz_similarity.py",
+        "license_path": "third_party/rapidfuzz/LICENSE",
+        "provenance": "third_party/rapidfuzz/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "docling",
@@ -178,9 +212,16 @@
       "repo": "mem0ai/mem0",
       "category": "memory_retrieval",
       "license": "Apache-2.0",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "记忆抽取/检索模式参考"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "Mem0 记忆抽取/检索适配到 Novel RecallBackend；infer=false 保持 Novel 结构化记忆为权威",
+      "stars_observed": 66563,
+      "adapter_provenance": {
+        "upstream_commit": "abb81c88e1f738a8117d8293530fbc31a5ef8fd9",
+        "local_path": "novel_ai/upstream_adapters.py",
+        "provenance": "third_party/mem0/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "graphiti",
@@ -196,9 +237,16 @@
       "repo": "run-llama/llama_index",
       "category": "orchestration",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "索引/检索抽象，不替换 Novel 核心管线"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "LlamaIndex VectorStoreIndex/retriever 适配到 Novel RecallBackend；实验开关下启用，不替换核心管线",
+      "stars_observed": 52408,
+      "adapter_provenance": {
+        "upstream_commit": "7e2c60a78ec27e8d146dfdd596778aea83c041d5",
+        "local_path": "novel_ai/llamaindex_recall.py",
+        "provenance": "third_party/llama-index/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "langchain",
@@ -235,9 +283,16 @@
       "repo": "deepset-ai/haystack",
       "category": "orchestration",
       "license": "Apache-2.0",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "可组合 pipeline 组件模式"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "Haystack DocumentStore/retriever 适配到 Novel RecallBackend；实验开关下启用",
+      "stars_observed": 26650,
+      "adapter_provenance": {
+        "upstream_commit": "0499239e66f515feab503a2768ba785cace6de91",
+        "local_path": "novel_ai/haystack_recall.py",
+        "provenance": "third_party/haystack/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "chroma",
@@ -253,9 +308,18 @@
       "repo": "qdrant/qdrant",
       "category": "vector_store",
       "license": "Apache-2.0",
-      "mode": "experiment-candidate",
+      "mode": "git-submodule+optional-adapter+tested",
       "priority": "P1",
-      "use": "长篇项目向量库候选"
+      "use": "Qdrant 语义 Recall 适配器；通过 qdrant-client 固定 API 接入，保留 Novel 的本地 Recall 作为默认回退",
+      "stars_observed": 34930,
+      "adapter_provenance": {
+        "upstream_repository": "qdrant/qdrant-client",
+        "upstream_commit": "cf747f4b6fa71ba35dfb467931f3fa65f2cdf263",
+        "client_license": "Apache-2.0",
+        "local_path": "novel_ai/qdrant_recall.py",
+        "provenance": "third_party/qdrant-client/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "litellm",
@@ -352,9 +416,16 @@
       "repo": "stanfordnlp/dspy",
       "category": "prompt_optimization",
       "license": "MIT",
-      "mode": "git-submodule+experiment-candidate",
-      "priority": "P2",
-      "use": "用冻结 benchmark 优化 prompt/program，而非凭感觉调 Prompt"
+      "mode": "git-submodule+optional-adapter+tested",
+      "priority": "P1",
+      "use": "DSPy-style review program 适配到 Novel 外部审校 payload；结果仍需通过核心 Review gate",
+      "stars_observed": 38498,
+      "adapter_provenance": {
+        "upstream_commit": "6f0aacfa5ed68511ac10c66dbbe53eaf02fc66ec",
+        "local_path": "novel_ai/upstream_adapters.py",
+        "provenance": "third_party/dspy/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "openai_evals",
@@ -388,9 +459,21 @@
       "repo": "virgiliojr94/book-to-skill",
       "category": "document_ingest",
       "license": "MIT",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "把用户提供的书籍/参考文档转换为按需加载的 Agent Skill，作为 Reference Pack / Story DNA 前的结构化知识层"
+      "use": "参考文档转换前的不可见 Unicode、双向控制与隐藏文本清洗，防止文档内容伪装成指令进入 Story DNA",
+      "source_port": {
+        "upstream_commit": "c108d25b0cb58e1bdc361f3de02ed9f37075152f",
+        "upstream_path": "book_to_skill/sanitize.py",
+        "source_symbols": [
+          "is_invisible_codepoint",
+          "sanitize_extracted_text"
+        ],
+        "local_path": "novel_ai/document_sanitizer.py",
+        "license_path": "third_party/book-to-skill/LICENSE",
+        "provenance": "third_party/book-to-skill/provenance-sanitizer.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "lexicalrichness",
@@ -469,9 +552,22 @@
       "repo": "BYVoid/OpenCC",
       "category": "chinese_normalization",
       "license": "Apache-2.0",
-      "mode": "git-submodule",
+      "mode": "git-submodule+licensed-source-port+optional-adapter",
       "priority": "P0",
-      "use": "中文简繁与词汇规范转换，统一参考文本和生成文本的中文字符体系"
+      "use": "中文简繁与词汇规范转换；移植最大匹配分段算法，供调用方提供受控转换词典，不内置 OpenCC 词典",
+      "stars_observed": 10027,
+      "source_port": {
+        "upstream_commit": "3ac34aa439a9908dd49fa92b5174b46314787ac2",
+        "upstream_path": "src/MaxMatchSegmentation.cpp",
+        "source_symbols": [
+          "SegmentText",
+          "MaxMatchSegmentation::Segment"
+        ],
+        "local_path": "novel_ai/opencc_maxmatch.py",
+        "license_path": "third_party/opencc/LICENSE",
+        "provenance": "third_party/opencc/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "deepke",
@@ -487,18 +583,42 @@
       "repo": "ekzhu/datasketch",
       "category": "originality",
       "license": "MIT",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P0",
-      "use": "MinHash 跨章近似重复检测"
+      "use": "MinHash 近似 shingle overlap，支持大规模参考库的低内存重复检测",
+      "source_port": {
+        "upstream_commit": "ee60290e982be00b6f0a6aea8156e2be4d6921e6",
+        "upstream_path": "datasketch/minhash.py",
+        "source_symbols": [
+          "MinHash.update",
+          "MinHash.jaccard"
+        ],
+        "local_path": "novel_ai/minhash_similarity.py",
+        "license_path": "third_party/datasketch/LICENSE",
+        "provenance": "third_party/datasketch/provenance.json",
+        "stars_checked": 4700,
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "networkx",
       "repo": "networkx/networkx",
       "category": "story_structure",
       "license": "BSD-3-Clause",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P1",
-      "use": "人物/事件/伏笔 Story Graph"
+      "use": "人物/事件/伏笔 Story Graph；用 PageRank 为 GraphRAG 导出提供可复现的故事节点中心性",
+      "source_port": {
+        "upstream_commit": "31b74e96903d7f873b30c8ff36d71a4c9252b107",
+        "upstream_path": "networkx/algorithms/link_analysis/pagerank_alg.py",
+        "source_symbols": [
+          "_pagerank_python"
+        ],
+        "local_path": "novel_ai/story_graph_rank.py",
+        "license_path": "third_party/networkx/LICENSE.txt",
+        "provenance": "third_party/networkx/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "qdrant_client",
@@ -514,9 +634,21 @@
       "repo": "facebookresearch/faiss",
       "category": "memory_retrieval",
       "license": "MIT",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+adapter+licensed-source-port",
       "priority": "P1",
-      "use": "本地高性能向量 Recall；LocalSemanticRecall 可选加速"
+      "use": "本地高性能向量 Recall；LocalSemanticRecall 在无 FAISS 运行时使用同语义的 FlatIP/L2 本地回退",
+      "stars_observed": 41058,
+      "source_port": {
+        "upstream_commit": "b0074a3fa426027d9ff8575b44386d5922859ac9",
+        "upstream_path": "faiss/IndexFlat.cpp",
+        "source_symbols": [
+          "IndexFlat::search"
+        ],
+        "local_path": "novel_ai/faiss_flat_search.py",
+        "license_path": "third_party/faiss/LICENSE",
+        "provenance": "third_party/faiss/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "paddlenlp",
@@ -541,9 +673,21 @@
       "repo": "scikit-learn/scikit-learn",
       "category": "longform_analytics",
       "license": "BSD-3-Clause",
-      "mode": "git-submodule+adapter",
+      "mode": "git-submodule+licensed-source-port",
       "priority": "P0",
-      "use": "Story DNA 聚类、长期套路统计"
+      "use": "Story DNA 聚类、长期套路统计；本地余弦矩阵移植接入 semantic embedding 相似度",
+      "stars_observed": 67470,
+      "source_port": {
+        "upstream_commit": "a442e4bb39551feb7b0af4c00075e2cb91cf9b77",
+        "upstream_path": "sklearn/metrics/pairwise.py",
+        "source_symbols": [
+          "cosine_similarity"
+        ],
+        "local_path": "novel_ai/sklearn_cosine.py",
+        "license_path": "third_party/scikit-learn/COPYING",
+        "provenance": "third_party/scikit-learn/provenance.json",
+        "checked_at_utc": "2026-10-04"
+      }
     },
     {
       "key": "river",
@@ -610,6 +754,50 @@
       "stars_observed": 53203,
       "provenance": "docs/prompts/natural-fiction/source-lock.json",
       "checked_at_utc": "2026-10-01"
+    },
+    {
+      "key": "spindle_temporal",
+      "repo": "VerifiedOrganic/spindle",
+      "category": "longform_consistency",
+      "license": "MIT",
+      "mode": "licensed-source-port",
+      "priority": "P0",
+      "use": "Actual deterministic intra-scene temporal coherence scan merged into Draft→Review→Repair review payload; advisory only",
+      "upstream_commit": "d88500849b3561b78cd4a80e85443aa66122155d",
+      "upstream_path": "crates/spindle-core/src/temporal/mod.rs",
+      "local_path": "novel_ai/spindle_temporal.py",
+      "provenance": "third_party/spindle/provenance.json",
+      "checked_at_utc": "2026-10-04"
+    },
+    {
+      "key": "mcp_python_sdk_readonly",
+      "repo": "modelcontextprotocol/python-sdk",
+      "category": "context_tools",
+      "license": "MIT",
+      "mode": "optional-adapter",
+      "priority": "P0",
+      "use": "Optional stdio MCP adapter for verified story status, canonical character lookup, accepted-history rebuild and UTF-8 context preflight; ranked lookup adapted from MIT Novel Writer English; read-only handlers only",
+      "upstream_reference": [
+        "modelcontextprotocol/python-sdk: examples/stories/tools/server.py",
+        "JeroTan/novel-writer-english: src/mcp/story-library.js (normalizeText/scoreEntry)"
+      ],
+      "local_path": "novel_ai/mcp_readonly.py",
+      "provenance": "third_party/mcp-python-sdk/provenance.json",
+      "checked_at_utc": "2026-10-04"
+    },
+    {
+      "key": "lexicalrichness_mtld",
+      "repo": "LSYS/LexicalRichness",
+      "category": "style_quality",
+      "license": "MIT",
+      "mode": "licensed-source-port",
+      "priority": "P0",
+      "use": "Actual dependency-free TTR/MATTR/MTLD diagnostics merged into Draft→Review report and advisory ReviewIssue payload; mixed Chinese-English tokenization",
+      "upstream_commit": "69e6b8f381d6b86ec826911c3f0bb2fb298aac25",
+      "upstream_path": "lexicalrichness/lexicalrichness.py",
+      "local_path": "novel_ai/lexical_richness.py",
+      "provenance": "third_party/lexicalrichness/provenance.json",
+      "checked_at_utc": "2026-10-04"
     }
   ]
 }

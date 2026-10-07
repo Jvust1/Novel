@@ -67,3 +67,8 @@ def test_corrupt_pdf_raises_pdf_error_not_silent_empty():
 
     with pytest.raises((PdfReadError, ValueError)):
         extract_reference_text("bad.pdf", b"not a pdf at all")
+
+
+def test_reference_text_strips_invisible_prompt_injection_controls():
+    data = "正常\u200b文本\u202e倒序".encode("utf-8")
+    assert extract_reference_text("ref.txt", data) == "正常文本倒序"

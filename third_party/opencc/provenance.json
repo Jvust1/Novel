@@ -1,0 +1,11 @@
+{
+  "upstream": "BYVoid/OpenCC",
+  "upstream_commit": "3ac34aa439a9908dd49fa92b5174b46314787ac2",
+  "upstream_path": "src/MaxMatchSegmentation.cpp",
+  "license": "Apache-2.0",
+  "source_symbols": ["SegmentText", "MaxMatchSegmentation::Segment"],
+  "local_path": "novel_ai/opencc_maxmatch.py",
+  "adaptation": "Ported longest prefix matching to a bounded Python dictionary scanner; conversion maps remain caller-owned and no OpenCC dictionary data is bundled.",
+  "stars_checked": 10027,
+  "retrieved_at_utc": "2026-10-04"
+}
