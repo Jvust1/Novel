@@ -117,3 +117,73 @@ jobs:
             echo "reference evidence UI tests unexpectedly skipped"
             exit 1
           fi
+
+
+  browser-e2e:
+    name: browser-e2e (ubuntu-latest, 3.12)
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+      E2E_ARTIFACT_DIR: e2e-artifacts
+    steps:
+      - name: Preserve exact pinned source and frozen artifact bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Verify project Streamlit privacy setting
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from streamlit import config
+
+          config_path = Path(".streamlit/config.toml")
+          assert config_path.is_file(), config_path
+          gather_usage_stats = config.get_option("browser.gatherUsageStats")
+          assert gather_usage_stats is False, gather_usage_stats
+          print("browser.gatherUsageStats=false from .streamlit/config.toml")
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/e2e/package.json
+      - name: Install test-only Playwright package
+        working-directory: tests/e2e
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm install --registry=https://registry.npmjs.org --ignore-scripts --no-audit --no-fund
+      - name: Install test-only Chromium
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+      - name: Run real browser evidence and wording downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          python -m streamlit run app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 >"$work/streamlit.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; rm -rf "$work"' EXIT
+          health=""
+          for attempt in $(seq 1 60); do
+            health="$(curl -fsS http://127.0.0.1:8501/_stcore/health || true)"
+            if [ "$health" = "ok" ]; then
+              break
+            fi
+            sleep 1
+          done
+          test "$health" = "ok"
+          node tests/e2e/reference_evidence_download.mjs http://127.0.0.1:8501
+
+      - name: Upload synthetic browser verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: novel-reference-browser-evidence
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

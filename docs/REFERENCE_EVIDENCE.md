@@ -92,3 +92,60 @@ The real Streamlit AppTest uploader gate uses synthetic TXT/MD bytes and the
 actual file_uploader widget serialization.  The optional HTML/trafilatura
 acceptance remains a separate no-skip CI probe; TXT/MD UI coverage does not
 stand in for that HTML backend check.
+
+### Local Streamlit privacy configuration
+
+The supported local entry in docs/AUTHOR_WORKFLOW.md is
+`python -m streamlit run app.py`, started from the repository root. The
+project-level `.streamlit/config.toml` sets
+`[browser] gatherUsageStats = false`. The Chromium job verifies Streamlit's
+effective `browser.gatherUsageStats` option from that file and does not set a
+telemetry environment override. Its raw no-external-request assertion stays
+unfiltered; no external requests were observed in that browser run with the
+repository configuration alone.
+
+This verifies the repository's local entry and this CI browser environment.
+Browser extensions, reverse proxies, hosted deployment settings, and other
+launch wrappers are outside that check and may make external requests. This
+configuration does not promise every deployment environment is network-free.
+
+
+## Session-only wording check
+
+After a successful evidence query, the panel requires the author to paste a bounded
+draft fragment and explicitly select the current evidence matches. Each selected
+match is compared with the draft in memory only, using the deterministic normalized
+Levenshtein similarity implementation in
+novel_ai/rapidfuzz_similarity.py (RapidFuzz/RapidFuzz commit
+db6e504539a9c895180b266a06b36a32cb6029ee). The implementation and its
+adaptation record remain under the existing MIT license files
+third_party/rapidfuzz/LICENSE and third_party/rapidfuzz/provenance.json;
+the panel never switches to rapidfuzz.fuzz.ratio.
+
+The check is advisory surface wording similarity. It is not a plagiarism or
+originality proof, model judgement, or automatic acceptance signal. The
+session binding includes the project, every uploaded filename and raw hash,
+query, selected stable IDs, draft text, and the bounds. Changing an upload,
+query, encoding, evidence selection, draft, project, or a failed check clears
+the previous report and its download. The report and the explicit JSON export
+are session-only. The export contains metadata, selected IDs, hashes, offsets,
+scores, metric provenance, and parameters; it omits the draft body and bounded
+evidence prose.
+
+The checked limits are 2048 Unicode characters for the pasted fragment and 20
+selected matches/comparisons. The existing evidence bounds remain 8 MiB per
+source, 32 MiB total, and top 20. No provider, model, ContextAssembler,
+ProjectStore write, network request, or permanent index is used.
+
+The repository CI includes a test-only Ubuntu Chromium gate under
+tests/e2e/. It installs the pinned Playwright 1.62.1 package from the
+official npm registry, installs the matching Chromium through Playwright, starts
+the real Streamlit server, uploads synthetic TXT/MD bytes, runs MMR, clicks both
+download controls, reads the completed files, and checks their JSON bytes against
+the visible hashes, offsets, stable IDs, scores, and the current draft binding.
+It also checks deterministic repeat downloads, input/selection/project invalidation,
+controlled failure, external request absence, and that the project data directory
+does not contain the fixture bodies. On success, the two exact synthetic
+download bytes and a metadata-only verification summary are retained as a short-lived
+CI artifact; no user source, credential, or real data is included. This browser gate
+is separate from the optional HTML/trafilatura acceptance path.

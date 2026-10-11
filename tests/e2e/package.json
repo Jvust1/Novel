@@ -1,0 +1,9 @@
+{
+  "name": "novel-evidence-browser-gate",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Test-only Playwright gate for real evidence and wording JSON downloads",
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
