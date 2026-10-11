@@ -151,16 +151,21 @@ def test_reference_wording_server_rejects_2049_char_draft(monkeypatch, tmp_path)
         "rejected-before-submit",
     }
 
-    # The real AppTest widget transport applies max_chars before the app
-    # handler. Bypass only that serializer for this TEST-ONLY server-guard
-    # rerun; production still renders max_chars=2048.
-    from streamlit.elements.widgets.text_widgets import TextAreaSerde
+    # AppTest retains the original widget's max_chars constraint even when
+    # its deserializer is patched. Remove max_chars only for this TEST-ONLY
+    # rerun so the application handler receives the overlong value; production
+    # still renders max_chars=2048.
+    import streamlit as st
 
-    monkeypatch.setattr(
-        TextAreaSerde,
-        "deserialize",
-        lambda self, ui_value: ui_value if ui_value is not None else self.value,
-    )
+    real_text_area = st.text_area
+
+    def unbounded_wording_text_area(*args, **kwargs):
+        if kwargs.get("key") == "reference_wording_draft":
+            kwargs = dict(kwargs)
+            kwargs.pop("max_chars", None)
+        return real_text_area(*args, **kwargs)
+
+    monkeypatch.setattr(st, "text_area", unbounded_wording_text_area)
     at.text_area(key="reference_wording_draft").set_value(overlong).run()
     assert at.session_state["reference_wording_draft"] == overlong
     at.button(key="btn_reference_wording_check").click().run()
