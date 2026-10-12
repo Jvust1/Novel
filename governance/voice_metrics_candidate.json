@@ -31,7 +31,13 @@
       "exit_code": 4294967295,
       "command": "python -m pytest -q --tb=short -ra"
     },
-    "remote_ci": "Read the exact PR head workflow result; this record is not a CI or merge receipt",
+    "remote_ci": {
+      "status": "runner_not_started_account_billing_or_spending_limit",
+      "observed_run": "https://github.com/Jvust1/Novel/actions/runs/38253786304",
+      "observed_head": "24a6057f2c6b4a120f9f774c78377a8ef10656f2",
+      "annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+      "scope": "This is an infrastructure block, not a test result; read any later exact-head run separately"
+    },
     "real_model_or_manuscript_evaluation": "not run; synthetic provider and original test sentences only",
     "focused_final": {
       "passed": 73,
@@ -46,5 +52,5 @@
     "accepted manuscript bytes, author confirmations and private Drive data",
     "existing minimum-line thresholds, metric fields and conservative speaker-name filtering"
   ],
-  "next": "Inspect exact-head cross-platform PR CI before any merge; main remains unchanged"
+  "next": "Keep PR #91 draft; complete full regression after runner availability is restored or in an agreed local run; never change account billing automatically"
 }
