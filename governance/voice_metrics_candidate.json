@@ -28,9 +28,21 @@
       "exit_code": 0
     },
     "full_suite": {
-      "status": "not completed locally; agent stopped the slow run at reported 9% after about ten minutes; use exact-head GitHub CI",
-      "exit_code": 4294967295,
-      "command": "python -m pytest -q --tb=short -ra"
+      "status": "completed on pre-repair head: five v2 golden-contract failures and one baseline-reproducible disk deadline failure; all other results retained",
+      "tested_head": "1c75fb6f176c46cc215e5d44e8f431910a5d2116",
+      "summary": "6 failed, 2316 passed, 17 skipped in 4927.64s (1:22:07)",
+      "exit_code": 1,
+      "seconds": 4929.765,
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-ra",
+        "--durations=15",
+        "-o",
+        "faulthandler_timeout=90"
+      ]
     },
     "remote_ci": {
       "status": "runner_not_started_account_billing_or_spending_limit",
@@ -46,14 +58,36 @@
     },
     "high_risk_ruff_compile_and_entry": "passed locally",
     "rollback": "same regression input restores 30 failed / 8 passed; pristine bytes verified; reapply restores 38 passed",
-    "default_ruff_style": "four pre-existing diagnostics in the two source modules; new test file passes; not claimed all-green"
+    "default_ruff_style": "four pre-existing diagnostics in the two source modules; new test file passes; not claimed all-green",
+    "previous_full_suite_attempt": {
+      "status": "not completed locally; agent stopped the slow run at reported 9% after about ten minutes; use exact-head GitHub CI",
+      "exit_code": 4294967295,
+      "command": "python -m pytest -q --tb=short -ra"
+    },
+    "history_contract_repair": {
+      "scope": "Freeze v2 analysis inputs only for PR54 compatibility; separately assert real v3 rebuild/preflight outputs, source identity and archive immutability. No production-code changes.",
+      "unmodified_base_golden": "5 passed; same five cases fail on v3 before test-contract separation",
+      "live_v3_baseline": "5 failed",
+      "live_v3_modified": "5 passed",
+      "both_test_files": "57 passed, exit 0",
+      "source_identity": "463db24b6da2489046490061e49f72044e74406a67a2289472d9e3fb259af284 unchanged",
+      "production_code_changed_this_followup": false,
+      "final_candidate_fresh_full_suite": "pending; targeted repair is not a fresh all-green full run"
+    },
+    "snapshot_lock_test_upgrade": {
+      "baseline_and_pre_repair": "original five-second future deadline fails on both base and candidate in this Windows environment",
+      "changed_test": "test_context_assembler_observes_one_epoch_while_confirmed_commit_waits",
+      "semantic_probe": "observe reader guard nesting and writer native-lock entry; bounded completion deadline 30 seconds; preserve old-epoch and final-commit assertions",
+      "mutation_control": "test_snapshot_lock_probe_rejects_unguarded_assembler detects bypass of outer snapshot guard",
+      "result": "2 passed, exit 0; no production lock changes"
+    }
   },
   "preserved": [
     "main branch and frozen historical evidence",
     "accepted manuscript bytes, author confirmations and private Drive data",
     "existing minimum-line thresholds, metric fields and conservative speaker-name filtering"
   ],
-  "next": "Keep PR #91 draft; complete full regression after runner availability is restored or in an agreed local run; never change account billing automatically",
+  "next": "Run a fresh full suite on this repaired test candidate; retain draft until exact-head platform matrix and review complete; no automatic billing changes or merge",
   "storage_guard_upgrade": {
     "changed_symbol": "novel_ai.storage_guard.reject_links",
     "docs": "docs/STORAGE_GUARD.md",

@@ -300,33 +300,78 @@ def test_real_textarea_cannot_confirm_a_different_visible_draft(scenario, monkey
 
 def test_context_assembler_observes_one_epoch_while_confirmed_commit_waits(scenario, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
-    from threading import Event
+    from contextlib import contextmanager
+    from threading import Event, get_ident
     from novel_ai.context import ContextAssembler
+    from novel_ai import memory_proposals
     store, state, result, context, source, extraction = scenario
     proposal = pending(scenario)
-    read_state, started, done = Event(), Event(), Event()
+    read_state, attempted, acquired = Event(), Event(), Event()
+    reader_id = get_ident()
+    reader_depth = 0
+    original_guard = store._guard
+    original_lock = memory_proposals.project_lock
+
+    @contextmanager
+    def observed_guard(project):
+        nonlocal reader_depth
+        if get_ident() == reader_id:
+            with original_guard(project):
+                reader_depth += 1
+                try:
+                    yield
+                finally:
+                    reader_depth -= 1
+        else:
+            with original_guard(project):
+                yield
+
+    @contextmanager
+    def observed_writer_lock(path):
+        # Proposal commits enter the native lock directly, not via store._guard.
+        attempted.set()
+        with original_lock(path):
+            acquired.set()
+            assert reader_depth == 0, "writer entered the active snapshot guard"
+            yield
+
+    monkeypatch.setattr(store, "_guard", observed_guard)
+    monkeypatch.setattr(memory_proposals, "project_lock", observed_writer_lock)
     original = store.load_story_state
     def paused(project):
         old = original(project)
         read_state.set()
-        assert started.wait(2)
-        assert not done.wait(.15), "commit passed the ContextAssembler snapshot lock"
+        assert reader_depth == 1, "ContextAssembler is missing its outer snapshot guard"
+        assert attempted.wait(30), "writer never reached the guard"
+        assert not acquired.wait(.15), "writer passed the ContextAssembler snapshot lock"
         return old
     monkeypatch.setattr(store, "load_story_state", paused)
     def writer():
-        assert read_state.wait(2)
-        started.set()
+        assert read_state.wait(30), "reader never reached the snapshot"
         result = apply_memory_proposal(store, proposal, context=context,
             chapter_accepted=True, memory_accepted=True, confirmation_source="synthetic explicit author action")
-        done.set()
         return result
     with ThreadPoolExecutor(max_workers=2) as pool:
         commit = pool.submit(writer)
         assembled = ContextAssembler(store, "River").assemble()
-        assert commit.result(timeout=5)["status"] == "committed"
+        # A bounded completion guard, not a five-second disk-throughput benchmark.
+        # Snapshot exclusion is asserted above at guard entry, independently of I/O speed.
+        assert commit.result(timeout=30)["status"] == "committed"
     assert assembled.recent_summaries == []
     assert "铜铃已经交还" not in assembled.canon_block
     assert store.all_chapter_summaries("River")[0]["summary"] == extraction.summary
+
+
+def test_snapshot_lock_probe_rejects_unguarded_assembler(scenario, monkeypatch):
+    from novel_ai.context import ContextAssembler
+
+    def unguarded(self):
+        return self._assemble_snapshot(self.__dict__.copy(), recent_limit=4,
+            max_open_foreshadowing=8, recall_query="", history_chapter_ids=None)
+
+    monkeypatch.setattr(ContextAssembler, "assemble", unguarded)
+    with pytest.raises(AssertionError, match="snapshot guard"):
+        test_context_assembler_observes_one_epoch_while_confirmed_commit_waits(scenario, monkeypatch)
 
 
 @pytest.mark.parametrize("field", ["timeline", "foreshadowing", "state", "custom"])
