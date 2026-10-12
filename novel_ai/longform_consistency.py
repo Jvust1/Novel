@@ -12,6 +12,7 @@ from .dialogue_attribution import ATTRIBUTION_VERSION, attributed_dialogue
 
 
 _PARTICLES = tuple("吧呢啊呀嘛呗哦嗯吗啦")
+_ENDING_PARTICLE = re.compile(rf"([{''.join(_PARTICLES)}])[\s。！？!?.,，；;：:…]*$")
 _CURVE_HIGH = ("高潮", "爆发", "峰", "climax", "peak", "surge", "high")
 _CURVE_RISE = ("上升", "升温", "推进", "rise", "rising")
 _CURVE_LOW = ("低谷", "缓和", "平静", "回落", "low", "fall", "quiet", "rest")
@@ -48,7 +49,10 @@ def character_voice_dna(text: str, character_names: Sequence[str]) -> dict[str, 
             continue
         lengths = [len(_compact(line)) for line in lines]
         total = max(1, len(lines))
-        ending = Counter(line[-1] for line in lines if line and line[-1] in _PARTICLES)
+        ending = Counter(
+            match.group(1) for line in lines
+            if (match := _ENDING_PARTICLE.search(line)) is not None
+        )
         result[str(name)] = {
             "attribution_version": ATTRIBUTION_VERSION,
             "line_count": len(lines),
@@ -102,7 +106,12 @@ def voice_drift(current: dict[str, Any], baseline: dict[str, Any], threshold: fl
     keys = ("avg_line_chars", "question_ratio", "exclamation_ratio", "ellipsis_ratio", "short_line_ratio")
     for name, now in current.items():
         old = baseline.get(name)
-        if not old or int(old.get("line_count", 0) or 0) < 4 or int(now.get("line_count", 0) or 0) < 2:
+        # Direct callers must obey the same version boundary as aggregation.
+        # Older metrics counted unique wording rather than speech occurrences.
+        if (not old or now.get("attribution_version") != ATTRIBUTION_VERSION
+                or old.get("attribution_version") != ATTRIBUTION_VERSION):
+            continue
+        if int(old.get("line_count", 0) or 0) < 4 or int(now.get("line_count", 0) or 0) < 2:
             continue
         diffs = []
         for key in keys:

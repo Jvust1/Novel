@@ -1,0 +1,50 @@
+{
+  "schema": "novel-voice-metrics-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "codex/voice-metrics-skill-optimization",
+  "base_head": "6afdd3681824ddf17f9e598b7ef7de4389b405f5",
+  "scope": "Correct repeated-utterance counts, terminal particles and voice-metric version compatibility in existing analysis; no manuscript or author-state mutation",
+  "docs": "docs/VOICE_METRICS.md",
+  "attribution_version": 3,
+  "skills_applied": [
+    "test-driven-development",
+    "code-reviewer",
+    "voice-style (method reference only)"
+  ],
+  "validation": {
+    "platform": "Windows, Python 3.12.14",
+    "baseline_new_regressions": {
+      "failed": 30,
+      "passed": 8,
+      "exit_code": 1
+    },
+    "modified_new_regressions": {
+      "passed": 38,
+      "exit_code": 0
+    },
+    "existing_focused_baseline_and_modified": {
+      "passed": 35,
+      "exit_code": 0
+    },
+    "full_suite": {
+      "status": "not completed locally; agent stopped the slow run at reported 9% after about ten minutes; use exact-head GitHub CI",
+      "exit_code": 4294967295,
+      "command": "python -m pytest -q --tb=short -ra"
+    },
+    "remote_ci": "Read the exact PR head workflow result; this record is not a CI or merge receipt",
+    "real_model_or_manuscript_evaluation": "not run; synthetic provider and original test sentences only",
+    "focused_final": {
+      "passed": 73,
+      "exit_code": 0
+    },
+    "high_risk_ruff_compile_and_entry": "passed locally",
+    "rollback": "same regression input restores 30 failed / 8 passed; pristine bytes verified; reapply restores 38 passed",
+    "default_ruff_style": "four pre-existing diagnostics in the two source modules; new test file passes; not claimed all-green"
+  },
+  "preserved": [
+    "main branch and frozen historical evidence",
+    "accepted manuscript bytes, author confirmations and private Drive data",
+    "existing minimum-line thresholds, metric fields and conservative speaker-name filtering"
+  ],
+  "next": "Inspect exact-head cross-platform PR CI before any merge; main remains unchanged"
+}
