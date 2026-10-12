@@ -3,13 +3,14 @@
   "repository": "Jvust1/Novel",
   "branch": "codex/voice-metrics-skill-optimization",
   "base_head": "6afdd3681824ddf17f9e598b7ef7de4389b405f5",
-  "scope": "Correct repeated-utterance counts, terminal particles and voice-metric version compatibility in existing analysis; no manuscript or author-state mutation",
+  "scope": "Correct repeated-utterance counts, terminal particles and voice-metric version compatibility in existing analysis; no manuscript or author-state mutation; continue with fresh single-query ancestry guards and Python 3.11-compatible Windows junction detection",
   "docs": "docs/VOICE_METRICS.md",
   "attribution_version": 3,
   "skills_applied": [
     "test-driven-development",
     "code-reviewer",
-    "voice-style (method reference only)"
+    "voice-style (method reference only)",
+    "debug-detective"
   ],
   "validation": {
     "platform": "Windows, Python 3.12.14",
@@ -52,5 +53,24 @@
     "accepted manuscript bytes, author confirmations and private Drive data",
     "existing minimum-line thresholds, metric fields and conservative speaker-name filtering"
   ],
-  "next": "Keep PR #91 draft; complete full regression after runner availability is restored or in an agreed local run; never change account billing automatically"
+  "next": "Keep PR #91 draft; complete full regression after runner availability is restored or in an agreed local run; never change account billing automatically",
+  "storage_guard_upgrade": {
+    "changed_symbol": "novel_ai.storage_guard.reject_links",
+    "docs": "docs/STORAGE_GUARD.md",
+    "baseline": "3 failed, 9 passed (duplicate metadata reads; native junction with Path.is_junction removed)",
+    "modified": "12 passed, exit 0",
+    "metadata_queries": {
+      "baseline": 22,
+      "modified": 11
+    },
+    "microbenchmark_median_seconds": {
+      "baseline": 1.8854128000020864,
+      "modified": 0.9379532000020845
+    },
+    "existing_storage_voice_and_author_ui": "..................................s..........s.......................... [ 48%]\n........................................................................ [ 96%]\n......                                                                   [100%]\n============================= slowest 5 durations =============================\n86.55s call     tests/test_author_ui.py::test_outline_to_three_saved_chapters_to_review_and_release_restart\n9.52s call     tests/test_storage_integrity.py::test_cooperating_processes_do_not_lose_summaries\n1.68s call     tests/test_storage_integrity.py::test_stable_summary_order_after_edit_and_duplicates\n1.44s call     tests/test_storage_recovery_adversarial.py::test_corrupt_intent_never_publishes_either_target[duplicate_summary]\n1.41s call     tests/test_storage_recovery_adversarial.py::test_digest_consistent_nonfinite_recovery_content_is_rejected[1-NaN]\n=========================== short test summary info ===========================\nSKIPPED [1] tests\\test_storage_integrity.py:192: POSIX native lock fault test\nSKIPPED [1] tests\\test_storage_recovery_adversarial.py:43: Native POSIX reentry probe\n148 passed, 2 skipped in 147.50s (0:02:27)\n",
+    "scope_of_validation": "Windows Python 3.12.14; real symlinks/junctions; absence of Path.is_junction simulated, not an actual Python 3.11 runtime run",
+    "retained": "fresh checks on every call, symlink/junction rejection, native locks, atomic writes, private-file ACLs, author gates",
+    "limitations": "trusted directories/cooperating writers; not a hostile directory-swap sandbox; no whole-app 50% speedup claim; full suite and remote platform matrix remain incomplete",
+    "instrumentation_correction": "Initial lstat-only spy missed pathlib's os.stat(follow_symlinks=False); corrected baseline and candidate instrument both APIs. Earlier records retained, superseded for query counts."
+  }
 }
