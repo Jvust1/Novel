@@ -52,9 +52,28 @@ def save_load(path, value):
     ("no_auto", "5739e49489c4fd9e69c760ad2edc8678887f40d592a20119799574d279582e4d"),
     ("small", "a240c410396256170d69616baa2c2ff498b9426ad635e045fdb0d557896b40ec"),
 ])
-def test_native_v1_matches_fixed_pr54_golden(tmp_path, variant, expected):
+def test_native_v1_matches_fixed_pr54_golden(tmp_path, variant, expected, monkeypatch):
     # Values independently computed against frozen PR54 source 39d101330a11.
     # CI uses constants; it does not need another local checkout.
+    # PR54 compatibility freezes its v2 analysis inputs, not the current algorithm.
+    # Unmocked v3 rebuild/preflight contracts live in test_history_voice_version_regression.
+    from test_accepted_archive_writing import DRAFT
+    from test_history_voice_version_regression import FROZEN_VOICE_V2, FROZEN_BASELINE_V2
+
+    calls = []
+
+    def frozen_voice(text, names):
+        assert text == DRAFT and names == ["林青", "木禾"]
+        calls.append("voice")
+        return deepcopy(FROZEN_VOICE_V2)
+
+    def frozen_baseline(rows):
+        assert rows == [{"chapter_id": "ch-1", "voice_dna": FROZEN_VOICE_V2}]
+        calls.append("baseline")
+        return deepcopy(FROZEN_BASELINE_V2)
+
+    monkeypatch.setattr(state, "character_voice_dna", frozen_voice)
+    monkeypatch.setattr(state, "aggregate_voice_baseline", frozen_baseline)
     value = state.load_state(ready_archive(tmp_path), expected_story_id="synthetic-story")
     if variant == "history":
         result = state.rebuild_accepted_history(value)
@@ -64,6 +83,7 @@ def test_native_v1_matches_fixed_pr54_golden(tmp_path, variant, expected):
         result = state.preflight_next_chapter_context(value, [], 1000 if variant == "small" else 200000, **options)
         result["accepted_history"]["readback_file_sha256"] = "NORMALIZED_FILE_SHA"
     assert stable_hash(result) == expected
+    assert calls == ["voice", "baseline"]
 
 
 @pytest.mark.parametrize("mode,expected", [

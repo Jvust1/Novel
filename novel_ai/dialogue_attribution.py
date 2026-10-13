@@ -14,7 +14,7 @@ from typing import Sequence
 from ._vendor.spacy_spans import filter_spans
 
 
-ATTRIBUTION_VERSION = 2
+ATTRIBUTION_VERSION = 3
 _SPEECH_VERBS = r"(?:冷笑道|笑道|说道|回答|反问|嘀咕|说|问|答|道|喊|叫)"
 _SPEECH_ADVERB = r"(?:(?:低声|轻声|小声|大声|高声|沉声|厉声|缓缓|轻轻|冷冷|平静|笑着|冷笑着|叹息着)(?:地)?)?"
 
@@ -64,6 +64,8 @@ def attributed_dialogue(text: str, names: Sequence[str]) -> dict[str, list[str]]
             continue
         name = next(iter(speakers))
         dialogue = text[start:end].strip()
-        if dialogue and dialogue not in result[name]:
+        # Candidates are already keyed by source span: two tags for one quote
+        # count once, but the same words spoken again are a new observation.
+        if dialogue:
             result[name].append(dialogue)
     return dict(result)

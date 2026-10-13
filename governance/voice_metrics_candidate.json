@@ -1,0 +1,131 @@
+{
+  "schema": "novel-voice-metrics-candidate-v1",
+  "repository": "Jvust1/Novel",
+  "branch": "codex/voice-metrics-skill-optimization",
+  "base_head": "6afdd3681824ddf17f9e598b7ef7de4389b405f5",
+  "scope": "Correct repeated-utterance counts, terminal particles and voice-metric version compatibility in existing analysis; no manuscript or author-state mutation; continue with fresh single-query ancestry guards and Python 3.11-compatible Windows junction detection",
+  "docs": "docs/VOICE_METRICS.md",
+  "attribution_version": 3,
+  "skills_applied": [
+    "test-driven-development",
+    "code-reviewer",
+    "voice-style (method reference only)",
+    "debug-detective"
+  ],
+  "validation": {
+    "platform": "Windows, Python 3.12.14",
+    "baseline_new_regressions": {
+      "failed": 30,
+      "passed": 8,
+      "exit_code": 1
+    },
+    "modified_new_regressions": {
+      "passed": 38,
+      "exit_code": 0
+    },
+    "existing_focused_baseline_and_modified": {
+      "passed": 35,
+      "exit_code": 0
+    },
+    "full_suite": {
+      "status": "passed locally on Windows Python 3.12.14; remote platform matrix not passed",
+      "tested_head": "e41c7f1057715771e45bd36da980d75b26814b2c",
+      "tested_tree": "d43db839b36b3ac59674c59186928b3c1749a593",
+      "summary": "2328 passed, 17 skipped in 4607.91s (1:16:47)",
+      "exit_code": 0,
+      "elapsed_seconds": 4610.5,
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-ra",
+        "--durations=15"
+      ],
+      "skipped": {
+        "POSIX_only": 16,
+        "optional_qdrant_client_absent": 1
+      },
+      "publication_scope": "Only this governance receipt changes after the full run; all source, tests and other files retain the exact tested bytes."
+    },
+    "remote_ci": {
+      "status": "runner_not_started_account_billing_or_spending_limit",
+      "observed_run": "https://github.com/Jvust1/Novel/actions/runs/38253786304",
+      "observed_head": "24a6057f2c6b4a120f9f774c78377a8ef10656f2",
+      "annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+      "scope": "This is an infrastructure block, not a test result; read any later exact-head run separately"
+    },
+    "real_model_or_manuscript_evaluation": "not run; synthetic provider and original test sentences only",
+    "focused_final": {
+      "passed": 73,
+      "exit_code": 0
+    },
+    "high_risk_ruff_compile_and_entry": "passed locally",
+    "rollback": "same regression input restores 30 failed / 8 passed; pristine bytes verified; reapply restores 38 passed",
+    "default_ruff_style": "four pre-existing diagnostics in the two source modules; new test file passes; not claimed all-green",
+    "previous_full_suite_attempt": {
+      "status": "not completed locally; agent stopped the slow run at reported 9% after about ten minutes; use exact-head GitHub CI",
+      "exit_code": 4294967295,
+      "command": "python -m pytest -q --tb=short -ra"
+    },
+    "history_contract_repair": {
+      "scope": "Freeze v2 analysis inputs only for PR54 compatibility; separately assert real v3 rebuild/preflight outputs, source identity and archive immutability. No production-code changes.",
+      "unmodified_base_golden": "5 passed; same five cases fail on v3 before test-contract separation",
+      "live_v3_baseline": "5 failed",
+      "live_v3_modified": "5 passed",
+      "both_test_files": "57 passed, exit 0",
+      "source_identity": "463db24b6da2489046490061e49f72044e74406a67a2289472d9e3fb259af284 unchanged",
+      "production_code_changed_this_followup": false,
+      "final_candidate_fresh_full_suite": "2328 passed, 17 skipped; exit 0; exact tested head e41c7f1057715771e45bd36da980d75b26814b2c"
+    },
+    "snapshot_lock_test_upgrade": {
+      "baseline_and_pre_repair": "original five-second future deadline fails on both base and candidate in this Windows environment",
+      "changed_test": "test_context_assembler_observes_one_epoch_while_confirmed_commit_waits",
+      "semantic_probe": "observe reader guard nesting and writer native-lock entry; bounded completion deadline 30 seconds; preserve old-epoch and final-commit assertions",
+      "mutation_control": "test_snapshot_lock_probe_rejects_unguarded_assembler detects bypass of outer snapshot guard",
+      "result": "2 passed, exit 0; no production lock changes"
+    },
+    "pre_repair_full_suite": {
+      "status": "completed on pre-repair head: five v2 golden-contract failures and one baseline-reproducible disk deadline failure; all other results retained",
+      "tested_head": "1c75fb6f176c46cc215e5d44e8f431910a5d2116",
+      "summary": "6 failed, 2316 passed, 17 skipped in 4927.64s (1:22:07)",
+      "exit_code": 1,
+      "seconds": 4929.765,
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-ra",
+        "--durations=15",
+        "-o",
+        "faulthandler_timeout=90"
+      ]
+    }
+  },
+  "preserved": [
+    "main branch and frozen historical evidence",
+    "accepted manuscript bytes, author confirmations and private Drive data",
+    "existing minimum-line thresholds, metric fields and conservative speaker-name filtering"
+  ],
+  "next": "Keep PR #91 draft pending exact-head platform matrix and review; read back CI status without changing billing or merging automatically",
+  "storage_guard_upgrade": {
+    "changed_symbol": "novel_ai.storage_guard.reject_links",
+    "docs": "docs/STORAGE_GUARD.md",
+    "baseline": "3 failed, 9 passed (duplicate metadata reads; native junction with Path.is_junction removed)",
+    "modified": "12 passed, exit 0",
+    "metadata_queries": {
+      "baseline": 22,
+      "modified": 11
+    },
+    "microbenchmark_median_seconds": {
+      "baseline": 1.8854128000020864,
+      "modified": 0.9379532000020845
+    },
+    "existing_storage_voice_and_author_ui": "..................................s..........s.......................... [ 48%]\n........................................................................ [ 96%]\n......                                                                   [100%]\n============================= slowest 5 durations =============================\n86.55s call     tests/test_author_ui.py::test_outline_to_three_saved_chapters_to_review_and_release_restart\n9.52s call     tests/test_storage_integrity.py::test_cooperating_processes_do_not_lose_summaries\n1.68s call     tests/test_storage_integrity.py::test_stable_summary_order_after_edit_and_duplicates\n1.44s call     tests/test_storage_recovery_adversarial.py::test_corrupt_intent_never_publishes_either_target[duplicate_summary]\n1.41s call     tests/test_storage_recovery_adversarial.py::test_digest_consistent_nonfinite_recovery_content_is_rejected[1-NaN]\n=========================== short test summary info ===========================\nSKIPPED [1] tests\\test_storage_integrity.py:192: POSIX native lock fault test\nSKIPPED [1] tests\\test_storage_recovery_adversarial.py:43: Native POSIX reentry probe\n148 passed, 2 skipped in 147.50s (0:02:27)\n",
+    "scope_of_validation": "Windows Python 3.12.14; real symlinks/junctions; absence of Path.is_junction simulated, not an actual Python 3.11 runtime run",
+    "retained": "fresh checks on every call, symlink/junction rejection, native locks, atomic writes, private-file ACLs, author gates",
+    "limitations": "trusted directories/cooperating writers; not a hostile directory-swap sandbox; no whole-app 50% speedup claim; local Windows Python 3.12 full suite passed; remote platform matrix remains incomplete",
+    "instrumentation_correction": "Initial lstat-only spy missed pathlib's os.stat(follow_symlinks=False); corrected baseline and candidate instrument both APIs. Earlier records retained, superseded for query counts."
+  }
+}

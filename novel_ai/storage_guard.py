@@ -19,8 +19,20 @@ def reject_links(path: Path) -> None:
     Rechecking ordinary paths does not defend against a hostile directory swap
     racing between checks. Project directories must be trusted and writers cooperate.
     """
+    mount_point_tag = getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
     for item in (path, *path.parents):
-        if item.is_symlink() or (getattr(item, "is_junction", lambda: False)()):
+        try:
+            metadata = os.lstat(item)
+        except (FileNotFoundError, NotADirectoryError):
+            # The store also guards paths before creating their parent directories.
+            continue
+        # One fresh, non-following query per ancestor. The reparse tag is available
+        # on Windows Python 3.11 too, where Path.is_junction does not yet exist.
+        is_junction = (
+            mount_point_tag is not None
+            and getattr(metadata, "st_reparse_tag", None) == mount_point_tag
+        )
+        if stat.S_ISLNK(metadata.st_mode) or is_junction:
             raise ValueError("project storage refuses symlink or junction ancestry")
 
 
