@@ -45,6 +45,7 @@ from .spindle_temporal import temporal_coherence_report, temporal_review_payload
 from .lexical_richness import lexical_richness_report, lexical_richness_review_payload
 from .workflow_guard import workflow_summary
 from .story_revision import StoryReplanRequired, story_revision_route
+from .editorial_context import build_repair_context, build_review_context
 
 
 def sample_reference_text(text: str, max_chars: int = 12000) -> str:
@@ -419,6 +420,7 @@ class NovelEngine:
             "style": _data_digest(style.model_dump() if style is not None else None),
             "recent_summaries": _data_digest(recent_summaries),
             "extra_context": _text_digest(extra_context),
+            "user_notes": _text_digest(user_notes),
             "reference_hashes": _data_digest(sorted(hashes)),
             "historical_story_dna": _data_digest(dna_history),
             "historical_voice_dna": _data_digest(voice_history),
@@ -433,6 +435,13 @@ class NovelEngine:
             draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
         if behavior_report.get("should_avoid"):
             draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
+        review_context = build_review_context(
+            draft_context, style=style, user_notes=user_notes, target_chars=target_chars,
+        ) if review else ""
+        repair_context = build_repair_context(
+            draft_context, bible=bible, plan=plan, characters=characters,
+            user_notes=user_notes, target_chars=target_chars,
+        ) if review and auto_repair else ""
         plan_evidence = {
             "source": "chapter_plan", "plan_sha256": plan_sha,
             "story_dna": story_dna, "story_dna_similarity": dna_similarity.to_dict(),
@@ -474,7 +483,7 @@ class NovelEngine:
                 "external_hook_count": len(hooks) if review else 0,
                 "author_acceptance": "pending",
             }
-            selected_review = reviewer.review(bible, plan, characters, text, draft_context) if review else None
+            selected_review = reviewer.review(bible, plan, characters, text, review_context) if review else None
             if review and not isinstance(selected_review, ChapterReview):
                 raise TypeError("configured reviewer did not return a ChapterReview")
             if review:
@@ -506,7 +515,7 @@ class NovelEngine:
         final, revised, review_after_repair = initial, None, None
         if (auto_repair and review_result and review_result.verdict == "revise"
                 and initial["story_revision_route"]["local_repair_allowed"]):
-            revised = validate_output_text(self.repair(draft, review_result, style, draft_context),
+            revised = validate_output_text(self.repair(draft, review_result, style, repair_context),
                                            max_bytes=self.output_policy.max_output_bytes)
             final, review_after_repair = analyze(revised, "repaired")
         voice_report = deepcopy(initial["voice"])
