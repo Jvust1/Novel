@@ -5,7 +5,7 @@ These contracts do not measure prose immersion or prove model compliance.
 from pathlib import Path
 
 from novel_ai.models import StoryBible
-from novel_ai.prompts import draft_messages, plan_messages, review_messages
+from novel_ai.prompts import draft_messages, plan_messages, repair_messages, review_messages
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills/novel-opening-immersion/SKILL.md"
@@ -41,3 +41,15 @@ def test_opening_skill_is_explicitly_wired_into_gpt_stage_prompts():
     for filename in ("01-writing-before.md", "02-editorial-review.md", "README.md"):
         assert "../../../skills/novel-opening-immersion/SKILL.md" in (PROMPTS / filename).read_text(encoding="utf-8")
     assert "../skills/novel-opening-immersion/SKILL.md" in (ROOT / "docs/GPT_WRITING_ENTRY.md").read_text(encoding="utf-8")
+
+
+def test_immersion_repair_stage_keeps_existing_contract_and_limits_scope():
+    sentinel = "合成章节开头。\n\n下文没有变化。"
+    issue = {"issues": [{"category": "开篇代入感", "excerpt": "合成章节开头。", "reason": "主角的当下阻力不清楚", "suggestion": "仅调整已知信息顺序"}]}
+    messages = repair_messages(sentinel, issue, None, extra_context="既有章节来源证据")
+    assert "若问题涉及首场代入感" in messages[0]["content"]
+    assert "不添加未确认的事故" in messages[0]["content"]
+    assert "留待作者重新确认章计划" in messages[0]["content"]
+    assert sentinel in messages[1]["content"]
+    assert "既有章节来源证据" in messages[1]["content"]
+    assert "输出修订后的完整正文" in messages[1]["content"]

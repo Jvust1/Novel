@@ -1,0 +1,75 @@
+{
+  "schema_version": "novel-opening-immersion-full-chapter-trial-v2",
+  "source": {
+    "repository": "Jvust1/Novel",
+    "ref": "6afdd3681824ddf17f9e598b7ef7de4389b405f5",
+    "file": "../chapter-001.md",
+    "sha256": "b6d9e0d26c21658e1be0c9ab30117ca0ce53f7067c941fef8bad969d014c432e",
+    "chapter_id": "chapter-001",
+    "draft_revision": "r1",
+    "plan_revision": "p1",
+    "first_scene_end_marker": "她找出单子，门帘又被掀开了。"
+  },
+  "variants": {
+    "reader/01.md": "exact frozen original full chapter",
+    "reader/02.md": "manually edited beginning of the same frozen full chapter; 4 exact replacements"
+  },
+  "changes": [
+    {
+      "before": "那人来领工具包，先问了一句：“里面的纸，你们看过没有？”\n\n陶青的笔停在“物品特征”一栏。",
+      "after": "陶青的笔停在“物品特征”一栏。\n\n她登记过一把活扳手、半卷测绳，两只不成对的手套，没见过纸。可窗口外来领工具包的男人先问：\n\n“里面的纸，你们看过没有？”\n\n她脚边的旅行袋上压着六点十分的汽车票，最后一筐失物还没装箱。",
+      "why": "从主角对清单的不确定与时间压力切入，使读者跟着她判断而非纯旁观陌生人提问。不是宣称纸不存在。",
+      "source_facts": [
+        "开头陌生人先问纸",
+        "陶青物品特征登记",
+        "登记物品与未见票据",
+        "18:10 车票",
+        "最后一筐未装箱"
+      ]
+    },
+    {
+      "before": "陶青拉开抽屉。包是下午三点四十分送来的，帆布浸得发黑，搁在铺报纸的塑料筐里。她登记过一把活扳手、半卷测绳，两只不成对的手套，没见票据。",
+      "after": "陶青拉开抽屉。包是下午三点四十分送来的，帆布浸得发黑，搁在铺报纸的塑料筐里。",
+      "why": "把已登记而未见纸的内在核对前移，后段移除同一信息复述。"
+    },
+    {
+      "before": "男人笑了笑，往柜台里面看。陶青的旅行袋就在脚边，上头压着六点十分的汽车票。",
+      "after": "男人笑了笑，往柜台里面看。",
+      "why": "车票事实前移后保留观察动作，避免重复。"
+    },
+    {
+      "before": "她还剩最后一筐没装箱。这座旧站明天封门",
+      "after": "这座旧站明天封门",
+      "why": "末筐任务前移后保留旧站封门与明晨试工信息。"
+    }
+  ],
+  "protected_markers": [
+    "“里面的纸，你们看过没有？”",
+    "“代领要物主确认。你拨一下他的电话。”",
+    "五点五十。",
+    "六点十分的汽车票",
+    "明早七点到岗",
+    "外二底。腿卡。有人吗。",
+    "“我没往水里放。”",
+    "“上头有人放钩子。我挂上去的。”",
+    "未领取。"
+  ],
+  "checks": {
+    "same_unicode_char_count": true,
+    "complete_original_preserved": true,
+    "only_first_scene_changed": true,
+    "post_first_scene_suffix_exact": true,
+    "critical_story_markers_unchanged": true,
+    "post_first_scene_original_not_rewritten": true,
+    "private_material_used": false
+  },
+  "evaluation": {
+    "human_readers": 0,
+    "human_ratings": [],
+    "automatic_quality_uplift_verified": false,
+    "generative_model_A_B": false,
+    "author_accepted": null,
+    "canon_advanced": false
+  },
+  "interpretation": "This controls chapter length, rest of plot and key information but differs in opening order. It cannot prove the skill improved a model or the revised text is preferred; provenance mapping in this file must not be given to blinded readers."
+}
