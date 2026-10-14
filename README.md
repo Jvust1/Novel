@@ -1,5 +1,7 @@
 当前候选：`main`。公开工程入口以 [当前候选记录](governance/current_candidate.json) 为准。
 
+故事不再只靠润色：[故事设计、结构问题分流与原创场景示范](docs/STORY_CRAFT_FOLLOWUP.md)。
+
 故事设定与总纲保存中断后可核对恢复：[两个来源比较、固定原操作重试与完整读回](docs/SETTINGS_SAVE_RECOVERY.md)。
 
 旧人物来源不能继续写作：[核对两版、保留编辑与明确重新载入](docs/CHARACTER_SOURCE_BINDINGS.md)。
@@ -40,7 +42,7 @@ PDF 参考读取依赖已升级：[修复已知解析资源风险与验证范围
 
 1. 读取 [AGENTS.md](AGENTS.md) 和 [GPT 写作入口](docs/GPT_WRITING_ENTRY.md)，核对实际读取的分支或提交
 2. 读取当前作品的私有故事档案；新书从 [空白故事状态模板](writing_templates/story_state.template.json) 开始，未确定的资料留空
-3. 按本书类型选择 [文风卡](docs/prompts/natural-fiction/GENRE_PROFILES.md)，依次使用 [写前](docs/prompts/natural-fiction/01-writing-before.md)、[审校](docs/prompts/natural-fiction/02-editorial-review.md)、[局部修订](docs/prompts/natural-fiction/03-local-repair.md) 提示
+3. 按本书类型选择 [文风卡](docs/prompts/natural-fiction/GENRE_PROFILES.md)，先用 [故事设计](docs/prompts/natural-fiction/00-story-design.md) 形成待作者确认的场景计划，再依次使用 [写前](docs/prompts/natural-fiction/01-writing-before.md)、[审校](docs/prompts/natural-fiction/02-editorial-review.md)、[局部修订](docs/prompts/natural-fiction/03-local-repair.md) 提示
 4. 作者确认具体版本后，更新私有故事档案并读回核对，供下次对话继续
 
 可直接告诉 GPT：

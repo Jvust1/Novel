@@ -1,0 +1,36 @@
+{
+  "schema": "novel-story-craft-followup-v1",
+  "date": "2026-10-14",
+  "base_commit": "58bfe0b52ee8ad64c87f4aeabfb73bd476bfa7e9",
+  "branch": "feat/story-craft-upgrade-20261014",
+  "pull_request": 93,
+  "status": "candidate_requires_ci_and_merge",
+  "report": "docs/STORY_CRAFT_FOLLOWUP.md",
+  "runtime_module": "novel_ai/story_revision.py",
+  "runtime_integration": "novel_ai/engine.py",
+  "scope": "Route explicitly classified structural findings before local repair; add synthetic teaching scenes and an explicit planning entry",
+  "schema_migration": false,
+  "additional_model_calls": 0,
+  "private_story_artifacts_accessed_or_published": false,
+  "author_acceptance_rules_unchanged": true,
+  "validation": {
+    "local_unit_command": "python -m pytest -q tests/test_story_revision_routing.py",
+    "local_unit_passed": 24,
+    "python_compilation": "passed",
+    "engine_integration_cases": 16,
+    "engine_integration_local": "not_run; complete repository unavailable",
+    "full_repository_local": "not_run",
+    "current_commit_ci": "consult_actual_pr_runs",
+    "previous_commit_ci_run": 38511041234,
+    "previous_commit_ci_conclusion": "success",
+    "reconstructed_original_git_blob_hashes_verified": true,
+    "live_model_generation": "not_run",
+    "human_blind_evaluation": "not_run"
+  },
+  "limits": [
+    "Only an explicit review category triggers structural routing; no automatic literary-quality detector is claimed.",
+    "A mixed structural/expression review suspends the whole automatic repair, not an invented paragraph-level executor.",
+    "Teaching examples are newly authored synthetic illustrations, not before/after model measurements or accepted author manuscripts.",
+    "main is unchanged until an actual merge; no deployment is implied."
+  ]
+}
