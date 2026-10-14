@@ -437,10 +437,12 @@ class NovelEngine:
             draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
         review_context = build_review_context(
             draft_context, style=style, user_notes=user_notes, target_chars=target_chars,
+            recent_summaries=recent_summaries,
         ) if review else ""
         repair_context = build_repair_context(
             draft_context, bible=bible, plan=plan, characters=characters,
             user_notes=user_notes, target_chars=target_chars,
+            recent_summaries=recent_summaries,
         ) if review and auto_repair else ""
         plan_evidence = {
             "source": "chapter_plan", "plan_sha256": plan_sha,

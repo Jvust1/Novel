@@ -4,7 +4,11 @@ Keep the conversational counterpart in docs/prompts/natural-fiction/00-story-des
 in sync. These are writing/review instructions, not a literary-quality detector.
 """
 
-STORY_CRAFT_VERSION = "1.1"
+from .story_progression import (
+    LONGFORM_DRAFT_RULES, LONGFORM_PLAN_RULES, LONGFORM_REPAIR_RULES, LONGFORM_REVIEW_RULES,
+)
+
+STORY_CRAFT_VERSION = "1.2"
 
 STORY_CRAFT_GUARDS = """
 【故事设计边界】
@@ -66,3 +70,10 @@ STORY_REPAIR_RULES = STORY_CRAFT_GUARDS + "\n\n" + """
 保留作者已指定的语气与本轮要求；没有这些依据时注明范围不足所对应的问题仍未解决，不猜作者文风。输出仍只给正文，未解决事项由后续复审报告。
 返回完整候选正文，后续仍需对最终版本复审并取得作者接受；不能把 review 中的建议当作作者授权。
 """.strip()
+
+# Each prompt factory already imports the matching STORY_* constant. Append
+# only its own longform stage; do not load four stages into every model call.
+STORY_PLAN_RULES += "\n\n" + LONGFORM_PLAN_RULES
+STORY_DRAFT_RULES += "\n\n" + LONGFORM_DRAFT_RULES
+STORY_REVIEW_RULES += "\n\n" + LONGFORM_REVIEW_RULES
+STORY_REPAIR_RULES += "\n\n" + LONGFORM_REPAIR_RULES

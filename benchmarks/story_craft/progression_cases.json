@@ -1,0 +1,45 @@
+{
+  "schema": "novel-story-progression-cases-v1",
+  "provenance": "Synthetic engineering scenarios, not an author's accepted chapters or live-model evaluation.",
+  "evaluation_status": "not_run",
+  "cases": [
+    {
+      "id": "earned_trust",
+      "recent_summaries": [
+        {"chapter_id": "c7", "revision": "r1", "summary": "许宁要求父亲只指导、不接管，父亲答应了。", "open_threads": ["下一顿饭怎样分工"]},
+        {"chapter_id": "c8", "revision": "r1", "summary": "父亲按约定等许宁自己完成，许宁主动请他尝味。", "new_facts": ["双方已经试过不接管的合作"]}
+      ],
+      "chapter_goal": "写下一次一起招待客人，已有信任影响分工，不把旧争执原样重演。",
+      "must_preserve": ["已建立的合作与各自自主", "允许温暖日常，不新增事故"],
+      "reject": ["父亲无新触发就完全忘记承诺", "以复述前两章代替新的相处"]
+    },
+    {
+      "id": "cost_survives",
+      "recent_summaries": [
+        {"chapter_id": "c9", "revision": "r2", "summary": "陆砚把唯一的一次性护符给同伴用掉，两人因此错过近路。", "new_facts": ["护符已消耗", "必须绕行"]}
+      ],
+      "chapter_goal": "在无护符和绕行条件下规划下一步，允许休整，不追加隐藏能力。",
+      "must_preserve": ["护符不能再次可用", "上章损失影响当前方案"],
+      "reject": ["同一护符下章自动恢复", "为了证明节奏紧凑取消必要休整"]
+    },
+    {
+      "id": "promised_verification",
+      "recent_summaries": [
+        {"chapter_id": "c10", "revision": "r1", "summary": "陈澄撤回未经证实的判断，保管人同意双方在场核对两份原件。", "open_threads": ["共同复核两份时间冲突的记录"], "foreshadowing": [{"id": "time_gap", "status": "advanced", "description": "两份记录相差十分钟，谁错尚未知"}]}
+      ],
+      "chapter_goal": "本章落实已约定的复核，计划只准缩小记录冲突的范围，不揭露真凶。",
+      "must_preserve": ["共同复核已经约定", "假设与事实分开"],
+      "reject": ["重复花整章争取已获得的复核机会", "只追加第三个谜语而不处理原问题", "伪造前文原话或提前破案"]
+    },
+    {
+      "id": "closed_arc",
+      "recent_summaries": [
+        {"chapter_id": "c29", "revision": "r1", "summary": "旧店结清所有债务与纠纷。", "open_threads": ["交还钥匙并告别"]},
+        {"chapter_id": "c30", "revision": "r1", "summary": "老板交还钥匙，正式告别旧店。", "open_threads": []}
+      ],
+      "chapter_goal": "按已确认安排写尾声，允许完整收束，不把已结束的主线重启。",
+      "must_preserve": ["债务已经结清", "告别已完成，不重放同一场景", "低冲突和余韵有效"],
+      "reject": ["凭空新增债主或神秘来客", "所有结尾强行制造悬念"]
+    }
+  ]
+}

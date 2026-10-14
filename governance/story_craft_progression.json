@@ -1,0 +1,47 @@
+{
+  "schema": "novel-story-craft-progression-v1",
+  "version": "1.2",
+  "date": "2026-10-14",
+  "base_commit": "ddd8707d4bf93f3cf8005451646a6775be5976a7",
+  "branch": "feat/story-craft-upgrade-20261014",
+  "status": "candidate_requires_ci_merge_and_quality_evaluation",
+  "report": "docs/STORY_CRAFT_PROGRESSION.md",
+  "conversation_protocol": "docs/prompts/natural-fiction/05-longform-progression.md",
+  "scope": ["chapter_progression", "history_handoff_to_editors", "missing_bible_genre_regression"],
+  "new_dependencies": [],
+  "additional_model_calls": 0,
+  "input_length_increased": true,
+  "schema_migration": false,
+  "author_acceptance_rules_unchanged": true,
+  "private_manuscripts_accessed_or_published": false,
+  "previous_ci_observation": {
+    "run_id": 38521853529,
+    "job_id": 115713134835,
+    "job": "Ubuntu Python 3.11",
+    "result": "1 failed, 2413 passed, 9 skipped",
+    "failure": "test_routed_run_splits_writer_and_reviewer_and_passes_context: None Bible genre AttributeError",
+    "original_test_removed_or_weakened": false
+  },
+  "validation": {
+    "local_command": "python -m pytest -q tests/test_story_progression.py tests/test_missing_bible_craft.py tests/test_editorial_context.py",
+    "passed": 72,
+    "new_history_checks": 44,
+    "new_regression_and_factory_checks": 14,
+    "unchanged_editorial_checks": 14,
+    "regression_before_fix": "4 failed, 10 passed",
+    "compileall": "passed",
+    "engine_integration_cases": 8,
+    "engine_integration_local_execution": "not_run",
+    "full_repository_local_tests": "not_run",
+    "source_git_blob_hashes_verified": true,
+    "current_commit_ci": "consult_actual_pr_runs",
+    "live_generation_ab": "not_run",
+    "human_blind_review": "not_run"
+  },
+  "limits": [
+    "Summary transfer is not full-text readback, history authentication, or secret redaction.",
+    "Story guidance is not a deterministic literary-quality detector.",
+    "No measured manuscript-quality improvement is claimed.",
+    "The main branch is unchanged until an actual merge."
+  ]
+}
