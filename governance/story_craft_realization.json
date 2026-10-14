@@ -1,0 +1,44 @@
+{
+  "schema": "novel-story-craft-realization-v1",
+  "date": "2026-10-14",
+  "version": "1.1",
+  "base_commit": "b9249d791fa09519ea2c40cd7d8b481e1249a4b9",
+  "branch": "feat/story-craft-upgrade-20261014",
+  "pr": 93,
+  "status": "candidate_requires_current_head_ci_merge_and_quality_evaluation",
+  "report": "docs/STORY_CRAFT_REALIZATION.md",
+  "conversation_protocol": "docs/prompts/natural-fiction/04-scene-execution.md",
+  "runtime": [
+    "novel_ai/story_craft.py",
+    "novel_ai/story_craft_profiles.py",
+    "novel_ai/editorial_context.py",
+    "novel_ai/prompts.py",
+    "novel_ai/engine.py"
+  ],
+  "schema_migration": false,
+  "additional_model_calls": 0,
+  "input_text_increased": true,
+  "author_acceptance_rules_changed": false,
+  "private_story_artifacts_accessed_or_published": false,
+  "validation": {
+    "direct_unit_and_prompt_tests": 64,
+    "dependency_isolated_engine_message_tests": 10,
+    "full_repository_tests": "not_run_locally",
+    "source_blob_hashes_verified": true,
+    "compilation": "passed",
+    "current_head_ci": "consult_actual_pr_run",
+    "prior_head_ci": {
+      "head": "b9249d791fa09519ea2c40cd7d8b481e1249a4b9",
+      "run": 38516607398,
+      "conclusion": "success"
+    },
+    "live_generation_ab": "not_run",
+    "human_blind_evaluation": "not_run"
+  },
+  "limitations": [
+    "Local engine tests isolate unrelated diagnostic dependencies; CI uses real imports.",
+    "Genre labels are explicitly resolved; unknown or ambiguous text is not classified.",
+    "Omitting Character.secret in the added repair copy is not comprehensive redaction.",
+    "No measured literary-quality improvement or zero-token-cost claim."
+  ]
+}

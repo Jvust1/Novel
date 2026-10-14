@@ -1,0 +1,36 @@
+{
+  "schema": "novel-story-craft-upgrade-v1",
+  "version": "1.0",
+  "date": "2026-10-14",
+  "base_commit": "6afdd3681824ddf17f9e598b7ef7de4389b405f5",
+  "branch": "feat/story-craft-upgrade-20261014",
+  "status": "candidate_requires_merge_and_quality_evaluation",
+  "report": "docs/STORY_CRAFT_UPGRADE.md",
+  "conversation_entry": "docs/prompts/natural-fiction/README.md",
+  "planning_protocol": "docs/prompts/natural-fiction/00-story-design.md",
+  "runtime_module": "novel_ai/story_craft.py",
+  "runtime_integration": "novel_ai/prompts.py",
+  "scope": ["planning", "drafting", "editorial_review", "local_repair"],
+  "schema_migration": false,
+  "new_dependencies": [],
+  "additional_model_calls": 0,
+  "prompt_size_increased": true,
+  "author_acceptance_rules_unchanged": true,
+  "private_story_artifacts_accessed_or_published": false,
+  "validation": {
+    "command": "python -m pytest -q tests/test_story_craft_prompts.py",
+    "passed": 20,
+    "scope": "offline prompt factories, existing Pydantic contracts and synthetic inputs",
+    "reconstructed_source_git_blob_hashes_verified": true,
+    "full_repository_tests": "not_run_locally",
+    "ci_status": "consult_actual_pr_runs",
+    "live_model_generation": "not_run",
+    "human_blind_evaluation": "not_run",
+    "fixtures": "benchmarks/story_craft/cases.json"
+  },
+  "limits": [
+    "Prompt instructions are not a deterministic literary-quality detector or new execution gate.",
+    "No measured improvement in actual manuscript quality is claimed.",
+    "The public main pointer is unchanged until a real merge; existing chats must re-read the prompts."
+  ]
+}

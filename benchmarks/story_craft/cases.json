@@ -1,0 +1,62 @@
+{
+  "schema": "novel-story-craft-cases-v1",
+  "provenance": "Synthetic engineering scenarios written for this upgrade; not an author's manuscript or accepted story state.",
+  "evaluation_status": "not_run",
+  "cases": [
+    {
+      "id": "quiet_daily",
+      "bible": {"genre": "都市/日常", "tone": "温暖，允许幽默", "premise": "成年女儿第一次请父亲教她做一顿普通晚饭。", "locked_facts": ["父女没有重病或财务危机", "本章是日常关系推进，不引入事故"]},
+      "characters": [{"name": "许宁", "current_goal": "独立做好晚饭", "fear": "被当作长不大的孩子"}, {"name": "父亲", "current_goal": "帮忙但不接管女儿的厨房"}],
+      "outline": "从互相抢着做事到女儿愿意请教、父亲愿意等她自己做完。",
+      "chapter_goal": "用一顿饭写出相处方式的小变化，完整收束。",
+      "checks": ["关系变化可感，低外部冲突不被当作缺陷", "保留生活趣味与完整收束"],
+      "reject": ["新增疾病事故来催泪", "章末神秘来电或黑影"]
+    },
+    {
+      "id": "romance_boundary",
+      "bible": {"genre": "言情", "tone": "明亮但不轻浮", "premise": "两位搭档谈是否一起去异地工作。", "locked_facts": ["双方已坦白互有好感", "没有隐瞒的第三者", "本章不替任何一方决定离职"]},
+      "characters": [{"name": "江遥", "current_goal": "获得对方支持", "core_desire": "保持职业自主"}, {"name": "周予", "current_goal": "确认自己在未来安排中的位置", "fear": "被当成附属选项"}],
+      "outline": "讨论工作，承认彼此想靠近，但把职业决定留给本人。",
+      "chapter_goal": "让亲近来自主动表达和尊重边界，不靠误会拖延。",
+      "checks": ["双方各有目的，对话回应改变谈法", "不替另一视角确认内心"],
+      "reject": ["新增第三者制造吃醋", "用一场争吵代替真实分歧"]
+    },
+    {
+      "id": "suspense_fair_clue",
+      "bible": {"genre": "悬疑", "tone": "紧凑、清楚", "premise": "管理员核对一把归还时间不符的备用钥匙。", "locked_facts": ["账本记录钥匙18点归还", "门禁记录保管人18点10分才入楼", "谁改记录尚未确定", "本章只能确认记录冲突，不能揭露真凶"]},
+      "characters": [{"name": "陈澄", "current_goal": "保全原始记录", "knows": ["两份记录相差十分钟"], "does_not_know": ["是谁改动记录"]}, {"name": "保管人", "current_goal": "避免未经核实的指控影响工作"}],
+      "outline": "核对两份记录，区分解释与证据，约定复核原件。",
+      "chapter_goal": "通过交涉获得复核机会，不新增第三份决定性证据。",
+      "checks": ["交涉有回应，不是配角直接讲出答案", "推进已知疑点，不提前揭密"],
+      "reject": ["把猜测写成凶手身份", "伪造前文伏笔或新监控证据"]
+    },
+    {
+      "id": "fantasy_cost",
+      "bible": {"genre": "玄幻/仙侠", "tone": "昂扬", "premise": "学徒在试炼中选择速度与保护同伴。", "world_rules": ["护符只能使用一次，且只能护住一人"], "locked_facts": ["主角没有隐藏能力", "同伴能自主行动"]},
+      "characters": [{"name": "陆砚", "current_goal": "按时完成试炼", "resources": ["一次性护符"]}, {"name": "阿岑", "current_goal": "凭自己的判断走出试炼"}],
+      "outline": "人物要在现有规则下合作，决定护符何时给谁用，并承担时间损失。",
+      "chapter_goal": "让成功来自选择与协作，代价延续。",
+      "checks": ["使用已有规则解决问题", "同伴有作用，时间代价不归零"],
+      "reject": ["临时觉醒或护符无限使用", "反派突然降智让路"]
+    },
+    {
+      "id": "resolved_ending",
+      "bible": {"genre": "都市/日常", "tone": "平静、有余韵", "premise": "一间旧店完成最后一天营业。", "locked_facts": ["债务已清", "所有顾客纠纷已解决", "这是全书结尾，不开启新主线"]},
+      "characters": [{"name": "老板", "current_goal": "把钥匙交还房东并告别"}],
+      "outline": "清点结束，交还钥匙，离开。",
+      "chapter_goal": "通过告别兑现结尾，不强造危机。",
+      "checks": ["具体告别而非重复总结人生", "允许 end_hook 为空"],
+      "reject": ["神秘陌生人或新债务", "为了悬念推翻已解决问题"]
+    },
+    {
+      "id": "replan_not_polish",
+      "bible": {"genre": "奇幻", "tone": "轻快", "premise": "信使到镇上交信。", "locked_facts": ["信件内容未获准公开", "本次只诊断，不改变现有计划"]},
+      "characters": [{"name": "信使", "current_goal": "交信"}],
+      "outline": "到镇上，问路，交信，然后离开。",
+      "chapter_goal": "诊断缺乏人物意义或变化的问题；修改事件前需作者确认。",
+      "draft": "他走进镇子，问了路。收信人接过信。他便离开了。",
+      "checks": ["指出结构缺口并标记 story_structure_requires_replan", "保留原稿，提出最小计划变更而非擅自执行"],
+      "reject": ["直接把信写成通缉令", "以华丽修辞宣称结构已修复"]
+    }
+  ]
+}

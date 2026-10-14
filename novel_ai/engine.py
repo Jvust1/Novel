@@ -44,6 +44,8 @@ from .story_dna_memory import compare_story_dna, story_dna_review_payload
 from .spindle_temporal import temporal_coherence_report, temporal_review_payload
 from .lexical_richness import lexical_richness_report, lexical_richness_review_payload
 from .workflow_guard import workflow_summary
+from .story_revision import StoryReplanRequired, story_revision_route
+from .editorial_context import build_repair_context, build_review_context
 
 
 def sample_reference_text(text: str, max_chars: int = 12000) -> str:
@@ -325,6 +327,13 @@ class NovelEngine:
         style: StyleFingerprint | None = None,
         extra_context: str = "",
     ) -> str:
+        review = ChapterReview.model_validate(json_object_from_value(
+            review, max_bytes=self.output_policy.max_output_bytes))
+        if story_revision_route(review.model_dump())["requires_replan"]:
+            raise StoryReplanRequired(
+                "story_structure_requires_replan: 原稿未修改；请先修订场景计划并取得作者确认，"
+                "不能用局部润色解决结构问题。"
+            )
         raw = self.provider.chat(
             repair_messages(draft, review.model_dump(), style, extra_context),
             temperature=0.72,
@@ -411,6 +420,7 @@ class NovelEngine:
             "style": _data_digest(style.model_dump() if style is not None else None),
             "recent_summaries": _data_digest(recent_summaries),
             "extra_context": _text_digest(extra_context),
+            "user_notes": _text_digest(user_notes),
             "reference_hashes": _data_digest(sorted(hashes)),
             "historical_story_dna": _data_digest(dna_history),
             "historical_voice_dna": _data_digest(voice_history),
@@ -425,6 +435,15 @@ class NovelEngine:
             draft_context = (draft_context + "\n\n" + dna_similarity.avoid_context).strip()
         if behavior_report.get("should_avoid"):
             draft_context = (draft_context + "\n\n" + str(behavior_report.get("avoid_context", ""))).strip()
+        review_context = build_review_context(
+            draft_context, style=style, user_notes=user_notes, target_chars=target_chars,
+            recent_summaries=recent_summaries,
+        ) if review else ""
+        repair_context = build_repair_context(
+            draft_context, bible=bible, plan=plan, characters=characters,
+            user_notes=user_notes, target_chars=target_chars,
+            recent_summaries=recent_summaries,
+        ) if review and auto_repair else ""
         plan_evidence = {
             "source": "chapter_plan", "plan_sha256": plan_sha,
             "story_dna": story_dna, "story_dna_similarity": dna_similarity.to_dict(),
@@ -466,7 +485,7 @@ class NovelEngine:
                 "external_hook_count": len(hooks) if review else 0,
                 "author_acceptance": "pending",
             }
-            selected_review = reviewer.review(bible, plan, characters, text, draft_context) if review else None
+            selected_review = reviewer.review(bible, plan, characters, text, review_context) if review else None
             if review and not isinstance(selected_review, ChapterReview):
                 raise TypeError("configured reviewer did not return a ChapterReview")
             if review:
@@ -480,6 +499,14 @@ class NovelEngine:
             selected_review = apply_external_review_hooks(
                 selected_review, hooks, draft=text, plan=plan, bible=bible, characters=characters,
                 max_output_bytes=self.output_policy.max_output_bytes)
+            route = story_revision_route(selected_review.model_dump() if selected_review else None)
+            if route["requires_replan"]:
+                # A mislabelled low-severity/pass finding still cannot authorize
+                # local repair. Preserve its evidence and the unrepaired draft.
+                selected_review = ChapterReview.model_validate({
+                    **selected_review.model_dump(), "verdict": "revise",
+                })
+            report["story_revision_route"] = route
             report["review"] = selected_review.model_dump() if selected_review else None
             return report, selected_review
 
@@ -488,8 +515,9 @@ class NovelEngine:
             max_bytes=self.output_policy.max_output_bytes)
         initial, review_result = analyze(draft, "draft")
         final, revised, review_after_repair = initial, None, None
-        if auto_repair and review_result and review_result.verdict == "revise":
-            revised = validate_output_text(self.repair(draft, review_result, style, draft_context),
+        if (auto_repair and review_result and review_result.verdict == "revise"
+                and initial["story_revision_route"]["local_repair_allowed"]):
+            revised = validate_output_text(self.repair(draft, review_result, style, repair_context),
                                            max_bytes=self.output_policy.max_output_bytes)
             final, review_after_repair = analyze(revised, "repaired")
         voice_report = deepcopy(initial["voice"])
